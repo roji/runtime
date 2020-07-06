@@ -11,7 +11,7 @@ namespace System.ComponentModel.DataAnnotations.Schema
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
     public class TableAttribute : Attribute
     {
-        private string _schema;
+        private string? _schema;
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="TableAttribute" /> class.
@@ -35,7 +35,7 @@ namespace System.ComponentModel.DataAnnotations.Schema
         /// <summary>
         ///     The schema of the table the class is mapped to.
         /// </summary>
-        public string Schema
+        public string? Schema
         {
             get => _schema;
             set

@@ -84,7 +84,7 @@ namespace System.ComponentModel.DataAnnotations
         /// parameters, for which the invariant culture is always used for any conversions of the validated value.</remarks>
         public bool ConvertValueInInvariantCulture { get; set; }
 
-        private Func<object, object> Conversion { get; set; }
+        private Func<object, object>? Conversion { get; set; }
 
         private void Initialize(IComparable minimum, IComparable maximum, Func<object, object> conversion)
         {
@@ -104,7 +104,7 @@ namespace System.ComponentModel.DataAnnotations
         /// <param name="value">The value to test for validity.</param>
         /// <returns><c>true</c> means the <paramref name="value" /> is valid</returns>
         /// <exception cref="InvalidOperationException"> is thrown if the current attribute is ill-formed.</exception>
-        public override bool IsValid(object value)
+        public override bool IsValid(object? value)
         {
             // Validate our properties and create the conversion function
             SetupConversion();
@@ -119,7 +119,7 @@ namespace System.ComponentModel.DataAnnotations
 
             try
             {
-                convertedValue = Conversion(value);
+                convertedValue = Conversion!(value);
             }
             catch (FormatException)
             {
