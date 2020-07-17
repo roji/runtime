@@ -3,6 +3,7 @@
     <AssemblyName>System.Data.DataSetExtensions</AssemblyName>
     <TargetFrameworks>$(NetCoreAppCurrent)</TargetFrameworks>
     <IsPartialFacadeAssembly>true</IsPartialFacadeAssembly>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
   <PropertyGroup>
   </PropertyGroup>
