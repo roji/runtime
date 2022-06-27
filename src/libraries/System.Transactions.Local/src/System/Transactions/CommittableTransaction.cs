@@ -5,6 +5,8 @@ using System.Diagnostics;
 using System.Runtime.Versioning;
 using System.Threading;
 
+#pragma warning disable CS1591
+
 namespace System.Transactions
 {
     [UnsupportedOSPlatform("browser")]
