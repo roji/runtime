@@ -13,14 +13,12 @@ using System.Security.Permissions;
 using System.Threading;
 using System.Transactions.Diagnostics;
 
-#nullable disable
-
 namespace System.Transactions.Oletx
 {
     /// <summary>
     /// A Transaction object represents a single transaction.  It is created by TransactionManager
     /// objects through CreateTransaction or through deserialization.  Alternatively, the static Create
-    /// methodis provided, which creates a "default" TransactionManager and requests that it create
+    /// method is provided, which creates a "default" TransactionManager and requests that it create
     /// a new transaction with default values.  A transaction can only be committed by
     /// the client application that created the transaction.  If a client application wishes to allow
     /// access to the transaction by multiple threads, but wants to prevent those other threads from
@@ -42,7 +40,7 @@ namespace System.Transactions.Oletx
         // filled with the propagation token from the serialization info.  Later, when
         // GetRealObject is called, this array is used to decide whether or not a new
         // transation needs to be created and if so, to create the transaction.
-        private byte[] _propagationTokenForDeserialize;
+        private byte[]? _propagationTokenForDeserialize;
 
         protected int Disposed;
 
@@ -50,7 +48,7 @@ namespace System.Transactions.Oletx
         // we need to remember that transaction because GetRealObject is called twice during
         // deserialization.  In this case, GetRealObject returns the LTM transaction, not this OletxTransaction.
         // The OletxTransaction will get GC'd because there will be no references to it.
-        internal Transaction SavedLtmPromotedTransaction;
+        internal Transaction? SavedLtmPromotedTransaction;
 
         private TransactionTraceIdentifier _traceIdentifier = TransactionTraceIdentifier.Empty;
 
@@ -107,7 +105,7 @@ namespace System.Transactions.Oletx
             }
         }
 
-        internal Exception InnerException
+        internal Exception? InnerException
             => RealOletxTransaction.InnerException;
 
         internal OletxTransaction(RealOletxTransaction realOletxTransaction)
@@ -118,7 +116,9 @@ namespace System.Transactions.Oletx
             RealOletxTransaction.OletxTransactionCreated();
         }
 
-        protected OletxTransaction(SerializationInfo serializationInfo, StreamingContext context)
+        // TODO: Remove this
+#pragma warning disable CS8618
+        protected OletxTransaction(SerializationInfo? serializationInfo, StreamingContext context)
         {
             if (serializationInfo == null)
             {
@@ -127,13 +127,14 @@ namespace System.Transactions.Oletx
 
             // Simply store the propagation token from the serialization info.  GetRealObject will
             // decide whether or not we will use it.
-            _propagationTokenForDeserialize = (byte[])serializationInfo.GetValue(PropagationTokenString, typeof(byte[]));
+            _propagationTokenForDeserialize = (byte[])serializationInfo.GetValue(PropagationTokenString, typeof(byte[]))!;
 
             if (_propagationTokenForDeserialize.Length < 24)
             {
                 throw new ArgumentException(SR.InvalidArgument, "serializationInfo");
             }
         }
+#pragma warning restore CS8618
 
         public object GetRealObject(StreamingContext context)
         {
@@ -172,7 +173,7 @@ namespace System.Transactions.Oletx
             {
                 TransactionDeserializedTraceRecord.Trace(
                     SR.TraceSourceOletx,
-                    returnValue._internalTransaction.PromotedTransaction.TransactionTraceId);
+                    returnValue._internalTransaction.PromotedTransaction!.TransactionTraceId);
             }
 
             if (DiagnosticTrace.Verbose)
@@ -479,7 +480,7 @@ namespace System.Transactions.Oletx
         internal IsolationLevel TransactionIsolationLevel { get; private set; }
 
         // Record the exception that caused the transaction to abort.
-        internal Exception InnerException;
+        internal Exception? InnerException;
 
         // Store status
         internal TransactionStatus Status { get; private set; }
@@ -494,13 +495,13 @@ namespace System.Transactions.Oletx
 
         // The list of containers for phase0 volatile enlistment multiplexing so we only enlist with the proxy once per wave.
         // The last one on the list is the "current" one.
-        internal ArrayList Phase0EnlistVolatilementContainerList;
+        internal ArrayList? Phase0EnlistVolatilementContainerList;
 
         // The container for phase1 volatile enlistment multiplexing so we only enlist with the proxy once.
-        internal OletxPhase1VolatileEnlistmentContainer Phase1EnlistVolatilementContainer;
+        internal OletxPhase1VolatileEnlistmentContainer? Phase1EnlistVolatilementContainer;
 
         // Used to get outcomes of transactions with a voter.
-        private OutcomeEnlistment _outcomeEnlistment;
+        private OutcomeEnlistment? _outcomeEnlistment;
 
         // This is a count of volatile and Phase0 durable enlistments on this transaction that have not yet voted.
         // This is incremented when an enlistment is made and decremented when the
@@ -528,7 +529,7 @@ namespace System.Transactions.Oletx
 
         // This field is set directly from the OletxCommittableTransaction constructor.  It will be null
         // for non-root RealOletxTransactions.
-        internal OletxCommittableTransaction CommittableTransaction;
+        internal OletxCommittableTransaction? CommittableTransaction;
 
         // This is an internal OletxTransaction.  It is created as part of the RealOletxTransaction constructor.
         // It is used by the DependentCloneEnlistments when creating their volatile enlistments.
@@ -542,7 +543,7 @@ namespace System.Transactions.Oletx
         // This is the InternalTransaction that instigated creation of this RealOletxTransaction.  When we get the outcome
         // of the transaction, we use this to notify the InternalTransaction of the outcome.  We do this to avoid the LTM
         // always creating a volatile enlistment just to get the outcome.
-        internal InternalTransaction InternalTransaction { get; set; }
+        internal InternalTransaction? InternalTransaction { get; set; }
 
         internal Guid Identifier
         {
@@ -621,7 +622,7 @@ namespace System.Transactions.Oletx
             OutcomeEnlistment outcomeEnlistment,
             Guid identifier,
             OletxTransactionIsolationLevel oletxIsoLevel,
-            bool isRoot )
+            bool isRoot)
         {
             bool successful = false;
 
@@ -677,15 +678,15 @@ namespace System.Transactions.Oletx
             }
         }
 
-        internal OletxVolatileEnlistmentContainer AddDependentClone( bool delayCommit )
+        internal OletxVolatileEnlistmentContainer AddDependentClone(bool delayCommit)
         {
-            IPhase0EnlistmentShim phase0Shim = null;
-            IVoterBallotShim voterShim = null;
+            IPhase0EnlistmentShim? phase0Shim = null;
+            IVoterBallotShim? voterShim = null;
             bool needVoterEnlistment = false;
             bool needPhase0Enlistment = false;
-            OletxVolatileEnlistmentContainer returnValue = null;
-            OletxPhase0VolatileEnlistmentContainer localPhase0VolatileContainer = null;
-            OletxPhase1VolatileEnlistmentContainer localPhase1VolatileContainer = null;
+            OletxVolatileEnlistmentContainer? returnValue = null;
+            OletxPhase0VolatileEnlistmentContainer? localPhase0VolatileContainer = null;
+            OletxPhase1VolatileEnlistmentContainer? localPhase1VolatileContainer = null;
             bool enlistmentSucceeded = false;
             bool phase0ContainerLockAcquired = false;
 
@@ -726,7 +727,7 @@ namespace System.Transactions.Oletx
                                 TakeContainerLock(localPhase0VolatileContainer, ref phase0ContainerLockAcquired);
                             }
 
-                            if (!localPhase0VolatileContainer.NewEnlistmentsAllowed)
+                            if (!localPhase0VolatileContainer!.NewEnlistmentsAllowed)
                             {
                                 //It is OK to release the lock at this time because we are creating a new container that has not yet
                                 //been enlisted with DTC. So there is no race to worry about
@@ -780,7 +781,7 @@ namespace System.Transactions.Oletx
                         {
                             // We need to use shims if native threads are not allowed to enter managed code.
                             _transactionShim.Phase0Enlist(phase0Handle, out phase0Shim);
-                            localPhase0VolatileContainer.Phase0EnlistmentShim = phase0Shim;
+                            localPhase0VolatileContainer!.Phase0EnlistmentShim = phase0Shim;
                         }
 
                         if (needVoterEnlistment)
@@ -789,7 +790,7 @@ namespace System.Transactions.Oletx
                             OletxTransactionManagerInstance.DtcTransactionManagerLock.AcquireReaderLock(-1);
                             try
                             {
-                                _transactionShim.CreateVoter(localPhase1VolatileContainer.VoterHandle, out voterShim);
+                                _transactionShim.CreateVoter(localPhase1VolatileContainer!.VoterHandle, out voterShim);
 
                                 enlistmentSucceeded = true;
                             }
@@ -807,9 +808,9 @@ namespace System.Transactions.Oletx
                             // list.
                             if (needPhase0Enlistment)
                             {
-                                Phase0EnlistVolatilementContainerList.Add(localPhase0VolatileContainer);
+                                Phase0EnlistVolatilementContainerList!.Add(localPhase0VolatileContainer);
                             }
-                            localPhase0VolatileContainer.AddDependentClone();
+                            localPhase0VolatileContainer!.AddDependentClone();
                             returnValue = localPhase0VolatileContainer;
                         }
                         else
@@ -822,7 +823,7 @@ namespace System.Transactions.Oletx
                                     "RealOletxTransaction.AddDependentClone - phase1VolContainer not null when expected" );
                                 Phase1EnlistVolatilementContainer = localPhase1VolatileContainer;
                             }
-                            localPhase1VolatileContainer.AddDependentClone();
+                            localPhase1VolatileContainer!.AddDependentClone();
                             returnValue = localPhase1VolatileContainer;
                         }
 
@@ -843,7 +844,7 @@ namespace System.Transactions.Oletx
                     ReleaseContainerLock(localPhase0VolatileContainer, ref phase0ContainerLockAcquired);
                 }
 
-                if (phase0Handle != IntPtr.Zero && localPhase0VolatileContainer.Phase0EnlistmentShim == null)
+                if (phase0Handle != IntPtr.Zero && localPhase0VolatileContainer!.Phase0EnlistmentShim == null)
                 {
                     HandleTable.FreeHandle(phase0Handle);
                 }
@@ -857,7 +858,6 @@ namespace System.Transactions.Oletx
                 }
             }
             return returnValue;
-
         }
 
         void ReleaseContainerLock(OletxPhase0VolatileEnlistmentContainer localPhase0VolatileContainer, ref bool phase0ContainerLockAcquired)
@@ -886,14 +886,14 @@ namespace System.Transactions.Oletx
             EnlistmentOptions enlistmentOptions,
             OletxTransaction oletxTransaction)
         {
-            OletxVolatileEnlistment enlistment = null;
+            OletxVolatileEnlistment? enlistment = null;
             bool needVoterEnlistment = false;
             bool needPhase0Enlistment = false;
-            OletxPhase0VolatileEnlistmentContainer localPhase0VolatileContainer = null;
-            OletxPhase1VolatileEnlistmentContainer localPhase1VolatileContainer = null;
+            OletxPhase0VolatileEnlistmentContainer? localPhase0VolatileContainer = null;
+            OletxPhase1VolatileEnlistmentContainer? localPhase1VolatileContainer = null;
             IntPtr phase0Handle = IntPtr.Zero;
-            IVoterBallotShim voterShim = null;
-            IPhase0EnlistmentShim phase0Shim = null;
+            IVoterBallotShim? voterShim = null;
+            IPhase0EnlistmentShim? phase0Shim = null;
             bool enlistmentSucceeded = false;
 
             // Yes, we are talking to the proxy while holding the lock on the RealOletxTransaction.
@@ -929,7 +929,7 @@ namespace System.Transactions.Oletx
                         else
                         {
                             localPhase0VolatileContainer = Phase0EnlistVolatilementContainerList[^1] as OletxPhase0VolatileEnlistmentContainer;
-                            if (!localPhase0VolatileContainer.NewEnlistmentsAllowed)
+                            if (!localPhase0VolatileContainer!.NewEnlistmentsAllowed)
                             {
                                 localPhase0VolatileContainer = new OletxPhase0VolatileEnlistmentContainer(this);
                                 needPhase0Enlistment = true;
@@ -970,7 +970,7 @@ namespace System.Transactions.Oletx
                         // If enlistDuringPrepareRequired is true, we need to ask the proxy to create a Phase0 enlistment.
                         if (needPhase0Enlistment)
                         {
-                            lock (localPhase0VolatileContainer)
+                            lock (localPhase0VolatileContainer!)
                             {
                                 _transactionShim.Phase0Enlist(phase0Handle, out phase0Shim);
 
@@ -980,7 +980,7 @@ namespace System.Transactions.Oletx
 
                         if (needVoterEnlistment)
                         {
-                            _transactionShim.CreateVoter(localPhase1VolatileContainer.VoterHandle, out voterShim);
+                            _transactionShim.CreateVoter(localPhase1VolatileContainer!.VoterHandle, out voterShim);
 
                             enlistmentSucceeded = true;
                             localPhase1VolatileContainer.VoterBallotShim = voterShim;
@@ -988,15 +988,15 @@ namespace System.Transactions.Oletx
 
                         if ((enlistmentOptions & EnlistmentOptions.EnlistDuringPrepareRequired) != 0)
                         {
-                            localPhase0VolatileContainer.AddEnlistment(enlistment);
+                            localPhase0VolatileContainer!.AddEnlistment(enlistment);
                             if (needPhase0Enlistment)
                             {
-                                Phase0EnlistVolatilementContainerList.Add( localPhase0VolatileContainer);
+                                Phase0EnlistVolatilementContainerList!.Add( localPhase0VolatileContainer);
                             }
                         }
                         else
                         {
-                            localPhase1VolatileContainer.AddEnlistment(enlistment);
+                            localPhase1VolatileContainer!.AddEnlistment(enlistment);
 
                             if (needVoterEnlistment)
                             {
@@ -1015,7 +1015,7 @@ namespace System.Transactions.Oletx
             }
             finally
             {
-                if (phase0Handle != IntPtr.Zero && localPhase0VolatileContainer.Phase0EnlistmentShim == null)
+                if (phase0Handle != IntPtr.Zero && localPhase0VolatileContainer!.Phase0EnlistmentShim == null)
                 {
                     HandleTable.FreeHandle(phase0Handle);
                 }
@@ -1258,13 +1258,13 @@ namespace System.Transactions.Oletx
             }
             // Tell the outcome enlistment the TM went down.  We are doing this outside the lock
             // because this may end up making calls out to user code through enlistments.
-            _outcomeEnlistment.TMDown();
+            _outcomeEnlistment!.TMDown();
         }
     }
 
     internal sealed class OutcomeEnlistment
     {
-        private WeakReference _weakRealTransaction;
+        private WeakReference? _weakRealTransaction;
 
         internal Guid TransactionIdentifier { get; private set; }
 
@@ -1326,7 +1326,7 @@ namespace System.Transactions.Oletx
 
         private void InvokeOutcomeFunction(TransactionStatus status)
         {
-            WeakReference localTxWeakRef;
+            WeakReference? localTxWeakRef;
 
             // In the face of TMDown notifications, we may have already issued
             // the outcome of the transaction.
@@ -1345,7 +1345,7 @@ namespace System.Transactions.Oletx
             // during the RealOletxTransaction constructor after the OutcomeEnlistment object was created.
             // In the finally block of the constructor, it calls UnregisterOutcomeCallback, which will
             // null out weakRealTransaction.  If this is the case, there is nothing to do.
-            if (localTxWeakRef != null )
+            if (localTxWeakRef != null)
             {
                 if (localTxWeakRef.Target is RealOletxTransaction realOletxTransaction)
                 {
@@ -1399,7 +1399,7 @@ namespace System.Transactions.Oletx
         {
             // Assume that we don't know because that is the safest answer.
             bool transactionIsInDoubt = true;
-            RealOletxTransaction realOletxTransaction = null;
+            RealOletxTransaction? realOletxTransaction = null;
             lock (this)
             {
                 if (_weakRealTransaction != null)

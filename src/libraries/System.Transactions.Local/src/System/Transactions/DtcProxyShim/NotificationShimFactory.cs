@@ -44,7 +44,7 @@ internal class NotificationShimFactory : IDtcProxyShimFactory
 
     [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2050", Justification = "Leave me alone")]
     public void ConnectToProxy(
-        string nodeName,
+        string? nodeName,
         Guid resourceManagerIdentifier,
         OletxInternalResourceManager managedIdentifier,
         out bool nodeNameMatches,
@@ -108,26 +108,26 @@ internal class NotificationShimFactory : IDtcProxyShimFactory
                 // TODO: The C++ code uses IResourceManagerFactory2.CreateEx to create the resource manager; the only difference between that and IResourceManagerFactory.CreateEx is that the latter doesn't
                 // accept an riid, and my attempts to pass IID_IResourceManager to it have failed (some sort of GUID mismatch??)
 
-                rmFactory.CreateEx(
-                    resourceManagerIdentifier,
-                    "System.Transactions.InternalRM",
-                    rmNotifyShim,
-                    Guid.Parse(Guids.IID_IResourceManager),
-                    out var rm);
-
-                //var hresult = rmFactory.Create(
+                //rmFactory.CreateEx(
                 //    resourceManagerIdentifier,
                 //    "System.Transactions.InternalRM",
                 //    rmNotifyShim,
+                //    Guid.Parse(Guids.IID_IResourceManager),
                 //    out var rm);
 
-                //rm.ReenlistmentComplete();
+                rmFactory.Create(
+                    resourceManagerIdentifier,
+                    "System.Transactions.InternalRM",
+                    rmNotifyShim,
+                    out var rm);
 
-                //hresult = rm.GetDistributedTransactionManager(
-                //    Guid.Parse(Guids.IID_ITransactionDispenser),
-                //    out var foo);
+                rm.GetDistributedTransactionManager(
+                    Guid.Parse(Guids.IID_ITransactionDispenser),
+                    out var foo);
 
-                //rmShim.ResourceManager = rm;
+                rm.ReenlistmentComplete();
+
+                rmShim.ResourceManager = rm;
             });
 
             resourceManagerShim = rmShim;

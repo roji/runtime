@@ -6,8 +6,6 @@ using System.Diagnostics;
 using System.Threading;
 using System.Transactions.Diagnostics;
 
-#nullable disable
-
 namespace System.Transactions.Oletx
 {
     [Serializable]

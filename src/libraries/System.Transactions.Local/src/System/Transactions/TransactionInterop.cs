@@ -64,7 +64,7 @@ namespace System.Transactions
             Buffer.BlockCopy(whereabouts, 0, whereaboutsCopy, 0, whereabouts.Length);
 
             int cookieIndex = 0;
-            UInt32 cookieSize = 0;
+            uint cookieSize = 0;
             CoTaskMemHandle? cookieBuffer = null;
 
             // First, make sure we are working with an OletxTransaction.
@@ -263,7 +263,7 @@ namespace System.Transactions
         {
             byte[]? propagationToken = null;
             CoTaskMemHandle? propagationTokenBuffer = null;
-            UInt32 tokenSize = 0;
+            uint tokenSize = 0;
 
             try
             {

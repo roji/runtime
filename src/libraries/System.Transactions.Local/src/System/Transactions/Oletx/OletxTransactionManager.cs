@@ -14,8 +14,6 @@ using System.Threading;
 using System.Transactions.Diagnostics;
 using System.Transactions.DtcProxyShim;
 
-#nullable disable
-
 namespace System.Transactions.Oletx
 {
     internal class OletxTransactionManager
@@ -27,12 +25,12 @@ namespace System.Transactions.Oletx
         private TransactionOptions _configuredTransactionOptions = new TransactionOptions();
 
         // Object for synchronizing access to the entire class( avoiding lock( typeof( ... )) )
-        private static object _classSyncObject;
+        private static object? _classSyncObject;
 
         // These have to be static because we can only add an RM with the proxy once, even if we
         // have multiple OletxTransactionManager instances.
-        internal static Hashtable _resourceManagerHashTable;
-        public static ReaderWriterLock ResourceManagerHashTableLock;
+        internal static Hashtable? _resourceManagerHashTable;
+        public static ReaderWriterLock ResourceManagerHashTableLock = null!;
 
         internal static volatile bool ProcessingTmDown;
 
@@ -40,10 +38,10 @@ namespace System.Transactions.Oletx
         private DtcTransactionManager _dtcTransactionManager;
         internal OletxInternalResourceManager InternalResourceManager;
 
-        internal static IDtcProxyShimFactory ProxyShimFactory;
+        internal static IDtcProxyShimFactory ProxyShimFactory = null!; // Late initialization
 
         // Double-checked locking pattern requires volatile for read/write synchronization
-        internal static volatile EventWaitHandle _shimWaitHandle;
+        internal static volatile EventWaitHandle? _shimWaitHandle;
         internal static EventWaitHandle ShimWaitHandle
         {
             get
@@ -60,14 +58,14 @@ namespace System.Transactions.Oletx
             }
         }
 
-        private string _nodeNameField;
+        private string? _nodeNameField;
 //        byte[] propToken;
 
         // Method that is used within SQLCLR as the WaitOrTimerCallback for the call to
         // ThreadPool.RegisterWaitForSingleObject.
         // This is here for the DangerousGetHandle call.  We need to do it.
         [SuppressMessage("Microsoft.Reliability", "CA2001:AvoidCallingProblematicMethods")]
-        internal static void ShimNotificationCallback(object state, bool timeout)
+        internal static void ShimNotificationCallback(object? state, bool timeout)
         {
             // First we need to get the notification from the shim factory.
             IntPtr enlistmentHandleIntPtr = IntPtr.Zero;
@@ -76,7 +74,7 @@ namespace System.Transactions.Oletx
             bool abortingHint;
 
             uint prepareInfoSize;
-            CoTaskMemHandle prepareInfoBuffer = null;
+            CoTaskMemHandle? prepareInfoBuffer = null;
 
             bool holdingNotificationLock = false;
             bool cleanExit = false;
@@ -152,7 +150,7 @@ namespace System.Transactions.Oletx
 
                         if (shimNotificationType != ShimNotificationType.None)
                         {
-                            object target = HandleTable.FindHandle(enlistmentHandleIntPtr);
+                            object? target = HandleTable.FindHandle(enlistmentHandleIntPtr);
 
                             // Next, based on the notification type, cast the Handle accordingly and make
                             // the appropriate call on the enlistment.
@@ -401,7 +399,7 @@ namespace System.Transactions.Oletx
 
                                 case ShimNotificationType.ResourceManagerTmDownNotify:
                                 {
-                                    OletxResourceManager resourceManager = target as OletxResourceManager;
+                                    OletxResourceManager? resourceManager = target as OletxResourceManager;
                                     try
                                     {
                                         if (resourceManager != null)
@@ -551,7 +549,7 @@ namespace System.Transactions.Oletx
         {
             OletxCommittableTransaction tx;
             RealOletxTransaction realTransaction;
-            ITransactionShim transactionShim = null;
+            ITransactionShim? transactionShim = null;
             Guid txIdentifier = Guid.Empty;
             OutcomeEnlistment outcomeEnlistment;
 
@@ -670,14 +668,14 @@ namespace System.Transactions.Oletx
 
         internal OletxResourceManager RegisterResourceManager(Guid resourceManagerIdentifier)
         {
-            OletxResourceManager oletxResourceManager;
+            OletxResourceManager? oletxResourceManager;
 
             ResourceManagerHashTableLock.AcquireWriterLock(-1);
 
             try
             {
                 // If this resource manager has already been registered, don't register it again.
-                oletxResourceManager = _resourceManagerHashTable[resourceManagerIdentifier] as OletxResourceManager;
+                oletxResourceManager = _resourceManagerHashTable![resourceManagerIdentifier] as OletxResourceManager;
                 if (oletxResourceManager != null)
                 {
                     return oletxResourceManager;
@@ -695,7 +693,7 @@ namespace System.Transactions.Oletx
             return oletxResourceManager;
         }
 
-        internal string CreationNodeName
+        internal string? CreationNodeName
             => _nodeNameField;
 
         internal OletxResourceManager FindOrRegisterResourceManager(Guid resourceManagerIdentifier)
@@ -705,12 +703,12 @@ namespace System.Transactions.Oletx
                 throw new ArgumentException(SR.BadResourceManagerId, "resourceManagerIdentifier");
             }
 
-            OletxResourceManager oletxResourceManager;
+            OletxResourceManager? oletxResourceManager;
 
             ResourceManagerHashTableLock.AcquireReaderLock(-1);
             try
             {
-                oletxResourceManager = _resourceManagerHashTable[resourceManagerIdentifier] as OletxResourceManager;
+                oletxResourceManager = _resourceManagerHashTable![resourceManagerIdentifier] as OletxResourceManager;
             }
             finally
             {
@@ -744,7 +742,7 @@ namespace System.Transactions.Oletx
             }
         }
 
-        internal string NodeName
+        internal string? NodeName
             => _nodeNameField;
 
         internal static void ProxyException(COMException comException)
@@ -839,7 +837,7 @@ namespace System.Transactions.Oletx
 
         internal Guid Identifier { get; }
 
-        internal IResourceManagerShim ResourceManagerShim;
+        internal IResourceManagerShim? ResourceManagerShim;
 
         internal OletxInternalResourceManager(OletxTransactionManager oletxTm)
         {
@@ -856,7 +854,7 @@ namespace System.Transactions.Oletx
 
             // We need to look through all the transactions and tell them about
             // the TMDown so they can tell their Phase0VolatileEnlistmentContainers.
-            Transaction tx;
+            Transaction? tx;
             RealOletxTransaction realTx;
             IDictionaryEnumerator tableEnum;
 
@@ -877,13 +875,13 @@ namespace System.Transactions.Oletx
             tableEnum = txHashTable.GetEnumerator();
             while (tableEnum.MoveNext())
             {
-                WeakReference txWeakRef = (WeakReference) tableEnum.Value;
+                WeakReference? txWeakRef = (WeakReference?)tableEnum.Value;
                 if (txWeakRef != null)
                 {
-                    tx = (Transaction)txWeakRef.Target;
+                    tx = (Transaction?)txWeakRef.Target;
                     if (tx != null)
                     {
-                        realTx = tx._internalTransaction.PromotedTransaction.RealOletxTransaction;
+                        realTx = tx._internalTransaction.PromotedTransaction!.RealOletxTransaction;
                         // Only deal with transactions owned by my OletxTm.
                         if (realTx.OletxTransactionManagerInstance == _oletxTm)
                         {
@@ -896,7 +894,7 @@ namespace System.Transactions.Oletx
             // Now make a local copy of the hash table of resource managers and tell each of them.  This is to
             // deal with Durable EDPR=true (phase0) enlistments.  Each RM will also get a TMDown, but it will
             // come AFTER the "buggy" Phase0Request with abortHint=true - COMPlus bug 36760/36758.
-            Hashtable rmHashTable = null;
+            Hashtable? rmHashTable = null;
             if (OletxTransactionManager._resourceManagerHashTable != null)
             {
                 OletxTransactionManager.ResourceManagerHashTableLock.AcquireReaderLock(Timeout.Infinite);
@@ -916,7 +914,7 @@ namespace System.Transactions.Oletx
                 tableEnum = rmHashTable.GetEnumerator();
                 while (tableEnum.MoveNext())
                 {
-                    OletxResourceManager oletxRM = (OletxResourceManager)tableEnum.Value;
+                    OletxResourceManager? oletxRM = (OletxResourceManager?)tableEnum.Value;
                     if (oletxRM != null)
                     {
                         // When the RM spins through its enlistments, it will need to make sure that
@@ -945,6 +943,6 @@ namespace System.Transactions.Oletx
         }
 
         internal void CallReenlistComplete()
-            => ResourceManagerShim.ReenlistComplete();
+            => ResourceManagerShim!.ReenlistComplete();
     }
 }

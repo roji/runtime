@@ -40,8 +40,7 @@ internal interface IResourceManager
     /// </summary>
     void ReenlistmentComplete();
 
-    [PreserveSig]
-    int GetDistributedTransactionManager(
+    void GetDistributedTransactionManager(
         in Guid riid,
         out IntPtr ppvObject);
 }

@@ -29,7 +29,7 @@ namespace System.Transactions
 
         byte[] GetRecoveryInformation();
 
-        InternalEnlistment InternalEnlistment
+        InternalEnlistment? InternalEnlistment
         {
             get;
             set;

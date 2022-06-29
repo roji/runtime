@@ -123,7 +123,7 @@ namespace System.Transactions
         private OletxTransaction? _promotedTransaction;
         internal OletxTransaction? PromotedTransaction
         {
-            get { return _promotedTransaction; }
+            get => _promotedTransaction;
             set
             {
                 Debug.Assert(_promotedTransaction == null, "A transaction can only be promoted once!");

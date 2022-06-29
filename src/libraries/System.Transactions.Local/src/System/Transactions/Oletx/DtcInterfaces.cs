@@ -9,8 +9,6 @@ using System.Threading;
 using System.Diagnostics.CodeAnalysis;
 using System.Transactions.DtcProxyShim.DTCInterfaces;
 
-#nullable disable
-
 namespace System.Transactions.Oletx
 {
     [Security.SuppressUnmanagedCodeSecurity]
@@ -21,19 +19,18 @@ namespace System.Transactions.Oletx
         // https://docs.microsoft.com/en-us/previous-versions/windows/desktop/ms678898(v=vs.85)
         [DllImport(Interop.Libraries.Xolehlp, CharSet = CharSet.Unicode)]
         internal static extern void DtcGetTransactionManagerExW(
-            [MarshalAs(UnmanagedType.LPWStr)] string pszHost, // TODO: Is this the right marshaling for tchar*?
-            [MarshalAs(UnmanagedType.LPWStr)] string pszTmName,
+            [MarshalAs(UnmanagedType.LPWStr)] string? pszHost, // TODO: Is this the right marshaling for tchar*?
+            [MarshalAs(UnmanagedType.LPWStr)] string? pszTmName,
             in Guid riid,
             int grfOptions, // TODO: Enum?
-            object pvConfigPararms,
+            object? pvConfigPararms,
             [MarshalAs(UnmanagedType.Interface)] out ITransactionDispenser ppvObject);
 
         // Note that this PInvoke does not pass any string params but specifying a charset makes FxCop happy
         [DllImport("System.Transactions.Native.Dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Unicode)]
         internal static extern int GetNotificationFactory(
             SafeHandle notificationEventHandle,
-            [MarshalAs(UnmanagedType.Interface)] out IDtcProxyShimFactory ppProxyShimFactory
-            );
+            [MarshalAs(UnmanagedType.Interface)] out IDtcProxyShimFactory ppProxyShimFactory);
 
         internal static int S_OK = 0;
         internal static int E_FAIL = -2147467259;  // 0x80004005, -2147467259
@@ -271,7 +268,7 @@ namespace System.Transactions.Oletx
     internal interface IDtcProxyShimFactory
     {
         void ConnectToProxy(
-            string nodeName,
+            string? nodeName,
             Guid resourceManagerIdentifier,
             OletxInternalResourceManager managedIdentifier,
             out bool nodeNameMatches,

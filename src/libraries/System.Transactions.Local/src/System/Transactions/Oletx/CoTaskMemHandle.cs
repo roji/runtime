@@ -7,8 +7,6 @@ using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
 using System.Security;
 
-#nullable disable
-
 namespace System.Transactions.Oletx
 {
     internal sealed class CoTaskMemHandle : SafeHandle

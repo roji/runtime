@@ -7,20 +7,20 @@ using System.Globalization;
 using System.Security.Permissions;
 using System.Runtime.CompilerServices;
 using System.Transactions.Diagnostics;
-
-#nullable disable
+using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics;
 
 namespace System.Transactions.Oletx
 {
     internal class DtcTransactionManager
     {
-        private string _nodeName;
+        private string? _nodeName;
         private OletxTransactionManager _oletxTm;
         private IDtcProxyShimFactory _proxyShimFactory;
-        private byte[] _whereabouts;
+        private byte[] _whereabouts = null!; // Late-initialized
         private bool _initialized;
 
-        internal DtcTransactionManager(string nodeName, OletxTransactionManager oletxTm)
+        internal DtcTransactionManager(string? nodeName, OletxTransactionManager oletxTm)
         {
             _nodeName = nodeName;
             _oletxTm = oletxTm;
@@ -30,18 +30,20 @@ namespace System.Transactions.Oletx
 
         // This is here for the DangerousGetHandle call.  We need to do it.
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2001:AvoidCallingProblematicMethods")]
+        [MemberNotNull(nameof(_whereabouts))]
         void Initialize()
         {
             if (_initialized)
             {
+                Debug.Assert(_whereabouts is not null);
+
                 return;
             }
 
             OletxInternalResourceManager internalRM = _oletxTm.InternalResourceManager;
             //IntPtr handle = IntPtr.Zero;
-            IResourceManagerShim resourceManagerShim = null;
+            IResourceManagerShim? resourceManagerShim = null;
             bool nodeNameMatches;
-
             try
             {
                 //handle = HandleTable.AllocHandle(internalRM);
@@ -91,9 +93,9 @@ namespace System.Transactions.Oletx
                     //    HandleTable.FreeHandle(handle);
                     //}
 
-                    if (null != _whereabouts)
+                    if (_whereabouts != null)
                     {
-                        _whereabouts = null;
+                        _whereabouts = null!;
                     }
                 }
             }
@@ -119,7 +121,7 @@ namespace System.Transactions.Oletx
         {
             lock (this)
             {
-                _whereabouts = null;
+                _whereabouts = null!;
                 _initialized = false;
             }
         }
@@ -130,7 +132,7 @@ namespace System.Transactions.Oletx
             {
                 if (!_initialized)
                 {
-                    lock ( this )
+                    lock (this)
                     {
                         Initialize();
                     }
