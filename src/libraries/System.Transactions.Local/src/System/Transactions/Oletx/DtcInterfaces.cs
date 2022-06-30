@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Reflection;
 using System.Threading;
 using System.Diagnostics.CodeAnalysis;
+using System.Transactions.DtcProxyShim.DTCInterfaces;
 
 #nullable disable
 
@@ -15,6 +16,17 @@ namespace System.Transactions.Oletx
     [Security.SuppressUnmanagedCodeSecurity]
     internal static class NativeMethods
     {
+        // TODO: Move to Safe/UnsafeNativeMethods under DtcProxyShim
+        // TODO: Use LibraryImport
+        [DllImport(Interop.Libraries.Xolehlp, CharSet = CharSet.Unicode)]
+        internal static extern void DtcGetTransactionManagerExW(
+            string pszHost,
+            string pszTmName,
+            Guid riid,
+            int grfOptions, // TODO: Enum?
+            object pvConfigPararms,
+            [MarshalAs(UnmanagedType.Interface)] out ITransactionDispenser ppvObject);
+
         // Note that this PInvoke does not pass any string params but specifying a charset makes FxCop happy
         [DllImport("System.Transactions.Native.Dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Unicode)]
         internal static extern int GetNotificationFactory(
@@ -236,10 +248,10 @@ namespace System.Transactions.Oletx
         void GetTransactionDoNotUse(out IntPtr transaction);
     }
 
-    [Security.SuppressUnmanagedCodeSecurity,
-    ComImport,
-    Guid("27C73B91-99F5-46d5-A247-732A1A16529E"),
-    InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    //[Security.SuppressUnmanagedCodeSecurity,
+    //ComImport,
+    //Guid("27C73B91-99F5-46d5-A247-732A1A16529E"),
+    //InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     internal interface IResourceManagerShim
     {
         void Enlist(
@@ -255,22 +267,15 @@ namespace System.Transactions.Oletx
         void ReenlistComplete();
     }
 
-    [Security.SuppressUnmanagedCodeSecurity,
-    ComImport,
-    Guid("467C8BCB-BDDE-4885-B143-317107468275"),
-    InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     internal interface IDtcProxyShimFactory
     {
-        // See https://github.com/dotnet/runtime/issues/45633
-        [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(CoTaskMemHandle))]
         void ConnectToProxy(
-            [MarshalAs(UnmanagedType.LPWStr)] string nodeName,
+            string nodeName,
             Guid resourceManagerIdentifier,
-            IntPtr managedIdentifier,
-            [MarshalAs(UnmanagedType.Bool)] out bool nodeNameMatches,
-            [MarshalAs(UnmanagedType.U4)] out uint whereaboutsSize,
-            out CoTaskMemHandle whereaboutsBuffer,
-            [MarshalAs(UnmanagedType.Interface)] out IResourceManagerShim resourceManagerShim);
+            OletxInternalResourceManager managedIdentifier,
+            out bool nodeNameMatches,
+            out byte[] whereaboutsBuffer,
+            out IResourceManagerShim resourceManagerShim);
 
         void GetNotification(
             out IntPtr managedIdentifier,
@@ -293,7 +298,7 @@ namespace System.Transactions.Oletx
         void CreateResourceManager(
             Guid resourceManagerIdentifier,
             IntPtr managedIdentifier,
-            [MarshalAs(UnmanagedType.Interface)] out IResourceManagerShim resourceManagerShim            );
+            [MarshalAs(UnmanagedType.Interface)] out IResourceManagerShim resourceManagerShim);
 
         void Import(
             [MarshalAs(UnmanagedType.U4)] uint cookieSize,

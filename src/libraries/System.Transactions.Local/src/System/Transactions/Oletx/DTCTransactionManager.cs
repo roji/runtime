@@ -17,7 +17,6 @@ namespace System.Transactions.Oletx
         private string _nodeName;
         private OletxTransactionManager _oletxTm;
         private IDtcProxyShimFactory _proxyShimFactory;
-        private uint _whereaboutsSize;
         private byte[] _whereabouts;
         private bool _initialized;
 
@@ -39,36 +38,27 @@ namespace System.Transactions.Oletx
             }
 
             OletxInternalResourceManager internalRM = _oletxTm.InternalResourceManager;
-            IntPtr handle = IntPtr.Zero;
+            //IntPtr handle = IntPtr.Zero;
             IResourceManagerShim resourceManagerShim = null;
             bool nodeNameMatches;
 
-            CoTaskMemHandle whereaboutsBuffer = null;
-            RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
-                handle = HandleTable.AllocHandle(internalRM);
+                //handle = HandleTable.AllocHandle(internalRM);
 
                 _proxyShimFactory.ConnectToProxy(
                     _nodeName,
                     internalRM.Identifier,
-                    handle,
+                    //handle,
+                    internalRM,
                     out nodeNameMatches,
-                    out _whereaboutsSize,
-                    out whereaboutsBuffer,
+                    out _whereabouts,
                     out resourceManagerShim);
 
                 // If the node name does not match, throw.
                 if (!nodeNameMatches)
                 {
                     throw new NotSupportedException(SR.ProxyCannotSupportMultipleNodeNames);
-                }
-
-                // Make a managed copy of the whereabouts.
-                if (whereaboutsBuffer != null && _whereaboutsSize != 0)
-                {
-                    _whereabouts = new byte[_whereaboutsSize];
-                    Marshal.Copy(whereaboutsBuffer.DangerousGetHandle(), _whereabouts, 0, Convert.ToInt32(_whereaboutsSize));
                 }
 
                 // Give the IResourceManagerShim to the internalRM and tell it to call ReenlistComplete.
@@ -92,24 +82,18 @@ namespace System.Transactions.Oletx
             }
             finally
             {
-                if (whereaboutsBuffer != null)
-                {
-                    whereaboutsBuffer.Close();
-                }
-
                 // If we weren't successful at initializing ourself, clear things out
                 // for next time around.
                 if (!_initialized)
                 {
-                    if (handle != IntPtr.Zero && resourceManagerShim == null)
-                    {
-                        HandleTable.FreeHandle(handle);
-                    }
+                    //if (handle != IntPtr.Zero && resourceManagerShim == null)
+                    //{
+                    //    HandleTable.FreeHandle(handle);
+                    //}
 
                     if (null != _whereabouts)
                     {
                         _whereabouts = null;
-                        _whereaboutsSize = 0;
                     }
                 }
             }
@@ -136,7 +120,6 @@ namespace System.Transactions.Oletx
             lock (this)
             {
                 _whereabouts = null;
-                _whereaboutsSize = 0;
                 _initialized = false;
             }
         }
