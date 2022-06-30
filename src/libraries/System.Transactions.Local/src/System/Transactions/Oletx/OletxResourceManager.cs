@@ -10,7 +10,6 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 // using System.Runtime.Serialization.Formatters.Binary;
-using System.Security.Permissions;
 using System.Threading;
 using System.Transactions.Diagnostics;
 
@@ -90,26 +89,11 @@ namespace System.Transactions.Oletx
                             try
                             {
                                 Guid rmGuid = ResourceManagerIdentifier;
-                                IntPtr handle = IntPtr.Zero;
 
-                                RuntimeHelpers.PrepareConstrainedRegions();
-                                try
-                                {
-                                    handle = HandleTable.AllocHandle( this );
-
-                                    OletxTransactionManager.DtcTransactionManager.ProxyShimFactory.CreateResourceManager(
-                                        rmGuid,
-                                        handle,
-                                        out localResourceManagerShim);
-                                }
-                                finally
-                                {
-                                    if (localResourceManagerShim == null && handle != IntPtr.Zero)
-                                    {
-                                        HandleTable.FreeHandle(handle);
-                                    }
-                                }
-
+                                OletxTransactionManager.DtcTransactionManager.ProxyShimFactory.CreateResourceManager(
+                                    rmGuid,
+                                    this,
+                                    out localResourceManagerShim);
                             }
                             catch (COMException ex)
                             {
@@ -302,12 +286,10 @@ namespace System.Transactions.Oletx
 
             bool enlistmentSucceeded = false;
 
-            RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
                 if ((enlistmentOptions & EnlistmentOptions.EnlistDuringPrepareRequired) != 0)
                 {
-                    RuntimeHelpers.PrepareConstrainedRegions();
                     oletxTransaction.RealTransaction.IncrementUndecidedEnlistments();
                     undecidedEnlistmentsIncremented = true;
                 }
@@ -315,7 +297,6 @@ namespace System.Transactions.Oletx
                 // This entire sequence needs to be executed before we can go on.
                 lock (enlistment)
                 {
-                    RuntimeHelpers.PrepareConstrainedRegions();
                     try
                     {
                         // Do the enlistment on the proxy.
@@ -331,7 +312,6 @@ namespace System.Transactions.Oletx
                             // We need to create an EnlistmentNotifyShim if native threads are not allowed to enter managed code.
                             handlePhase0 = HandleTable.AllocHandle( enlistment );
 
-                            RuntimeHelpers.PrepareConstrainedRegions();
                             oletxTransaction.RealTransaction.TransactionShim.Phase0Enlist(
                                 handlePhase0,
                                 out phase0Shim );
@@ -339,10 +319,12 @@ namespace System.Transactions.Oletx
                             enlistment.Phase0EnlistmentShim = phase0Shim;
                         }
 
+                        // TODO: Figure out the lifecycle of _phase1Handle here
                         enlistment._phase1Handle = HandleTable.AllocHandle(enlistment);
                         localResourceManagerShim.Enlist(
                             oletxTransaction.RealTransaction.TransactionShim,
-                            enlistment._phase1Handle,
+                            //enlistment._phase1Handle,
+                            enlistment,
                             out enlistmentShim);
 
                         enlistment.EnlistmentShim = enlistmentShim;

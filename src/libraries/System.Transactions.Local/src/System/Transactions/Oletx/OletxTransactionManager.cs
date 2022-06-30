@@ -9,9 +9,9 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Security.Permissions;
 using System.Threading;
 using System.Transactions.Diagnostics;
+using System.Transactions.DtcProxyShim;
 
 namespace System.Transactions.Oletx
 {
@@ -100,17 +100,16 @@ namespace System.Transactions.Oletx
                     try
                     {
                         Thread.BeginThreadAffinity();
-                        RuntimeHelpers.PrepareConstrainedRegions();
                         try
                         {
-                            localProxyShimFactory.GetNotification(
-                                out enlistmentHandleIntPtr,
-                                out shimNotificationType,
-                                out isSinglePhase,
-                                out abortingHint,
-                                out holdingNotificationLock,
-                                out prepareInfoSize,
-                                out prepareInfoBuffer);
+                            //localProxyShimFactory.GetNotification(
+                            //    out enlistmentHandleIntPtr,
+                            //    out shimNotificationType,
+                            //    out isSinglePhase,
+                            //    out abortingHint,
+                            //    out holdingNotificationLock,
+                            //    out prepareInfoSize,
+                            //    out prepareInfoBuffer);
                         }
                         finally
                         {
@@ -486,12 +485,14 @@ namespace System.Transactions.Oletx
                 // thread, do so now.
                 if (ProxyShimFactory == null)
                 {
-                    int error = NativeMethods.GetNotificationFactory(ShimWaitHandle.SafeWaitHandle, out ProxyShimFactory);
+                    //int error = NativeMethods.GetNotificationFactory(ShimWaitHandle.SafeWaitHandle, out ProxyShimFactory);
+                    //
+                    // if (error != 0)
+                    // {
+                    //     throw TransactionException.Create(SR.UnableToGetNotificationShimFactory, null);
+                    // }
 
-                    if (error != 0)
-                    {
-                        throw TransactionException.Create(SR.UnableToGetNotificationShimFactory, null);
-                    }
+                    ProxyShimFactory = new NotificationShimFactory(ShimWaitHandle.SafeWaitHandle);
 
                     ThreadPool.UnsafeRegisterWaitForSingleObject(
                         ShimWaitHandle,
@@ -569,16 +570,12 @@ namespace System.Transactions.Oletx
                 uint oletxTimeout = DtcTransactionManager.AdjustTimeout(properties.Timeout);
 
                 outcomeEnlistment = new OutcomeEnlistment();
-                IntPtr outcomeEnlistmentHandle = IntPtr.Zero;
-                RuntimeHelpers.PrepareConstrainedRegions();
                 try
                 {
-                    outcomeEnlistmentHandle = HandleTable.AllocHandle(outcomeEnlistment);
-
                     _dtcTransactionManager.ProxyShimFactory.BeginTransaction(
                         oletxTimeout,
                         oletxIsoLevel,
-                        outcomeEnlistmentHandle,
+                        null,
                         out txIdentifier,
                         out transactionShim);
                 }
@@ -586,13 +583,6 @@ namespace System.Transactions.Oletx
                 {
                     ProxyException(ex);
                     throw;
-                }
-                finally
-                {
-                    if (transactionShim == null && outcomeEnlistmentHandle != IntPtr.Zero)
-                    {
-                        HandleTable.FreeHandle(outcomeEnlistmentHandle);
-                    }
                 }
 
                 realTransaction = new RealOletxTransaction(

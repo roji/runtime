@@ -54,31 +54,18 @@ namespace System.Transactions
                 etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, $"{nameof(TransactionInterop)}.{nameof(GetExportCookie)}");
             }
 
-            byte[]? cookie = null;
+            byte[] cookie;
 
             // Copy the whereabouts so that it cannot be modified later.
             var whereaboutsCopy = new byte[whereabouts.Length];
             Buffer.BlockCopy(whereabouts, 0, whereaboutsCopy, 0, whereabouts.Length);
 
-            int cookieIndex = 0;
-            UInt32 cookieSize = 0;
-            CoTaskMemHandle? cookieBuffer = null;
-
             // First, make sure we are working with an OletxTransaction.
-            OletxTransaction oletxTx = TransactionInterop.ConvertToOletxTransaction( transaction );
+            OletxTransaction oletxTx = ConvertToOletxTransaction(transaction);
 
             try
             {
-                oletxTx.RealOletxTransaction.TransactionShim.Export(
-                    Convert.ToUInt32(whereabouts.Length),
-                    whereabouts,
-                    out cookieIndex,
-                    out cookieSize,
-                    out cookieBuffer);
-
-                // allocate and fill in the cookie
-                cookie = new byte[cookieSize];
-                Marshal.Copy(cookieBuffer!.DangerousGetHandle(), cookie, 0, Convert.ToInt32(cookieSize));
+                oletxTx.RealOletxTransaction.TransactionShim.Export(whereabouts, out cookie);
             }
             catch (COMException comException)
             {
@@ -96,13 +83,13 @@ namespace System.Transactions
                 throw new Exception("TODO");
                 // throw TransactionManagerCommunicationException.Create(SR.GetString(SR.TraceSourceOletx), comException);
             }
-            finally
-            {
-                if (cookieBuffer != null)
-                {
-                    cookieBuffer.Close();
-                }
-            }
+            //finally
+            //{
+            //    if (cookieBuffer != null)
+            //    {
+            //        cookieBuffer.Close();
+            //    }
+            //}
 
             if (etwLog.IsEnabled())
             {
@@ -164,26 +151,7 @@ namespace System.Transactions
             try
             {
                 outcomeEnlistment = new OutcomeEnlistment();
-                IntPtr outcomeEnlistmentHandle = IntPtr.Zero;
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try
-                {
-                    outcomeEnlistmentHandle = HandleTable.AllocHandle(outcomeEnlistment);
-                    oletxTm.DtcTransactionManager.ProxyShimFactory.Import(
-                        Convert.ToUInt32(cookie.Length),
-                        cookie,
-                        outcomeEnlistmentHandle,
-                        out txIdentifier,
-                        out oletxIsoLevel,
-                        out transactionShim);
-                }
-                finally
-                {
-                    if (transactionShim == null && outcomeEnlistmentHandle != IntPtr.Zero)
-                    {
-                        HandleTable.FreeHandle(outcomeEnlistmentHandle);
-                    }
-                }
+                oletxTm.DtcTransactionManager.ProxyShimFactory.Import(cookie, outcomeEnlistment, out txIdentifier, out oletxIsoLevel, out transactionShim);
             }
             catch (COMException comException)
             {
@@ -250,33 +218,18 @@ namespace System.Transactions
             return token;
         }
 
-        // This is here for the DangerousGetHandle call.  We need to do it.
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2001:AvoidCallingProblematicMethods")]
         internal static byte[] GetTransmitterPropagationToken(OletxTransaction oletxTx)
         {
             byte[]? propagationToken = null;
-            CoTaskMemHandle? propagationTokenBuffer = null;
-            UInt32 tokenSize = 0;
 
             try
             {
-                oletxTx.RealOletxTransaction.TransactionShim.GetPropagationToken(
-                    out tokenSize,
-                    out propagationTokenBuffer);
-                propagationToken = new byte[tokenSize];
-                Marshal.Copy(propagationTokenBuffer!.DangerousGetHandle(), propagationToken, 0, Convert.ToInt32(tokenSize));
+                propagationToken = oletxTx.RealOletxTransaction.TransactionShim.GetPropagationToken();
             }
             catch (COMException comException)
             {
                 OletxTransactionManager.ProxyException(comException);
                 throw;
-            }
-            finally
-            {
-                if (propagationTokenBuffer != null)
-                {
-                    propagationTokenBuffer.Close();
-                }
             }
 
             return propagationToken;
@@ -424,14 +377,12 @@ namespace System.Transactions
             {
                 outcomeEnlistment = new OutcomeEnlistment();
                 IntPtr outcomeEnlistmentHandle = IntPtr.Zero;
-                RuntimeHelpers.PrepareConstrainedRegions();
                 try
                 {
-                    outcomeEnlistmentHandle = HandleTable.AllocHandle(outcomeEnlistment);
+                    //outcomeEnlistmentHandle = HandleTable.AllocHandle(outcomeEnlistment);
                     oletxTm.DtcTransactionManager.ProxyShimFactory.ReceiveTransaction(
-                        Convert.ToUInt32(propagationToken.Length),
                         propagationToken,
-                        outcomeEnlistmentHandle,
+                        outcomeEnlistment,
                         out identifier,
                         out oletxIsoLevel,
                         out transactionShim);

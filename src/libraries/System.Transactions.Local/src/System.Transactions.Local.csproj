@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <IsPartialFacadeAssembly>true</IsPartialFacadeAssembly>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -7,6 +7,9 @@
     <NoWarn>$(NoWarn);CS1591</NoWarn> <!-- TODO -->
     <TargetPlatformIdentifier>$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)'))</TargetPlatformIdentifier>
   </PropertyGroup>
+  <ItemGroup>
+    <ILLinkDescriptorsXmls Condition="'$(TargetPlatformIdentifier)' == 'windows'" Include="$(ILLinkDirectory)ILLink.Descriptors.LibraryBuild.xml" />
+  </ItemGroup>
   <ItemGroup>
     <Compile Include="System\Transactions\CommittableTransaction.cs" />
     <Compile Include="System\Transactions\DependentTransaction.cs" />
@@ -43,7 +46,53 @@
     <Compile Include="System\Transactions\Configuration\MachineSettingsSection.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'windows'">
-    <Compile Include="System\Transactions\Oletx\CoTaskMemHandle.cs" />
+    <Compile Include="$(CommonPath)Interop\Windows\Interop.Libraries.cs" Link="Common\Interop\Windows\Interop.Libraries.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\CachedInterfaceBase.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\CachedOptions.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\CachedReceiver.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\CachedTransmitter.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\IPrepareInfo.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\IResourceManagerFactory2.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\IResourceManager.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\IResourceManagerSink.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITmNodeName.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransaction.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionCloner.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionExport.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionExportFactory.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionOptions.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionDispenser.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionEnlistmentAsync.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionImport.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionImportWhereabouts.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionPhase0EnlistmentAsync.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionPhase0Factory.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionPhase0NotifyAsync.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionReceiver.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionReceiverFactory.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionResourceAsync.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionTransmitter.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionTransmitterFactory.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionVoterBallotAsync2.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionVoterFactory2.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionVoterNotifyAsync2.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\EnlistmentNotifyShim.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\EnlistmentShim.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\Guids.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionOutcomeEvents.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\NotificationShimBase.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\NotificationShimFactory.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\Phase0NotifyShim.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\Phase0Shim.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\PrepareVoteType.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\ResourceManagerNotifyShim.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\ResourceManagerShim.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\TransactionNotifyShim.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\TransactionOutcome.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\TransactionShim.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\VoterNotifyShim.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\VoterShim.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\Xactopt.cs" />
     <Compile Include="System\Transactions\Oletx\DtcInterfaces.cs" />
     <Compile Include="System\Transactions\Oletx\DTCTransactionManager.cs" />
     <Compile Include="System\Transactions\Oletx\HandleTable.cs" />
@@ -69,9 +118,9 @@
     <Compile Include="System\Transactions\NonWindowsUnsupported.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\System.Collections\src\System.Collections.csproj" />
     <ProjectReference Include="..\..\System.Diagnostics.EventLog\src\System.Diagnostics.EventLog.csproj" />
     <ProjectReference Include="..\..\System.Configuration.ConfigurationManager\src\System.Configuration.ConfigurationManager.csproj" />
+    <Reference Include="System.Collections" />
     <Reference Include="System.ComponentModel" />
     <Reference Include="System.ComponentModel.Primitives" />
     <Reference Include="System.Diagnostics.Process" />

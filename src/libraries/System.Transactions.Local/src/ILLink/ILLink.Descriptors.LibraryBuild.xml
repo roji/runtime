@@ -1,0 +1,31 @@
+<linker>
+  <assembly fullname="System.Transactions.Local" feature="System.Runtime.InteropServices.BuiltInComInterop.IsSupported" featurevalue="true" featuredefault="true">
+    <!-- Imported COM interfaces -->
+    <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.IPrepareInfo"/>
+    <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.IResourceManager"/>
+    <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.IResourceManagerFactory2"/>
+    <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.IResourceManagerSink"/>
+    <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITmNodeName"/>
+    <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITransaction"/>
+    <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITransactionCloner"/>
+    <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITransactionDispenser"/>
+    <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITransactionEnlistmentAsync"/>
+    <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITransactionExport"/>
+    <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITransactionExportFactory"/>
+    <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITransactionImport"/>
+    <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITransactionImportWhereabouts"/>
+    <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITransactionOptions"/>
+    <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITransactionOutcomeEvents"/>
+    <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITransactionPhase0EnlistmentAsync"/>
+    <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITransactionPhase0Factory"/>
+    <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITransactionPhase0NotifyAsync"/>
+    <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITransactionReceiver"/>
+    <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITransactionReceiverFactory"/>
+    <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITransactionResourceAsync"/>
+    <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITransactionTransmitter"/>
+    <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITransactionTransmitterFactory"/>
+    <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITransactionVoterBallotAsync2"/>
+    <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITransactionVoterFactory2"/>
+    <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITransactionVoterNotifyAsync2"/>
+  </assembly>
+</linker>
