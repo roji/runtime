@@ -12,6 +12,7 @@ using System.Runtime.InteropServices;
 using System.Security.Permissions;
 using System.Threading;
 using System.Transactions.Diagnostics;
+using System.Transactions.DtcProxyShim;
 
 #nullable disable
 
@@ -487,12 +488,14 @@ namespace System.Transactions.Oletx
                 // thread, do so now.
                 if (ProxyShimFactory == null)
                 {
-                    int error = NativeMethods.GetNotificationFactory(ShimWaitHandle.SafeWaitHandle, out ProxyShimFactory);
+                    //int error = NativeMethods.GetNotificationFactory(ShimWaitHandle.SafeWaitHandle, out ProxyShimFactory);
+                    //
+                    // if (error != 0)
+                    // {
+                    //     throw TransactionException.Create(SR.UnableToGetNotificationShimFactory, null);
+                    // }
 
-                    if (error != 0)
-                    {
-                        throw TransactionException.Create(SR.UnableToGetNotificationShimFactory, null);
-                    }
+                    ProxyShimFactory = new NotificationShimFactory(ShimWaitHandle.SafeWaitHandle);
 
                     ThreadPool.UnsafeRegisterWaitForSingleObject(
                         ShimWaitHandle,
