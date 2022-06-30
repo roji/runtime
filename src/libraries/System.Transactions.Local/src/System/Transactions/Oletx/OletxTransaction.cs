@@ -709,7 +709,6 @@ namespace System.Transactions.Oletx
             // We only do this the first time we get a depenent clone of a given type (delay vs. non-delay).
             // After that, we don't create a new container, except for Phase0 if we need to create one
             // for a second wave.
-            RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
                 lock (this)
@@ -913,7 +912,6 @@ namespace System.Transactions.Oletx
             // We only do this the first time we get a depenent clone of a given type (delay vs. non-delay).
             // After that, we don't create a new container, except for Phase0 if we need to create one
             // for a second wave.
-            RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
                 lock (this)
