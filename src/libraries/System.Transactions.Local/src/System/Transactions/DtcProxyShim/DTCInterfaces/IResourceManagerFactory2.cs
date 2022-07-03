@@ -32,7 +32,6 @@ internal interface IResourceManagerFactory2
     internal void CreateEx(
         Guid pguidRM,
         [MarshalAs(UnmanagedType.LPStr)] string pszRMName,
-        //[MarshalAs(UnmanagedType.BStr)] string pszRMName,
         [MarshalAs(UnmanagedType.Interface)] IResourceManagerSink pIResMgrSink,
         //IntPtr pIResMgrSink,
         Guid riidRequested,

@@ -10,5 +10,6 @@ namespace System.Transactions.DtcProxyShim;
 internal static class Guids
 {
     internal const string IID_ITransactionDispenser = "3A6AD9E1-23B9-11cf-AD60-00AA00A74CCD";
-    internal const string IID_IResourceManager = "13741d21-87eb-11ce-8081-0080c758527e";
+    //internal const string IID_IResourceManager = "13741d21-87eb-11ce-8081-0080c758527e";
+    internal const string IID_IResourceManager = "13741D21-87EB-11CE-8081-0080C758527E";
 }

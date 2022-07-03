@@ -10,8 +10,9 @@ internal interface IResourceManagerFactory
 {
     internal void Create(
         Guid pguidRM,
-        string pszRMName,
-        //[MarshalAs(UnmanagedType.LPStr)] string pszRMName,
+        //string pszRMName,
+        [MarshalAs(UnmanagedType.LPStr)] string pszRMName,
+        //[MarshalAs(UnmanagedType.LPWStr)] string pszRMName,
         //[MarshalAs(UnmanagedType.BStr)] string pszRMName,
         [MarshalAs(UnmanagedType.Interface)] IResourceManagerSink pIResMgrSink,
         //IntPtr pIResMgrSink,
