@@ -84,9 +84,11 @@ internal class NotificationShimFactory : IDtcProxyShimFactory
             Retry(() => pImportWhereabouts.GetWhereabouts(whereaboutsSize, tmpWhereabouts, out var pcbUsed));
             whereabouts = tmpWhereabouts;
 
+            ///////// GOOD
+
             // Now we need to create the internal resource manager.
-            //var rmFactory = (IResourceManagerFactory2)localDispenser;
-            var rmFactory = (IResourceManagerFactory)localDispenser;
+            var rmFactory = (IResourceManagerFactory2)localDispenser;
+            //var rmFactory = (IResourceManagerFactory)localDispenser;
 
             var rmNotifyShim = new ResourceManagerNotifyShim(this, managedIdentifier);
             //var myNotifyShimRef = Marshal.GetComInterfaceForObject(rmNotifyShim, typeof(IResourceManagerSink));
@@ -105,19 +107,24 @@ internal class NotificationShimFactory : IDtcProxyShimFactory
                 // TODO: The C++ code uses IResourceManagerFactory2.CreateEx to create the resource manager; the only difference between that and IResourceManagerFactory.CreateEx is that the latter doesn't
                 // accept an riid, and my attempts to pass IID_IResourceManager to it have failed (some sort of GUID mismatch??)
 
-                // rmFactory.CreateEx(
-                //     resourceManagerIdentifier,
-                //     "System.Transactions.InternalRM",
-                //     rmNotifyShim,
-                //     out var rm);
-
-                rmFactory.Create(
+                rmFactory.CreateEx(
                     resourceManagerIdentifier,
                     "System.Transactions.InternalRM",
                     rmNotifyShim,
+                    Guid.Parse(Guids.IID_IResourceManager),
                     out var rm);
 
+                //rmFactory.Create(
+                //    resourceManagerIdentifier,
+                //    "System.Transactions.InternalRM",
+                //    rmNotifyShim,
+                //    out var rm);
+
                 //rm.ReenlistmentComplete();
+
+                rm.GetDistributedTransactionManager(
+                    Guid.Parse(Guids.IID_ITransactionDispenser),
+                    out var foo);
 
                 rmShim.ResourceManager = rm;
             });
