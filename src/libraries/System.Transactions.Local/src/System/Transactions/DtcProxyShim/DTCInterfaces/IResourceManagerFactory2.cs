@@ -14,8 +14,15 @@ namespace System.Transactions.DtcProxyShim.DTCInterfaces;
 /// See https://docs.microsoft.com/en-us/previous-versions/windows/desktop/ms686489(v=vs.85).
 /// </remarks>
 [ComImport, Guid("6B369C21-FBD2-11d1-8F47-00C04F8EE57D"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-internal interface IResourceManagerFactory2
+internal interface IResourceManagerFactory2 : IResourceManagerFactory
 {
+    [PreserveSig]
+    public new int Create(
+        in Guid pguidRM,
+        [MarshalAs(UnmanagedType.LPStr)] string pszRMName,
+        [MarshalAs(UnmanagedType.Interface)] IResourceManagerSink pIResMgrSink,
+        [MarshalAs(UnmanagedType.Interface)] out IResourceManager rm);
+
     /// <summary>
     /// The CreateEx method is used to create a resource manager object.
     /// </summary>
@@ -29,11 +36,10 @@ internal interface IResourceManagerFactory2
     /// <param name="rm">
     /// Reference to the interface on the resource manager object whose IID is specified in the <paramref name="riidRequested" /> parameter.
     /// </param>
-    internal void CreateEx(
-        Guid pguidRM,
+    public void CreateEx(
+        in Guid pguidRM,
         [MarshalAs(UnmanagedType.LPStr)] string pszRMName,
         [MarshalAs(UnmanagedType.Interface)] IResourceManagerSink pIResMgrSink,
-        //IntPtr pIResMgrSink,
-        Guid riidRequested,
-        [MarshalAs(UnmanagedType.Interface)] out IResourceManager rm);
+        in Guid riidRequested,
+        [MarshalAs(UnmanagedType.Interface)] out object rm);
 }
