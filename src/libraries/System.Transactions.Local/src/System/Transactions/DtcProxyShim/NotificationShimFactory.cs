@@ -114,7 +114,7 @@ internal class NotificationShimFactory : IDtcProxyShimFactory
                     Guid.Parse(Guids.IID_IResourceManager),
                     out var rm);
 
-                //rmFactory.Create(
+                //var hresult = rmFactory.Create(
                 //    resourceManagerIdentifier,
                 //    "System.Transactions.InternalRM",
                 //    rmNotifyShim,
@@ -122,11 +122,11 @@ internal class NotificationShimFactory : IDtcProxyShimFactory
 
                 //rm.ReenlistmentComplete();
 
-                rm.GetDistributedTransactionManager(
-                    Guid.Parse(Guids.IID_ITransactionDispenser),
-                    out var foo);
+                //hresult = rm.GetDistributedTransactionManager(
+                //    Guid.Parse(Guids.IID_ITransactionDispenser),
+                //    out var foo);
 
-                rmShim.ResourceManager = rm;
+                //rmShim.ResourceManager = rm;
             });
 
             resourceManagerShim = rmShim;

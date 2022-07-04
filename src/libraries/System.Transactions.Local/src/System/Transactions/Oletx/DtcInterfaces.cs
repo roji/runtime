@@ -18,11 +18,12 @@ namespace System.Transactions.Oletx
     {
         // TODO: Move to Safe/UnsafeNativeMethods under DtcProxyShim
         // TODO: Use LibraryImport
+        // https://docs.microsoft.com/en-us/previous-versions/windows/desktop/ms678898(v=vs.85)
         [DllImport(Interop.Libraries.Xolehlp, CharSet = CharSet.Unicode)]
         internal static extern void DtcGetTransactionManagerExW(
-            string pszHost,
-            string pszTmName,
-            Guid riid,
+            [MarshalAs(UnmanagedType.LPWStr)] string pszHost, // TODO: Is this the right marshaling for tchar*?
+            [MarshalAs(UnmanagedType.LPWStr)] string pszTmName,
+            in Guid riid,
             int grfOptions, // TODO: Enum?
             object pvConfigPararms,
             [MarshalAs(UnmanagedType.Interface)] out ITransactionDispenser ppvObject);
