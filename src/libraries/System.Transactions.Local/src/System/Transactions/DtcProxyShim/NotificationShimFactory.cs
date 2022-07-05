@@ -42,6 +42,7 @@ internal class NotificationShimFactory : IDtcProxyShimFactory
         // TODO: Instantiate all the locks (critical sections)
     }
 
+    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2050", Justification = "Leave me alone")]
     public void ConnectToProxy(
         string nodeName,
         Guid resourceManagerIdentifier,

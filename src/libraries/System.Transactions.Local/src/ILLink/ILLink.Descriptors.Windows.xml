@@ -1,0 +1,12 @@
+<linker>
+  <assembly fullname="System.Transactions.Local" feature="System.Runtime.InteropServices.BuiltInComInterop.IsSupported" featurevalue="true" featuredefault="true">
+    <!-- Imported COM interfaces -->
+    <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.IResourceManager"/>
+    <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.IResourceManagerFactory"/>
+    <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.IResourceManagerFactory2"/>
+    <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.IResourceManagerSink"/>
+    <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITmNodeName"/>
+    <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITransactionDispenser"/>
+    <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITransactionImportWhereabouts"/>
+  </assembly>
+</linker>
