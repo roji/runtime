@@ -16,9 +16,8 @@ namespace System.Transactions.DtcProxyShim.DTCInterfaces;
 [ComImport, Guid("6B369C21-FBD2-11d1-8F47-00C04F8EE57D"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 internal interface IResourceManagerFactory2 : IResourceManagerFactory
 {
-    [PreserveSig]
-    public new int Create(
-        in Guid pguidRM,
+    internal new void Create(
+        Guid pguidRM,
         [MarshalAs(UnmanagedType.LPStr)] string pszRMName,
         [MarshalAs(UnmanagedType.Interface)] IResourceManagerSink pIResMgrSink,
         [MarshalAs(UnmanagedType.Interface)] out IResourceManager rm);
@@ -36,10 +35,10 @@ internal interface IResourceManagerFactory2 : IResourceManagerFactory
     /// <param name="rm">
     /// Reference to the interface on the resource manager object whose IID is specified in the <paramref name="riidRequested" /> parameter.
     /// </param>
-    public void CreateEx(
-        in Guid pguidRM,
+    internal void CreateEx(
+        Guid pguidRM,
         [MarshalAs(UnmanagedType.LPStr)] string pszRMName,
         [MarshalAs(UnmanagedType.Interface)] IResourceManagerSink pIResMgrSink,
-        in Guid riidRequested,
+        Guid riidRequested,
         [MarshalAs(UnmanagedType.Interface)] out object rm);
 }
