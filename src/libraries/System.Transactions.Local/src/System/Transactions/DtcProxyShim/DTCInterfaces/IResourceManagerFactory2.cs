@@ -14,9 +14,9 @@ namespace System.Transactions.DtcProxyShim.DTCInterfaces;
 /// See https://docs.microsoft.com/en-us/previous-versions/windows/desktop/ms686489(v=vs.85).
 /// </remarks>
 [ComImport, Guid("6B369C21-FBD2-11d1-8F47-00C04F8EE57D"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-internal interface IResourceManagerFactory2 : IResourceManagerFactory
+internal interface IResourceManagerFactory2
 {
-    internal new void Create(
+    internal void Create(
         Guid pguidRM,
         [MarshalAs(UnmanagedType.LPStr)] string pszRMName,
         [MarshalAs(UnmanagedType.Interface)] IResourceManagerSink pIResMgrSink,

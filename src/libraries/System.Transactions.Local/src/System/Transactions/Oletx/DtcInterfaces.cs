@@ -83,7 +83,7 @@ namespace System.Transactions.Oletx
         Aborted = 2
     }
 
-    internal enum OletxTransactionIsolationLevel
+    internal enum OletxTransactionIsolationLevel : long
     {
         ISOLATIONLEVEL_UNSPECIFIED = -1,
         ISOLATIONLEVEL_CHAOS = 0x10,
@@ -97,7 +97,7 @@ namespace System.Transactions.Oletx
     }
 
     [Flags]
-    internal enum OletxTransactionIsoFlags
+    internal enum OletxTransactionIsoFlags : ulong
     {
         ISOFLAG_NONE = 0,
         ISOFLAG_RETAIN_COMMIT_DC = 1,
@@ -113,8 +113,7 @@ namespace System.Transactions.Oletx
         ISOFLAG_READONLY = 32
     }
 
-    [Flags]
-    internal enum OletxXacttc
+    internal enum OletxXacttc : uint
     {
         XACTTC_NONE = 0,
         XACTTC_SYNC_PHASEONE = 1,
@@ -122,6 +121,12 @@ namespace System.Transactions.Oletx
         XACTTC_SYNC = 2,
         XACTTC_ASYNC_PHASEONE = 4,
         XACTTC_ASYNC = 4
+    }
+
+    internal enum OletxXactRm : uint
+    {
+        XACTRM_OPTIMISTICLASTWINS = 1,
+        XACTRM_NOREADONLYPREPARES = 2
     }
 
     internal enum OletxTransactionStatus
@@ -149,6 +154,41 @@ namespace System.Transactions.Oletx
         OLETX_TRANSACTION_STATUS_OPEN = 0x3,
         OLETX_TRANSACTION_STATUS_NOTPREPARED = 0x7ffc3,
         OLETX_TRANSACTION_STATUS_ALL = 0x7ffff
+    }
+
+    internal enum OletxTransactionHeuristic : uint
+    {
+        XACTHEURISTIC_ABORT = 1,
+        XACTHEURISTIC_COMMIT = 2,
+        XACTHEURISTIC_DAMAGE = 3,
+        XACTHEURISTIC_DANGER = 4
+    }
+
+    internal enum OletxXactStat
+    {
+        XACTSTAT_NONE = 0,
+        XACTSTAT_OPENNORMAL = 0x1,
+        XACTSTAT_OPENREFUSED = 0x2,
+        XACTSTAT_PREPARING = 0x4,
+        XACTSTAT_PREPARED = 0x8,
+        XACTSTAT_PREPARERETAINING = 0x10,
+        XACTSTAT_PREPARERETAINED = 0x20,
+        XACTSTAT_COMMITTING = 0x40,
+        XACTSTAT_COMMITRETAINING = 0x80,
+        XACTSTAT_ABORTING = 0x100,
+        XACTSTAT_ABORTED = 0x200,
+        XACTSTAT_COMMITTED = 0x400,
+        XACTSTAT_HEURISTIC_ABORT = 0x800,
+        XACTSTAT_HEURISTIC_COMMIT = 0x1000,
+        XACTSTAT_HEURISTIC_DAMAGE = 0x2000,
+        XACTSTAT_HEURISTIC_DANGER = 0x4000,
+        XACTSTAT_FORCED_ABORT = 0x8000,
+        XACTSTAT_FORCED_COMMIT = 0x10000,
+        XACTSTAT_INDOUBT = 0x20000,
+        XACTSTAT_CLOSED = 0x40000,
+        XACTSTAT_OPEN = 0x3,
+        XACTSTAT_NOTPREPARED = 0x7ffc3,
+        XACTSTAT_ALL = 0x7ffff
     }
 
     [ComVisible(false)]
@@ -199,10 +239,10 @@ namespace System.Transactions.Oletx
         void Phase0Done([MarshalAs(UnmanagedType.Bool)] bool voteYes);
     }
 
-    [Security.SuppressUnmanagedCodeSecurity,
-    ComImport,
-    Guid("5EC35E09-B285-422c-83F5-1372384A42CC"),
-    InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    //[Security.SuppressUnmanagedCodeSecurity,
+    //ComImport,
+    //Guid("5EC35E09-B285-422c-83F5-1372384A42CC"),
+    //InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     internal interface IEnlistmentShim
     {
         void PrepareRequestDone(OletxPrepareVoteType voteType);
@@ -212,10 +252,10 @@ namespace System.Transactions.Oletx
         void AbortRequestDone();
     }
 
-    [Security.SuppressUnmanagedCodeSecurity,
-    ComImport,
-    Guid("279031AF-B00E-42e6-A617-79747E22DD22"),
-    InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    //[Security.SuppressUnmanagedCodeSecurity,
+    //ComImport,
+    //Guid("279031AF-B00E-42e6-A617-79747E22DD22"),
+    //InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     internal interface ITransactionShim
     {
         void Commit();
@@ -243,7 +283,7 @@ namespace System.Transactions.Oletx
             IntPtr managedIdentifier,
             [MarshalAs(UnmanagedType.Interface)] out IPhase0EnlistmentShim phase0EnlistmentShim);
 
-        void GetTransactionDoNotUse(out IntPtr transaction);
+        void GetTransaction(out ITransaction transaction);
     }
 
     //[Security.SuppressUnmanagedCodeSecurity,
@@ -253,9 +293,10 @@ namespace System.Transactions.Oletx
     internal interface IResourceManagerShim
     {
         void Enlist(
-            [MarshalAs(UnmanagedType.Interface)] ITransactionShim transactionShim,
-            IntPtr managedIdentifier,
-            [MarshalAs(UnmanagedType.Interface)] out IEnlistmentShim enlistmentShim);
+            ITransactionShim transactionShim,
+            //IntPtr managedIdentifier,
+            OletxEnlistment managedIdentifier,
+            out IEnlistmentShim enlistmentShim);
 
         void Reenlist(
             [MarshalAs(UnmanagedType.U4)] uint prepareInfoSize,
@@ -270,7 +311,7 @@ namespace System.Transactions.Oletx
         void ConnectToProxy(
             string? nodeName,
             Guid resourceManagerIdentifier,
-            OletxInternalResourceManager managedIdentifier,
+            object managedIdentifier,
             out bool nodeNameMatches,
             out byte[] whereaboutsBuffer,
             out IResourceManagerShim resourceManagerShim);
@@ -289,13 +330,13 @@ namespace System.Transactions.Oletx
         void BeginTransaction(
             [MarshalAs(UnmanagedType.U4)] uint timeout,
             OletxTransactionIsolationLevel isolationLevel,
-            IntPtr managedIdentifier,
+            object? managedIdentifier,
             out Guid transactionIdentifier,
             [MarshalAs(UnmanagedType.Interface)] out ITransactionShim transactionShim);
 
         void CreateResourceManager(
             Guid resourceManagerIdentifier,
-            IntPtr managedIdentifier,
+            OletxResourceManager managedIdentifier,
             [MarshalAs(UnmanagedType.Interface)] out IResourceManagerShim resourceManagerShim);
 
         void Import(
@@ -327,16 +368,17 @@ namespace System.Transactions.Oletx
     // we want to be able to check to see if we already have one.
     // So we use the GetTransactionInfo method to get the GUID identifier and do various table
     // lookups.
-    [Security.SuppressUnmanagedCodeSecurity,
-    ComImport,
-    Guid("0fb15084-af41-11ce-bd2b-204c4f4f5020"),
-    InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    internal interface ITransactionNativeInternal
-    {
-        void Commit(int retaining, [MarshalAs(UnmanagedType.I4)] OletxXacttc commitType, int reserved);
-
-        void Abort(IntPtr reason, int retaining, int async);
-
-        void GetTransactionInfo(out OletxXactTransInfo xactInfo);
-    }
+    // TODO: Moved this to ITransaction under DtcProxyShim.DTCInterfaces
+    //[Security.SuppressUnmanagedCodeSecurity,
+    //ComImport,
+    //Guid("0fb15084-af41-11ce-bd2b-204c4f4f5020"),
+    //InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    //internal interface ITransactionNativeInternal
+    //{
+    //    void Commit(int retaining, [MarshalAs(UnmanagedType.I4)] OletxXacttc commitType, int reserved);
+    //
+    //    void Abort(IntPtr reason, int retaining, int async);
+    //
+    //    void GetTransactionInfo(out OletxXactTransInfo xactInfo);
+    //}
 }

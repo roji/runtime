@@ -11,7 +11,7 @@ internal class ResourceManagerNotifyShim : NotificationShimBase, IResourceManage
 {
     internal ResourceManagerNotifyShim(
         NotificationShimFactory shimFactory,
-        OletxInternalResourceManager enlistmentIdentifier)
+        object enlistmentIdentifier)
         : base(shimFactory, enlistmentIdentifier)
     {
     }

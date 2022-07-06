@@ -41,21 +41,16 @@ namespace System.Transactions.Oletx
             }
 
             OletxInternalResourceManager internalRM = _oletxTm.InternalResourceManager;
-            //IntPtr handle = IntPtr.Zero;
-            IResourceManagerShim? resourceManagerShim = null;
             bool nodeNameMatches;
             try
             {
-                //handle = HandleTable.AllocHandle(internalRM);
-
                 _proxyShimFactory.ConnectToProxy(
                     _nodeName,
                     internalRM.Identifier,
-                    //handle,
                     internalRM,
                     out nodeNameMatches,
                     out _whereabouts,
-                    out resourceManagerShim);
+                    out var resourceManagerShim);
 
                 // If the node name does not match, throw.
                 if (!nodeNameMatches)
@@ -88,15 +83,7 @@ namespace System.Transactions.Oletx
                 // for next time around.
                 if (!_initialized)
                 {
-                    //if (handle != IntPtr.Zero && resourceManagerShim == null)
-                    //{
-                    //    HandleTable.FreeHandle(handle);
-                    //}
-
-                    if (_whereabouts != null)
-                    {
-                        _whereabouts = null!;
-                    }
+                    _whereabouts = null!;
                 }
             }
         }

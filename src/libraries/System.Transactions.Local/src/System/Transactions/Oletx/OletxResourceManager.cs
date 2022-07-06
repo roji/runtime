@@ -90,26 +90,13 @@ namespace System.Transactions.Oletx
                             try
                             {
                                 Guid rmGuid = ResourceManagerIdentifier;
-                                IntPtr handle = IntPtr.Zero;
 
                                 RuntimeHelpers.PrepareConstrainedRegions();
-                                try
-                                {
-                                    handle = HandleTable.AllocHandle( this );
 
-                                    OletxTransactionManager.DtcTransactionManager.ProxyShimFactory.CreateResourceManager(
-                                        rmGuid,
-                                        handle,
-                                        out localResourceManagerShim);
-                                }
-                                finally
-                                {
-                                    if (localResourceManagerShim == null && handle != IntPtr.Zero)
-                                    {
-                                        HandleTable.FreeHandle(handle);
-                                    }
-                                }
-
+                                OletxTransactionManager.DtcTransactionManager.ProxyShimFactory.CreateResourceManager(
+                                    rmGuid,
+                                    this,
+                                    out localResourceManagerShim);
                             }
                             catch (COMException ex)
                             {
@@ -339,10 +326,12 @@ namespace System.Transactions.Oletx
                             enlistment.Phase0EnlistmentShim = phase0Shim;
                         }
 
+                        // TODO: Figure out the lifecycle of _phase1Handle here
                         enlistment._phase1Handle = HandleTable.AllocHandle(enlistment);
                         localResourceManagerShim.Enlist(
                             oletxTransaction.RealTransaction.TransactionShim,
-                            enlistment._phase1Handle,
+                            //enlistment._phase1Handle,
+                            enlistment,
                             out enlistmentShim);
 
                         enlistment.EnlistmentShim = enlistmentShim;

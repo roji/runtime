@@ -39,10 +39,24 @@ internal class ResourceManagerShim : IResourceManagerShim
     }
 
     public void Enlist(
-        [MarshalAs(UnmanagedType.Interface)] ITransactionShim transactionShim,
-        IntPtr managedIdentifier,
-        [MarshalAs(UnmanagedType.Interface)] out IEnlistmentShim enlistmentShim)
-        => throw new NotImplementedException();
+        ITransactionShim transactionShim,
+        //IntPtr managedIdentifier,
+        OletxEnlistment managedIdentifier,
+        out IEnlistmentShim enlistmentShim)
+    {
+        var pEnlistmentNotifyShim = new EnlistmentNotifyShim(_shimFactory, managedIdentifier);
+        var pEnlistmentShim = new EnlistmentShim(_shimFactory, pEnlistmentNotifyShim);
+
+        // hr = pEnlistmentShim->Initialize();
+
+        transactionShim.GetTransaction(out var pTransaction);
+        _pResourceManager!.Enlist(pTransaction, pEnlistmentNotifyShim, out var txUow, out var isoLevel, out var pEnlistmentAsync);
+
+        pEnlistmentNotifyShim.EnlistmentAsync = pEnlistmentAsync;
+        pEnlistmentShim.EnlistmentAsync = pEnlistmentAsync;
+
+        enlistmentShim = pEnlistmentShim;
+    }
 
     public void Reenlist(
         [MarshalAs(UnmanagedType.U4)] uint prepareInfoSize,

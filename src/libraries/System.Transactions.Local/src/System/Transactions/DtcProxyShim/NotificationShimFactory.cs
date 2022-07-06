@@ -1,8 +1,10 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.ComTypes;
 using System.Threading;
 using System.Transactions.DtcProxyShim.DTCInterfaces;
 using System.Transactions.Oletx;
@@ -17,7 +19,7 @@ internal class NotificationShimFactory : IDtcProxyShimFactory
     // of GetWhereabouts[Size].  We could have this situation in cases where
     // there are multiple app domains being ititialized in the same process
     // at the same time.
-    private static volatile object s_pcsxProxyInit = new();
+    private static volatile object _proxyInitLock = new();
 
     // Adding retry logic as a work around for MSDTC's GetWhereAbouts/GetWhereAboutsSize API
     // which is single threaded and will return XACT_E_ALREADYINPROGRESS if another thread invokes the API.
@@ -27,9 +29,17 @@ internal class NotificationShimFactory : IDtcProxyShimFactory
     // Lock to protect access to listOfNotifications.
     private object _csx = new();
 
+    // This is the list of queued NotificationShimBase objects.
+    //UTStaticList<NotificationShimBase*> listOfNotifications;
+
+    // This is the list of cached ITransactionOptions interfaces.
+    private List<CachedInterfaceBase> _listOfOptions = new();
+
     // The handle returned by LoadLibraryEx of xolehlp.dll and the fptr to DtcGetTransactionManagerEx.
     //private HMODULE xoleHlpHandle;
     //private LPDtcGetTransactionManagerExW? pfDtcGetTransactionManagerExW;
+
+    private ITransactionDispenser _transactionDispenser = null!; // Late-initialized in ConnectToProxy
 
     internal NotificationShimFactory(SafeWaitHandle notificationEventHandle)
     {
@@ -46,12 +56,12 @@ internal class NotificationShimFactory : IDtcProxyShimFactory
     public void ConnectToProxy(
         string? nodeName,
         Guid resourceManagerIdentifier,
-        OletxInternalResourceManager managedIdentifier,
+        object managedIdentifier,
         out bool nodeNameMatches,
         out byte[] whereabouts,
         out IResourceManagerShim resourceManagerShim)
     {
-        lock (s_pcsxProxyInit)
+        lock (_proxyInitLock)
         {
             NativeMethods.DtcGetTransactionManagerExW(
                 nodeName,
@@ -85,74 +95,28 @@ internal class NotificationShimFactory : IDtcProxyShimFactory
             Retry(() => pImportWhereabouts.GetWhereabouts(whereaboutsSize, tmpWhereabouts, out var pcbUsed));
             whereabouts = tmpWhereabouts;
 
-            ///////// GOOD
-
             // Now we need to create the internal resource manager.
             var rmFactory = (IResourceManagerFactory2)localDispenser;
-            //var rmFactory = (IResourceManagerFactory)localDispenser;
 
             var rmNotifyShim = new ResourceManagerNotifyShim(this, managedIdentifier);
-            //var myNotifyShimRef = Marshal.GetComInterfaceForObject(rmNotifyShim, typeof(IResourceManagerSink));
-
             var rmShim = new ResourceManagerShim(this, rmNotifyShim);
 
             //     hr = rmShim->Initialize();
-            //     if ( FAILED( hr ) )
-            //     {
-            //         goto ErrorExit;
-            //     }
-            //
 
             Retry(() =>
             {
-                // TODO: The C++ code uses IResourceManagerFactory2.CreateEx to create the resource manager; the only difference between that and IResourceManagerFactory.CreateEx is that the latter doesn't
-                // accept an riid, and my attempts to pass IID_IResourceManager to it have failed (some sort of GUID mismatch??)
-
-                //rmFactory.CreateEx(
-                //    resourceManagerIdentifier,
-                //    "System.Transactions.InternalRM",
-                //    rmNotifyShim,
-                //    Guid.Parse(Guids.IID_IResourceManager),
-                //    out var rm);
-
-                rmFactory.Create(
+                rmFactory.CreateEx(
                     resourceManagerIdentifier,
                     "System.Transactions.InternalRM",
                     rmNotifyShim,
+                    Guid.Parse(Guids.IID_IResourceManager),
                     out var rm);
 
-                rm.GetDistributedTransactionManager(
-                    Guid.Parse(Guids.IID_ITransactionDispenser),
-                    out var foo);
-
-                rm.ReenlistmentComplete();
-
-                rmShim.ResourceManager = rm;
+                rmShim.ResourceManager = (IResourceManager)rm;
             });
 
             resourceManagerShim = rmShim;
-        }
-
-        // Adding retry logic as a work around for MSDTC's GetWhereAbouts/GetWhereAboutsSize API
-        // which is single threaded and will return XACT_E_ALREADYINPROGRESS if another thread invokes the API.
-        // Resource Manager Factory CreateEx under the covers calls GetWhereAbouts API.
-        static void Retry(Action action)
-        {
-            var nRetries = MaxRetryCount;
-
-            while (nRetries > 0)
-            {
-                try
-                {
-                    action();
-                    return;
-                }
-                catch (COMException e) when (e.ErrorCode == NativeMethods.XACT_E_ALREADYINPROGRESS)
-                {
-                    Thread.Sleep(RetryInterval);
-                    nRetries--;
-                }
-            }
+            _transactionDispenser = localDispenser;
         }
     }
 
@@ -175,13 +139,49 @@ internal class NotificationShimFactory : IDtcProxyShimFactory
 
     public void ReleaseNotificationLock() => throw new NotImplementedException();
 
-    public void BeginTransaction(uint timeout, OletxTransactionIsolationLevel isolationLevel, IntPtr managedIdentifier,
-        out Guid transactionIdentifier, out ITransactionShim transactionShim) =>
-        throw new NotImplementedException();
+    public void BeginTransaction(
+        uint timeout,
+        OletxTransactionIsolationLevel isolationLevel,
+        object? managedIdentifier,
+        out Guid transactionIdentifier,
+        out ITransactionShim transactionShim)
+    {
+        var pCachedOptions = GetCachedOptions();
 
-    public void CreateResourceManager(Guid resourceManagerIdentifier, IntPtr managedIdentifier,
-        out IResourceManagerShim resourceManagerShim) =>
-        throw new NotImplementedException();
+        var xactopt = new Xactopt(timeout, string.Empty);
+        pCachedOptions.PTxOptions.SetOptions(xactopt);
+
+        _transactionDispenser.BeginTransaction(IntPtr.Zero, isolationLevel, 0, pCachedOptions.PTxOptions, out var pTx);
+
+        SetupTransaction(pTx, managedIdentifier, out transactionIdentifier, out var localIsoLevel, out transactionShim);
+    }
+
+    public void CreateResourceManager(
+        Guid resourceManagerIdentifier,
+        OletxResourceManager managedIdentifier,
+        out IResourceManagerShim resourceManagerShim)
+    {
+        var rmFactory = (IResourceManagerFactory2)_transactionDispenser;
+
+        var rmNotifyShim = new ResourceManagerNotifyShim(this, managedIdentifier);
+        var rmShim = new ResourceManagerShim(this, rmNotifyShim);
+
+        //     hr = rmShim->Initialize();
+
+        Retry(() =>
+        {
+            rmFactory.CreateEx(
+                resourceManagerIdentifier,
+                "System.Transactions.ResourceManager",
+                rmNotifyShim,
+                Guid.Parse(Guids.IID_IResourceManager),
+                out var rm);
+
+            rmShim.ResourceManager = (IResourceManager)rm;
+        });
+
+        resourceManagerShim = rmShim;
+    }
 
     public void Import(uint cookieSize, byte[] cookie, IntPtr managedIdentifier, out Guid transactionIdentifier,
         out OletxTransactionIsolationLevel isolationLevel, out ITransactionShim transactionShim) =>
@@ -192,9 +192,78 @@ internal class NotificationShimFactory : IDtcProxyShimFactory
         out ITransactionShim transactionShim) =>
         throw new NotImplementedException();
 
-    public void CreateTransactionShim(IDtcTransaction transactionNative, IntPtr managedIdentifier, out Guid transactionIdentifier,
-        out OletxTransactionIsolationLevel isolationLevel, out ITransactionShim transactionShim) =>
-        throw new NotImplementedException();
+    public void CreateTransactionShim(
+        IDtcTransaction transactionNative,
+        IntPtr managedIdentifier,
+        out Guid transactionIdentifier,
+        out OletxTransactionIsolationLevel isolationLevel,
+        out ITransactionShim transactionShim)
+        => throw new NotImplementedException();
 
     public void GetNotification(out IntPtr managedIdentifier, [MarshalAs(UnmanagedType.I4)] out Oletx.ShimNotificationType shimNotificationType, [MarshalAs(UnmanagedType.Bool)] out bool isSinglePhase, [MarshalAs(UnmanagedType.Bool)] out bool abortingHint, [MarshalAs(UnmanagedType.Bool)] out bool releaseRequired, [MarshalAs(UnmanagedType.U4)] out uint prepareInfoSize, out CoTaskMemHandle prepareInfo) => throw new NotImplementedException();
+
+    private void SetupTransaction(
+        ITransaction pTx,
+        object? managedIdentifier,
+        out Guid pTransactionIdentifier,
+        out OletxTransactionIsolationLevel pIsolationLevel,
+        out ITransactionShim ppTransactionShim)
+    {
+        var transactionNotifyShim = new TransactionNotifyShim(this, managedIdentifier);
+        var transactionShim = new TransactionShim(this, transactionNotifyShim);
+        //hr = transactionShim->Initialize();
+
+        // Get the transaction id.
+        pTx.GetTransactionInfo(out var xactInfo);
+
+        // Register for outcome events.
+        var pContainer = (IConnectionPointContainer)pTx;
+        var guid = Guid.Parse(Guids.IID_ITransactionOutcomeEvents);
+        pContainer.FindConnectionPoint(ref guid, out var pConnPoint);
+        pConnPoint!.Advise(transactionNotifyShim, out var connPointCookie);
+
+        transactionShim.Transaction = pTx;
+        pTransactionIdentifier = xactInfo.uow;
+        pIsolationLevel = xactInfo.isoLevel;
+        ppTransactionShim = transactionShim;
+    }
+
+    private CachedOptions GetCachedOptions()
+    {
+        lock (_listOfOptions)
+        {
+            if (_listOfOptions.Count > 0)
+            {
+                var localCachedOptions = (CachedOptions)_listOfOptions[0];
+                _listOfOptions.RemoveAt(0);
+                return localCachedOptions;
+            }
+
+            // We need to allocate a new one.
+            _transactionDispenser.GetOptionsObject(out var pOptions);
+            return new(this, pOptions);
+        }
+    }
+
+    // Adding retry logic as a work around for MSDTC's GetWhereAbouts/GetWhereAboutsSize API
+    // which is single threaded and will return XACT_E_ALREADYINPROGRESS if another thread invokes the API.
+    // Resource Manager Factory CreateEx under the covers calls GetWhereAbouts API.
+    static void Retry(Action action)
+    {
+        var nRetries = MaxRetryCount;
+
+        while (nRetries > 0)
+        {
+            try
+            {
+                action();
+                return;
+            }
+            catch (COMException e) when (e.ErrorCode == NativeMethods.XACT_E_ALREADYINPROGRESS)
+            {
+                Thread.Sleep(RetryInterval);
+                nRetries--;
+            }
+        }
+    }
 }

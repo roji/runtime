@@ -14,6 +14,7 @@
   <ItemGroup>
     <Compile Include="System\Transactions\CommittableTransaction.cs" />
     <Compile Include="System\Transactions\DependentTransaction.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\IPrepareInfo.cs" />
     <Compile Include="System\Transactions\DurableEnlistmentState.cs" />
     <Compile Include="System\Transactions\EnterpriseServices.cs" />
     <Compile Include="System\Transactions\Enlistment.cs" />
@@ -48,14 +49,22 @@
   </ItemGroup>
   <ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'windows'">
     <Compile Include="$(CommonPath)Interop\Windows\Interop.Libraries.cs" Link="Common\Interop\Windows\Interop.Libraries.cs" />
-    <Compile Include="System\Transactions\DtcProxyShim\Guids.cs" />
-    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\IResourceManagerFactory.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\CachedInterfaceBase.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\CachedOptions.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransaction.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionOptions.cs" />
     <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\IResourceManagerFactory2.cs" />
     <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\IResourceManager.cs" />
     <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\IResourceManagerSink.cs" />
     <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITmNodeName.cs" />
     <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionDispenser.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionEnlistmentAsync.cs" />
     <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionImportWhereabouts.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionResourceAsync.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\EnlistmentNotifyShim.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\EnlistmentShim.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\Guids.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionOutcomeEvents.cs" />
     <Compile Include="System\Transactions\DtcProxyShim\NotificationShimBase.cs" />
     <Compile Include="System\Transactions\DtcProxyShim\NotificationShimFactory.cs" />
     <Compile Include="System\Transactions\DtcProxyShim\PrepareVoteType.cs" />
@@ -65,7 +74,10 @@
     <Compile Include="System\Transactions\DtcProxyShim\SafeNativeMethods.cs" />
     -->
     <Compile Include="System\Transactions\DtcProxyShim\ShimNotificationType.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\TransactionNotifyShim.cs" />
     <Compile Include="System\Transactions\DtcProxyShim\TransactionOutcome.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\TransactionShim.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\Xactopt.cs" />
     <Compile Include="System\Transactions\Oletx\CoTaskMemHandle.cs" />
     <Compile Include="System\Transactions\Oletx\DtcInterfaces.cs" />
     <Compile Include="System\Transactions\Oletx\DTCTransactionManager.cs" />
@@ -92,9 +104,9 @@
     <Compile Include="System\Transactions\NonWindowsUnsupported.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\System.Collections\src\System.Collections.csproj" />
     <ProjectReference Include="..\..\System.Diagnostics.EventLog\src\System.Diagnostics.EventLog.csproj" />
     <ProjectReference Include="..\..\System.Configuration.ConfigurationManager\src\System.Configuration.ConfigurationManager.csproj" />
+    <Reference Include="System.Collections" />
     <Reference Include="System.ComponentModel" />
     <Reference Include="System.ComponentModel.Primitives" />
     <Reference Include="System.Diagnostics.Process" />

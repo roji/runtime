@@ -9,19 +9,18 @@ namespace System.Transactions.DtcProxyShim;
 internal class NotificationShimBase
 {
     //public UTLink<NotificationShimBase*> Link;
-    public OletxInternalResourceManager EnlistmentIdentifier;
+    public object? EnlistmentIdentifier;
     public ShimNotificationType NotificationType;
     public bool AbortingHint;
     public bool IsSinglePhase;
-    public int PrepareInfoSize;
-    //public void* PPrepareInfo;
+    public byte[]? PPrepareInfo;
 
     protected long RefCount;
     protected NotificationShimFactory ShimFactory;
 
     internal NotificationShimBase(
         NotificationShimFactory shimFactory,
-        OletxInternalResourceManager enlistmentIdentifier)
+        object? enlistmentIdentifier)
     {
         ShimFactory = shimFactory;
         //ShimFactory->AddRef();
@@ -30,7 +29,6 @@ internal class NotificationShimBase
         NotificationType = ShimNotificationType.None;
         AbortingHint = false;
         IsSinglePhase = false;
-        PrepareInfoSize = 0;
         //PPrepareInfo = null;
 
         // From the original C++ code:
