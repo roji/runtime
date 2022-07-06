@@ -27,11 +27,36 @@ internal class TransactionShim : ITransactionShim
     }
 
     public void Abort() => throw new NotImplementedException();
-    public void CreateVoter(IntPtr managedIdentifier, [MarshalAs(UnmanagedType.Interface)] out IVoterBallotShim voterBallotShim) => throw new NotImplementedException();
-    public void Export([MarshalAs(UnmanagedType.U4)] uint whereaboutsSize, [MarshalAs(UnmanagedType.LPArray)] byte[] whereabouts, [MarshalAs(UnmanagedType.I4)] out int cookieIndex, [MarshalAs(UnmanagedType.U4)] out uint cookieSize, out CoTaskMemHandle cookieBuffer) => throw new NotImplementedException();
-    public void GetITransactionNative([MarshalAs(UnmanagedType.Interface)] out IDtcTransaction transactionNative) => throw new NotImplementedException();
-    public void GetPropagationToken([MarshalAs(UnmanagedType.U4)] out uint propagationTokeSize, out CoTaskMemHandle propagationToken) => throw new NotImplementedException();
-    public void Phase0Enlist(IntPtr managedIdentifier, [MarshalAs(UnmanagedType.Interface)] out IPhase0EnlistmentShim phase0EnlistmentShim) => throw new NotImplementedException();
+
+    public void CreateVoter(IntPtr managedIdentifier, out IVoterBallotShim voterBallotShim)
+        => throw new NotImplementedException();
+
+    public void Export(byte[] whereabouts, out byte[] cookieBuffer)
+    {
+        //_shimFactory.ExportFactory.GetRemoteClassId(out var guid);
+        _shimFactory.ExportFactory.Create((ulong)whereabouts.Length, whereabouts, out var export);
+
+        ulong cookieSizeULong = 0;
+
+        NativeMethods.Retry(() => export.Export(Transaction!, out cookieSizeULong));
+
+        var cookieSize = (uint)cookieSizeULong;
+        var buffer = new byte[cookieSize];
+        ulong bytesUsed = 0;
+
+        NativeMethods.Retry(() => export.GetTransactionCookie(Transaction!, cookieSize, buffer, out bytesUsed));
+
+        cookieBuffer = buffer;
+    }
+
+    public void GetITransactionNative(out IDtcTransaction transactionNative)
+        => throw new NotImplementedException();
+
+    public void GetPropagationToken(out uint propagationTokeSize, out CoTaskMemHandle propagationToken)
+        => throw new NotImplementedException();
+
+    public void Phase0Enlist(IntPtr managedIdentifier, out IPhase0EnlistmentShim phase0EnlistmentShim)
+        => throw new NotImplementedException();
 
     public void GetTransaction(out ITransaction transaction)
         => transaction = Transaction!;

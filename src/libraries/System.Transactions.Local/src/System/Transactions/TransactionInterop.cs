@@ -57,31 +57,18 @@ namespace System.Transactions
                 etwLog.MethodEnter(TraceSourceType.TraceSourceDistributed, "TransactionInterop.GetExportCookie");
             }
 
-            byte[]? cookie = null;
+            byte[] cookie;
 
             // Copy the whereabouts so that it cannot be modified later.
             var whereaboutsCopy = new byte[whereabouts.Length];
             Buffer.BlockCopy(whereabouts, 0, whereaboutsCopy, 0, whereabouts.Length);
 
-            int cookieIndex = 0;
-            uint cookieSize = 0;
-            CoTaskMemHandle? cookieBuffer = null;
-
             // First, make sure we are working with an OletxTransaction.
-            OletxTransaction oletxTx = TransactionInterop.ConvertToOletxTransaction( transaction );
+            OletxTransaction oletxTx = ConvertToOletxTransaction(transaction);
 
             try
             {
-                oletxTx.RealOletxTransaction.TransactionShim.Export(
-                    Convert.ToUInt32(whereabouts.Length),
-                    whereabouts,
-                    out cookieIndex,
-                    out cookieSize,
-                    out cookieBuffer);
-
-                // allocate and fill in the cookie
-                cookie = new byte[cookieSize];
-                Marshal.Copy(cookieBuffer!.DangerousGetHandle(), cookie, 0, Convert.ToInt32(cookieSize));
+                oletxTx.RealOletxTransaction.TransactionShim.Export(whereabouts, out cookie);
             }
             catch (COMException comException)
             {
@@ -99,13 +86,13 @@ namespace System.Transactions
                 throw new Exception("TODO");
                 // throw TransactionManagerCommunicationException.Create(SR.GetString(SR.TraceSourceOletx), comException);
             }
-            finally
-            {
-                if (cookieBuffer != null)
-                {
-                    cookieBuffer.Close();
-                }
-            }
+            //finally
+            //{
+            //    if (cookieBuffer != null)
+            //    {
+            //        cookieBuffer.Close();
+            //    }
+            //}
 
             // TODO
             // if (DiagnosticTrace.Verbose)

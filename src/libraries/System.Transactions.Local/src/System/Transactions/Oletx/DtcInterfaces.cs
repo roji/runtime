@@ -14,6 +14,9 @@ namespace System.Transactions.Oletx
     [Security.SuppressUnmanagedCodeSecurity]
     internal static class NativeMethods
     {
+        private const int RetryInterval = 50;  // in milliseconds
+        private const int MaxRetryCount = 100;
+
         // TODO: Move to Safe/UnsafeNativeMethods under DtcProxyShim
         // TODO: Use LibraryImport
         // https://docs.microsoft.com/en-us/previous-versions/windows/desktop/ms678898(v=vs.85)
@@ -50,6 +53,25 @@ namespace System.Transactions.Oletx
         internal static int XACT_E_LAST = -2147168215; // 0x8004D029
         internal static int XACT_E_NOTSUPPORTED = -2147168241; // 0x8004D00F
         internal static int XACT_E_NETWORK_TX_DISABLED = -2147168220; // 0x8004D024
+
+        internal static void Retry(Action action)
+        {
+            var nRetries = MaxRetryCount;
+
+            while (nRetries > 0)
+            {
+                try
+                {
+                    action();
+                    return;
+                }
+                catch (COMException e) when (e.ErrorCode == NativeMethods.XACT_E_ALREADYINPROGRESS)
+                {
+                    Thread.Sleep(RetryInterval);
+                    nRetries--;
+                }
+            }
+        }
     }
 
     internal enum ShimNotificationType
@@ -264,12 +286,7 @@ namespace System.Transactions.Oletx
 
         void GetITransactionNative([MarshalAs(UnmanagedType.Interface)] out IDtcTransaction transactionNative);
 
-        void Export(
-            [MarshalAs(UnmanagedType.U4)] uint whereaboutsSize,
-            [MarshalAs(UnmanagedType.LPArray)] byte[] whereabouts,
-            [MarshalAs(UnmanagedType.I4)] out int cookieIndex,
-            [MarshalAs(UnmanagedType.U4)] out uint cookieSize,
-            out CoTaskMemHandle cookieBuffer);
+        void Export(byte[] whereabouts, out byte[] cookieBuffer);
 
         void CreateVoter(
             IntPtr managedIdentifier,
@@ -381,4 +398,7 @@ namespace System.Transactions.Oletx
     //
     //    void GetTransactionInfo(out OletxXactTransInfo xactInfo);
     //}
+
+    // Adding retry logic as a work around for MSDTC, which is single threaded and will return XACT_E_ALREADYINPROGRESS
+    // if another thread invokes the API.
 }

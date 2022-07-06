@@ -21,11 +21,6 @@ internal class NotificationShimFactory : IDtcProxyShimFactory
     // at the same time.
     private static volatile object _proxyInitLock = new();
 
-    // Adding retry logic as a work around for MSDTC's GetWhereAbouts/GetWhereAboutsSize API
-    // which is single threaded and will return XACT_E_ALREADYINPROGRESS if another thread invokes the API.
-    private const int RetryInterval = 50;  // in milli seconds.
-    private const int MaxRetryCount = 100;
-
     // Lock to protect access to listOfNotifications.
     private object _csx = new();
 
@@ -85,14 +80,14 @@ internal class NotificationShimFactory : IDtcProxyShimFactory
             // Adding retry logic as a work around for MSDTC's GetWhereAbouts/GetWhereAboutsSize API
             // which is single threaded and will return XACT_E_ALREADYINPROGRESS if another thread invokes the API.
             ulong whereaboutsSize = 0;
-            Retry(() => pImportWhereabouts.GetWhereaboutsSize(out whereaboutsSize));
+            NativeMethods.Retry(() => pImportWhereabouts.GetWhereaboutsSize(out whereaboutsSize));
 
             // TODO: GetWhereaboutsSize returns ulong
             var tmpWhereabouts = new byte[(int)whereaboutsSize];
 
             // Adding retry logic as a work around for MSDTC's GetWhereAbouts/GetWhereAboutsSize API
             // which is single threaded and will return XACT_E_ALREADYINPROGRESS if another thread invokes the API.
-            Retry(() => pImportWhereabouts.GetWhereabouts(whereaboutsSize, tmpWhereabouts, out var pcbUsed));
+            NativeMethods.Retry(() => pImportWhereabouts.GetWhereabouts(whereaboutsSize, tmpWhereabouts, out var pcbUsed));
             whereabouts = tmpWhereabouts;
 
             // Now we need to create the internal resource manager.
@@ -103,7 +98,7 @@ internal class NotificationShimFactory : IDtcProxyShimFactory
 
             //     hr = rmShim->Initialize();
 
-            Retry(() =>
+            NativeMethods.Retry(() =>
             {
                 rmFactory.CreateEx(
                     resourceManagerIdentifier,
@@ -168,7 +163,7 @@ internal class NotificationShimFactory : IDtcProxyShimFactory
 
         //     hr = rmShim->Initialize();
 
-        Retry(() =>
+        NativeMethods.Retry(() =>
         {
             rmFactory.CreateEx(
                 resourceManagerIdentifier,
@@ -189,8 +184,10 @@ internal class NotificationShimFactory : IDtcProxyShimFactory
 
     public void ReceiveTransaction(uint propagationTokenSize, byte[] propgationToken, IntPtr managedIdentifier,
         out Guid transactionIdentifier, out OletxTransactionIsolationLevel isolationLevel,
-        out ITransactionShim transactionShim) =>
+        out ITransactionShim transactionShim)
+    {
         throw new NotImplementedException();
+    }
 
     public void CreateTransactionShim(
         IDtcTransaction transactionNative,
@@ -200,7 +197,18 @@ internal class NotificationShimFactory : IDtcProxyShimFactory
         out ITransactionShim transactionShim)
         => throw new NotImplementedException();
 
-    public void GetNotification(out IntPtr managedIdentifier, [MarshalAs(UnmanagedType.I4)] out Oletx.ShimNotificationType shimNotificationType, [MarshalAs(UnmanagedType.Bool)] out bool isSinglePhase, [MarshalAs(UnmanagedType.Bool)] out bool abortingHint, [MarshalAs(UnmanagedType.Bool)] out bool releaseRequired, [MarshalAs(UnmanagedType.U4)] out uint prepareInfoSize, out CoTaskMemHandle prepareInfo) => throw new NotImplementedException();
+    internal ITransactionExportFactory ExportFactory
+        => (ITransactionExportFactory)_transactionDispenser;
+
+    public void GetNotification(
+        out IntPtr managedIdentifier,
+        out Oletx.ShimNotificationType shimNotificationType,
+        out bool isSinglePhase,
+        out bool abortingHint,
+        out bool releaseRequired,
+        out uint prepareInfoSize,
+        out CoTaskMemHandle prepareInfo)
+        => throw new NotImplementedException();
 
     private void SetupTransaction(
         ITransaction pTx,
@@ -242,28 +250,6 @@ internal class NotificationShimFactory : IDtcProxyShimFactory
             // We need to allocate a new one.
             _transactionDispenser.GetOptionsObject(out var pOptions);
             return new(this, pOptions);
-        }
-    }
-
-    // Adding retry logic as a work around for MSDTC's GetWhereAbouts/GetWhereAboutsSize API
-    // which is single threaded and will return XACT_E_ALREADYINPROGRESS if another thread invokes the API.
-    // Resource Manager Factory CreateEx under the covers calls GetWhereAbouts API.
-    static void Retry(Action action)
-    {
-        var nRetries = MaxRetryCount;
-
-        while (nRetries > 0)
-        {
-            try
-            {
-                action();
-                return;
-            }
-            catch (COMException e) when (e.ErrorCode == NativeMethods.XACT_E_ALREADYINPROGRESS)
-            {
-                Thread.Sleep(RetryInterval);
-                nRetries--;
-            }
         }
     }
 }

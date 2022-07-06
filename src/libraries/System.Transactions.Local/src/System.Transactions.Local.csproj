@@ -14,7 +14,6 @@
   <ItemGroup>
     <Compile Include="System\Transactions\CommittableTransaction.cs" />
     <Compile Include="System\Transactions\DependentTransaction.cs" />
-    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\IPrepareInfo.cs" />
     <Compile Include="System\Transactions\DurableEnlistmentState.cs" />
     <Compile Include="System\Transactions\EnterpriseServices.cs" />
     <Compile Include="System\Transactions\Enlistment.cs" />
@@ -51,12 +50,16 @@
     <Compile Include="$(CommonPath)Interop\Windows\Interop.Libraries.cs" Link="Common\Interop\Windows\Interop.Libraries.cs" />
     <Compile Include="System\Transactions\DtcProxyShim\CachedInterfaceBase.cs" />
     <Compile Include="System\Transactions\DtcProxyShim\CachedOptions.cs" />
-    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransaction.cs" />
-    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionOptions.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\IPrepareInfo.cs" />
     <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\IResourceManagerFactory2.cs" />
     <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\IResourceManager.cs" />
     <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\IResourceManagerSink.cs" />
     <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITmNodeName.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransaction.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionCloner.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionExport.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionExportFactory.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionOptions.cs" />
     <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionDispenser.cs" />
     <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionEnlistmentAsync.cs" />
     <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionImportWhereabouts.cs" />
