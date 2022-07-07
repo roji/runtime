@@ -12,6 +12,7 @@
     <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITransactionEnlistmentAsync"/>
     <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITransactionExport"/>
     <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITransactionExportFactory"/>
+    <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITransactionImport"/>
     <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITransactionImportWhereabouts"/>
     <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITransactionOptions"/>
     <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITransactionOutcomeEvents"/>

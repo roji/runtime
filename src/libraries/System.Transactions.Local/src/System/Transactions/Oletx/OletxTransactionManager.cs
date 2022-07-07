@@ -103,14 +103,14 @@ namespace System.Transactions.Oletx
                         RuntimeHelpers.PrepareConstrainedRegions();
                         try
                         {
-                            localProxyShimFactory.GetNotification(
-                                out enlistmentHandleIntPtr,
-                                out shimNotificationType,
-                                out isSinglePhase,
-                                out abortingHint,
-                                out holdingNotificationLock,
-                                out prepareInfoSize,
-                                out prepareInfoBuffer);
+                            //localProxyShimFactory.GetNotification(
+                            //    out enlistmentHandleIntPtr,
+                            //    out shimNotificationType,
+                            //    out isSinglePhase,
+                            //    out abortingHint,
+                            //    out holdingNotificationLock,
+                            //    out prepareInfoSize,
+                            //    out prepareInfoBuffer);
                         }
                         finally
                         {

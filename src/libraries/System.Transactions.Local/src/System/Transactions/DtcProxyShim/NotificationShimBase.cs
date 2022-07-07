@@ -13,7 +13,7 @@ internal class NotificationShimBase
     public ShimNotificationType NotificationType;
     public bool AbortingHint;
     public bool IsSinglePhase;
-    public byte[]? PPrepareInfo;
+    public byte[]? PrepareInfo;
 
     protected long RefCount;
     protected NotificationShimFactory ShimFactory;

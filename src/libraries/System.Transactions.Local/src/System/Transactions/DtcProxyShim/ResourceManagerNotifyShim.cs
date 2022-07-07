@@ -18,7 +18,7 @@ internal class ResourceManagerNotifyShim : NotificationShimBase, IResourceManage
 
     public void TMDown()
     {
-        NotificationType = ShimNotificationType.ResourceManagerTMDownNotify;
+        NotificationType = ShimNotificationType.ResourceManagerTmDownNotify;
         //ShimFactory.NewNotification(this);
     }
 }

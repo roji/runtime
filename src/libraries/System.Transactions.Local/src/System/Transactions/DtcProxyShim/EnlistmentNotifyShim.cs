@@ -48,7 +48,7 @@ internal class EnlistmentNotifyShim : NotificationShimBase, ITransactionResource
         var prepareInfoBuffer = new byte[prepareInfoLength];
         pPrepareInfo.GetPrepareInfo(prepareInfoBuffer);
 
-        PPrepareInfo = prepareInfoBuffer;
+        PrepareInfo = prepareInfoBuffer;
         IsSinglePhase = fSinglePhase;
         NotificationType = ShimNotificationType.PrepareRequestNotify;
         ShimFactory.NewNotification(this);
@@ -72,7 +72,7 @@ internal class EnlistmentNotifyShim : NotificationShimBase, ITransactionResource
 
     public void TMDown()
     {
-        NotificationType = ShimNotificationType.EnlistmentTMDownNotify;
+        NotificationType = ShimNotificationType.ResourceManagerTmDownNotify;
         ShimFactory.NewNotification(this);
     }
 }

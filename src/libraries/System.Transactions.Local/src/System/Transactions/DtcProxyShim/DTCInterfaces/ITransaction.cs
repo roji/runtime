@@ -13,7 +13,7 @@ namespace System.Transactions.DtcProxyShim.DTCInterfaces;
 /// <remarks>
 /// See https://docs.microsoft.com/en-us/previous-versions/windows/desktop/ms686531(v=vs.85).
 /// </remarks>
-[ComImport, Guid("0fb15084-af41-11ce-bd2b-204c4f4f5020"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+[ComImport, Guid(Guids.IID_ITransaction), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 internal interface ITransaction
 {
     /// <summary>

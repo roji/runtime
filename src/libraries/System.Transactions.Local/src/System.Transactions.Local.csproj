@@ -64,6 +64,7 @@
     <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionOptions.cs" />
     <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionDispenser.cs" />
     <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionEnlistmentAsync.cs" />
+    <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionImport.cs" />
     <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionImportWhereabouts.cs" />
     <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionReceiver.cs" />
     <Compile Include="System\Transactions\DtcProxyShim\DTCInterfaces\ITransactionReceiverFactory.cs" />
@@ -82,7 +83,6 @@
     <!--
     <Compile Include="System\Transactions\DtcProxyShim\SafeNativeMethods.cs" />
     -->
-    <Compile Include="System\Transactions\DtcProxyShim\ShimNotificationType.cs" />
     <Compile Include="System\Transactions\DtcProxyShim\TransactionNotifyShim.cs" />
     <Compile Include="System\Transactions\DtcProxyShim\TransactionOutcome.cs" />
     <Compile Include="System\Transactions\DtcProxyShim\TransactionShim.cs" />

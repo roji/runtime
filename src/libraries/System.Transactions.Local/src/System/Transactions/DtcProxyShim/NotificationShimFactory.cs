@@ -2,9 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using System.Threading;
 using System.Transactions.DtcProxyShim.DTCInterfaces;
@@ -23,10 +21,10 @@ internal class NotificationShimFactory : IDtcProxyShimFactory
     private static volatile object _proxyInitLock = new();
 
     // Lock to protect access to listOfNotifications.
-    private object _csx = new();
+    private object _notificationLock = new();
 
     // This is the list of queued NotificationShimBase objects.
-    //UTStaticList<NotificationShimBase*> listOfNotifications;
+    private Queue<NotificationShimBase> _listOfNotifications = new();
 
     // This is the list of cached ITransactionOptions interfaces.
     private List<CachedInterfaceBase> _listOfOptions = new();
@@ -68,7 +66,7 @@ internal class NotificationShimFactory : IDtcProxyShimFactory
             NativeMethods.DtcGetTransactionManagerExW(
                 nodeName,
                 null,
-                Guid.Parse(Guids.IID_ITransactionDispenser),
+                Guids.IID_ITransactionDispenser_Guid,
                 0,
                 null,
                 out var localDispenser);
@@ -111,7 +109,7 @@ internal class NotificationShimFactory : IDtcProxyShimFactory
                     resourceManagerIdentifier,
                     "System.Transactions.InternalRM",
                     rmNotifyShim,
-                    Guid.Parse(Guids.IID_IResourceManager),
+                    Guids.IID_IResourceManager_Guid,
                     out var rm);
 
                 rmShim.ResourceManager = (IResourceManager)rm;
@@ -125,7 +123,7 @@ internal class NotificationShimFactory : IDtcProxyShimFactory
     internal void NewNotification(NotificationShimBase notification)
     {
         // assert( ! notification->link.IsLinked() );
-        lock (_csx)
+        lock (_notificationLock)
         {
             // notification->BaseAddRef();
             // this->listOfNotifications.InsertLast(&notification->link);
@@ -134,12 +132,8 @@ internal class NotificationShimFactory : IDtcProxyShimFactory
         // SetEvent(this->eventHandle);
     }
 
-    public void GetNotification(out IntPtr managedIdentifier, out ShimNotificationType shimNotificationType,
-        out bool isSinglePhase, out bool abortingHint, out bool releaseRequired, out uint prepareInfoSize,
-        out CoTaskMemHandle prepareInfo) =>
-        throw new NotImplementedException();
-
-    public void ReleaseNotificationLock() => throw new NotImplementedException();
+    public void ReleaseNotificationLock()
+        => Monitor.Exit(_notificationLock);
 
     public void BeginTransaction(
         uint timeout,
@@ -176,7 +170,7 @@ internal class NotificationShimFactory : IDtcProxyShimFactory
                 resourceManagerIdentifier,
                 "System.Transactions.ResourceManager",
                 rmNotifyShim,
-                Guid.Parse(Guids.IID_IResourceManager),
+                Guids.IID_IResourceManager_Guid,
                 out var rm);
 
             rmShim.ResourceManager = (IResourceManager)rm;
@@ -185,9 +179,18 @@ internal class NotificationShimFactory : IDtcProxyShimFactory
         resourceManagerShim = rmShim;
     }
 
-    public void Import(uint cookieSize, byte[] cookie, IntPtr managedIdentifier, out Guid transactionIdentifier,
-        out OletxTransactionIsolationLevel isolationLevel, out ITransactionShim transactionShim) =>
-        throw new NotImplementedException();
+    public void Import(
+        byte[] cookie,
+        OutcomeEnlistment managedIdentifier,
+        out Guid transactionIdentifier,
+        out OletxTransactionIsolationLevel isolationLevel,
+        out ITransactionShim transactionShim)
+    {
+        var txImport = (ITransactionImport)_transactionDispenser;
+        txImport.Import(Convert.ToUInt32(cookie.Length), cookie, Guids.IID_ITransaction_Guid, out var tx);
+
+        SetupTransaction((ITransaction)tx, managedIdentifier, out transactionIdentifier, out isolationLevel, out transactionShim);
+    }
 
     public void ReceiveTransaction(
         byte[] propagationToken,
@@ -206,26 +209,65 @@ internal class NotificationShimFactory : IDtcProxyShimFactory
         SetupTransaction(tx, managedIdentifier, out transactionIdentifier, out isolationLevel, out transactionShim);
     }
 
-    public void CreateTransactionShim(
-        IDtcTransaction transactionNative,
-        IntPtr managedIdentifier,
-        out Guid transactionIdentifier,
-        out OletxTransactionIsolationLevel isolationLevel,
-        out ITransactionShim transactionShim)
-        => throw new NotImplementedException();
+    // TODO: Does not seem to be called?
+    //public void CreateTransactionShim(
+    //    IDtcTransaction transactionNative,
+    //    IntPtr managedIdentifier,
+    //    out Guid transactionIdentifier,
+    //    out OletxTransactionIsolationLevel isolationLevel,
+    //    out ITransactionShim transactionShim)
+    //{
+    //    var cloner = (ITransactionCloner)transactionNative;
+    //    cloner.CloneWithCommitDisabled(out var transaction);
+    //
+    //    SetupTransaction(transaction, managedIdentifier, out transactionIdentifier, out isolationLevel, out transactionShim);
+    //}
 
     internal ITransactionExportFactory ExportFactory
         => (ITransactionExportFactory)_transactionDispenser;
 
     public void GetNotification(
-        out IntPtr managedIdentifier,
-        out Oletx.ShimNotificationType shimNotificationType,
+        out object? managedIdentifier,
+        out ShimNotificationType shimNotificationType,
         out bool isSinglePhase,
         out bool abortingHint,
-        out bool releaseRequired,
-        out uint prepareInfoSize,
-        out CoTaskMemHandle prepareInfo)
-        => throw new NotImplementedException();
+        out bool releaseLock,
+        out byte[]? prepareInfo)
+    {
+        managedIdentifier = null;
+        shimNotificationType = ShimNotificationType.None;
+        isSinglePhase = false;
+        abortingHint = false;
+        releaseLock = false;
+        prepareInfo = null;
+
+        Monitor.Enter(_notificationLock);
+
+        var entryRemoved = _listOfNotifications.TryDequeue(out var notification);
+        if (entryRemoved)
+        {
+            managedIdentifier = notification!.EnlistmentIdentifier;
+            shimNotificationType = notification.NotificationType;
+            isSinglePhase = notification.IsSinglePhase;
+            abortingHint = notification.AbortingHint;
+            prepareInfo = notification.PrepareInfo;
+        }
+
+        // We release the lock if we didn't find an entry or if the notification type
+        // is NOT ResourceManagerTMDownNotify.  If it is a ResourceManagerTMDownNotify, the managed
+        // code will call ReleaseNotificationLock after processing the TMDown.  We need to prevent
+        // other notifications from being processed while we are processing TMDown.  But we don't want
+        // to force 3 roundtrips to this NotificationShimFactory for all notifications ( 1 to grab the lock,
+        // one to get the notification, and one to release the lock).
+        if (!entryRemoved || shimNotificationType != ShimNotificationType.ResourceManagerTmDownNotify)
+        {
+            Monitor.Exit(_notificationLock);
+        }
+        else
+        {
+            releaseLock = true;
+        }
+    }
 
     private void SetupTransaction(
         ITransaction pTx,
@@ -243,7 +285,7 @@ internal class NotificationShimFactory : IDtcProxyShimFactory
 
         // Register for outcome events.
         var pContainer = (IConnectionPointContainer)pTx;
-        var guid = Guid.Parse(Guids.IID_ITransactionOutcomeEvents);
+        var guid = Guids.IID_ITransactionOutcomeEvents_Guid;
         pContainer.FindConnectionPoint(ref guid, out var pConnPoint);
         pConnPoint!.Advise(transactionNotifyShim, out var connPointCookie);
 

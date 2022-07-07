@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System;
-using System.Collections.Generic;
 using System.Transactions.DtcProxyShim.DTCInterfaces;
 using System.Transactions.Oletx;
 
@@ -20,6 +19,8 @@ internal class TransactionNotifyShim : NotificationShimBase, ITransactionOutcome
     {
         NotificationType = ShimNotificationType.CommittedNotify;
         ShimFactory.NewNotification(this);
+
+        //throw new Exception("Transaction committed notification");
     }
 
     public void Aborted(IntPtr pboidReason, bool fRetaining, Guid pNewUOW, uint hresult)
