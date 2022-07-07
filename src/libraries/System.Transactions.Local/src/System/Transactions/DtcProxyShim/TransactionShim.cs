@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Transactions.DtcProxyShim.DTCInterfaces;
 using System.Transactions.Oletx;
@@ -33,7 +34,6 @@ internal class TransactionShim : ITransactionShim
 
     public void Export(byte[] whereabouts, out byte[] cookieBuffer)
     {
-        //_shimFactory.ExportFactory.GetRemoteClassId(out var guid);
         _shimFactory.ExportFactory.Create((ulong)whereabouts.Length, whereabouts, out var export);
 
         ulong cookieSizeULong = 0;
@@ -52,8 +52,18 @@ internal class TransactionShim : ITransactionShim
     public void GetITransactionNative(out IDtcTransaction transactionNative)
         => throw new NotImplementedException();
 
-    public void GetPropagationToken(out uint propagationTokeSize, out CoTaskMemHandle propagationToken)
-        => throw new NotImplementedException();
+    public unsafe byte[] GetPropagationToken()
+    {
+        var cachedTransmitter = _shimFactory.GetCachedTransmitter(Transaction!);
+        cachedTransmitter.TxTransmitter.GetPropagationTokenSize(out var propagationTokenSizeULong);
+
+        var propagationTokenSize = (int)propagationTokenSizeULong;
+        var propagationToken = new byte[propagationTokenSize];
+
+        cachedTransmitter.TxTransmitter.MarshalPropagationToken((ulong)propagationTokenSize, propagationToken, out var propagationTokenSizeUsed);
+
+        return propagationToken;
+    }
 
     public void Phase0Enlist(IntPtr managedIdentifier, out IPhase0EnlistmentShim phase0EnlistmentShim)
         => throw new NotImplementedException();

@@ -13,8 +13,7 @@ namespace System.Transactions.Tests
         {
             var tx = new CommittableTransaction();
 
-            var rmGuid = Guid.Parse("ceb6c6b2-7fbf-43e3-ab81-8cb67ccd0b8e");
-            tx.EnlistDurable(rmGuid, new TestEnlistmentNotification(), EnlistmentOptions.None);
+            tx.EnlistDurable(Guid.Parse("ceb6c6b2-7fbf-43e3-ab81-8cb67ccd0b8e"), new TestEnlistmentNotification(), EnlistmentOptions.None);
         }
 
         [Fact]
@@ -94,6 +93,9 @@ namespace System.Transactions.Tests
 
     class TestPromotableSinglePhaseNotification : IPromotableSinglePhaseNotification
     {
+        Transaction _remoteTransaction;
+        TestEnlistmentNotification _remoteEnlistmentNotification;
+
         public void Initialize()
         {
             Console.WriteLine("Initialize");
@@ -113,14 +115,11 @@ namespace System.Transactions.Tests
 
         public byte[]? Promote()
         {
-            var tx = new CommittableTransaction();
+            _remoteEnlistmentNotification = new TestEnlistmentNotification();
+            _remoteTransaction = new CommittableTransaction();
+            _remoteTransaction.EnlistDurable(Guid.Parse("ceb6c6b2-7fbf-43e3-ab81-8cb67ccd0b8e"), _remoteEnlistmentNotification, EnlistmentOptions.None);
 
-            //var dtcTransaction = TransactionInterop.GetDtcTransaction(tx);
-
-            var whereabouts = TransactionInterop.GetWhereabouts();
-            TransactionInterop.GetExportCookie(tx, whereabouts);
-
-            return TransactionInterop.GetExportCookie(tx, whereabouts);
+            return TransactionInterop.GetTransmitterPropagationToken(_remoteTransaction);
         }
     }
 }

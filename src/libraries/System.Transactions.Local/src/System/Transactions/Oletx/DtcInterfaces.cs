@@ -292,9 +292,7 @@ namespace System.Transactions.Oletx
             IntPtr managedIdentifier,
             [MarshalAs(UnmanagedType.Interface)] out IVoterBallotShim voterBallotShim);
 
-        void GetPropagationToken(
-            [MarshalAs(UnmanagedType.U4)] out uint propagationTokeSize,
-            out CoTaskMemHandle propagationToken);
+        byte[] GetPropagationToken();
 
         void Phase0Enlist(
             IntPtr managedIdentifier,
@@ -345,16 +343,16 @@ namespace System.Transactions.Oletx
         void ReleaseNotificationLock();
 
         void BeginTransaction(
-            [MarshalAs(UnmanagedType.U4)] uint timeout,
+            uint timeout,
             OletxTransactionIsolationLevel isolationLevel,
             object? managedIdentifier,
             out Guid transactionIdentifier,
-            [MarshalAs(UnmanagedType.Interface)] out ITransactionShim transactionShim);
+            out ITransactionShim transactionShim);
 
         void CreateResourceManager(
             Guid resourceManagerIdentifier,
             OletxResourceManager managedIdentifier,
-            [MarshalAs(UnmanagedType.Interface)] out IResourceManagerShim resourceManagerShim);
+            out IResourceManagerShim resourceManagerShim);
 
         void Import(
             [MarshalAs(UnmanagedType.U4)] uint cookieSize,
@@ -365,12 +363,11 @@ namespace System.Transactions.Oletx
             [MarshalAs(UnmanagedType.Interface)] out ITransactionShim transactionShim);
 
         void ReceiveTransaction(
-            [MarshalAs(UnmanagedType.U4)] uint  propagationTokenSize,
-            [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)] byte[] propgationToken,
-            IntPtr managedIdentifier,
+            byte[] propgationToken,
+            OutcomeEnlistment managedIdentifier,
             out Guid transactionIdentifier,
             out OletxTransactionIsolationLevel isolationLevel,
-            [MarshalAs(UnmanagedType.Interface)] out ITransactionShim transactionShim);
+            out ITransactionShim transactionShim);
 
         void CreateTransactionShim(
             [MarshalAs(UnmanagedType.Interface)] IDtcTransaction transactionNative,

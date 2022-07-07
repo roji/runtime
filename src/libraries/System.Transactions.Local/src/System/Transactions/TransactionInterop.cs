@@ -249,28 +249,15 @@ namespace System.Transactions
         internal static byte[] GetTransmitterPropagationToken(OletxTransaction oletxTx)
         {
             byte[]? propagationToken = null;
-            CoTaskMemHandle? propagationTokenBuffer = null;
-            uint tokenSize = 0;
 
             try
             {
-                oletxTx.RealOletxTransaction.TransactionShim.GetPropagationToken(
-                    out tokenSize,
-                    out propagationTokenBuffer);
-                propagationToken = new byte[tokenSize];
-                Marshal.Copy(propagationTokenBuffer!.DangerousGetHandle(), propagationToken, 0, Convert.ToInt32(tokenSize));
+                propagationToken = oletxTx.RealOletxTransaction.TransactionShim.GetPropagationToken();
             }
             catch (COMException comException)
             {
                 OletxTransactionManager.ProxyException(comException);
                 throw;
-            }
-            finally
-            {
-                if (propagationTokenBuffer != null)
-                {
-                    propagationTokenBuffer.Close();
-                }
             }
 
             return propagationToken;
@@ -420,11 +407,10 @@ namespace System.Transactions
                 RuntimeHelpers.PrepareConstrainedRegions();
                 try
                 {
-                    outcomeEnlistmentHandle = HandleTable.AllocHandle(outcomeEnlistment);
+                    //outcomeEnlistmentHandle = HandleTable.AllocHandle(outcomeEnlistment);
                     oletxTm.DtcTransactionManager.ProxyShimFactory.ReceiveTransaction(
-                        Convert.ToUInt32(propagationToken.Length),
                         propagationToken,
-                        outcomeEnlistmentHandle,
+                        outcomeEnlistment,
                         out identifier,
                         out oletxIsoLevel,
                         out transactionShim);

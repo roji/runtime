@@ -3,6 +3,7 @@
 
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using System.Threading;
@@ -30,9 +31,15 @@ internal class NotificationShimFactory : IDtcProxyShimFactory
     // This is the list of cached ITransactionOptions interfaces.
     private List<CachedInterfaceBase> _listOfOptions = new();
 
-    // The handle returned by LoadLibraryEx of xolehlp.dll and the fptr to DtcGetTransactionManagerEx.
-    //private HMODULE xoleHlpHandle;
-    //private LPDtcGetTransactionManagerExW? pfDtcGetTransactionManagerExW;
+    // This is the list of cached ITransactionTransmitter interfaces.
+    // Lock to protect access to listOfTransmitters.
+    private object _transmitterLock = new();
+    private List<CachedInterfaceBase> _listOfTransmitters = new();
+
+    // This is the list of cached ITransactionReceiver interfaces.
+    // Lock to protect access to listOfReceivers.
+    private object _receiverLock = new();
+    private List<CachedInterfaceBase> _listOfReceivers = new();
 
     private ITransactionDispenser _transactionDispenser = null!; // Late-initialized in ConnectToProxy
 
@@ -47,7 +54,7 @@ internal class NotificationShimFactory : IDtcProxyShimFactory
         // TODO: Instantiate all the locks (critical sections)
     }
 
-    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2050", Justification = "Leave me alone")]
+    [UnconditionalSuppressMessage("Trimming", "IL2050", Justification = "Leave me alone")]
     public void ConnectToProxy(
         string? nodeName,
         Guid resourceManagerIdentifier,
@@ -182,11 +189,21 @@ internal class NotificationShimFactory : IDtcProxyShimFactory
         out OletxTransactionIsolationLevel isolationLevel, out ITransactionShim transactionShim) =>
         throw new NotImplementedException();
 
-    public void ReceiveTransaction(uint propagationTokenSize, byte[] propgationToken, IntPtr managedIdentifier,
-        out Guid transactionIdentifier, out OletxTransactionIsolationLevel isolationLevel,
+    public void ReceiveTransaction(
+        byte[] propagationToken,
+        OutcomeEnlistment managedIdentifier,
+        out Guid transactionIdentifier,
+        out OletxTransactionIsolationLevel isolationLevel,
         out ITransactionShim transactionShim)
     {
-        throw new NotImplementedException();
+        var cachedReceiver = GetCachedReceiver();
+
+        cachedReceiver.TxReceiver.UnmarshalPropagationToken(
+            Convert.ToUInt32(propagationToken.Length),
+            propagationToken,
+            out var tx);
+
+        SetupTransaction(tx, managedIdentifier, out transactionIdentifier, out isolationLevel, out transactionShim);
     }
 
     public void CreateTransactionShim(
@@ -250,6 +267,50 @@ internal class NotificationShimFactory : IDtcProxyShimFactory
             // We need to allocate a new one.
             _transactionDispenser.GetOptionsObject(out var pOptions);
             return new(this, pOptions);
+        }
+    }
+
+    internal CachedTransmitter GetCachedTransmitter(ITransaction transaction)
+    {
+        CachedTransmitter localCachedTransmitter;
+
+        lock (_transmitterLock)
+        {
+            if (_listOfTransmitters.Count > 0)
+            {
+                localCachedTransmitter = (CachedTransmitter)_listOfTransmitters[0];
+                _listOfTransmitters.RemoveAt(0);
+            }
+            else
+            {
+                var transmitterFactory = (ITransactionTransmitterFactory)_transactionDispenser;
+                transmitterFactory.Create(out var transmitter);
+
+                localCachedTransmitter = new CachedTransmitter(this, transmitter);
+            }
+        }
+
+        return localCachedTransmitter;
+    }
+
+    internal CachedReceiver GetCachedReceiver()
+    {
+        lock (_receiverLock)
+        {
+            if (_listOfReceivers.Count > 0)
+            {
+                var localCachedReceiver = (CachedReceiver)_listOfReceivers[0];
+                _listOfReceivers.RemoveAt(0);
+
+                return localCachedReceiver;
+            }
+            else
+            {
+                var receiverFactory = (ITransactionReceiverFactory)_transactionDispenser;
+                receiverFactory.Create(out var receiver);
+
+                return new CachedReceiver(this, receiver);
+            }
         }
     }
 }

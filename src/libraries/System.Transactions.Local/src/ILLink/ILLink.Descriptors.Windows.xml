@@ -15,6 +15,10 @@
     <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITransactionImportWhereabouts"/>
     <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITransactionOptions"/>
     <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITransactionOutcomeEvents"/>
+    <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITransactionReceiver"/>
+    <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITransactionReceiverFactory"/>
     <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITransactionResourceAsync"/>
+    <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITransactionTransmitter"/>
+    <type fullname="System.Transactions.DtcProxyShim.DTCInterfaces.ITransactionTransmitterFactory"/>
   </assembly>
 </linker>
