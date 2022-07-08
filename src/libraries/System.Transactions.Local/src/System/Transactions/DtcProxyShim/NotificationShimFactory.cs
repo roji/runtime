@@ -39,18 +39,12 @@ internal class NotificationShimFactory : IDtcProxyShimFactory
     private object _receiverLock = new();
     private List<CachedInterfaceBase> _listOfReceivers = new();
 
+    private readonly EventWaitHandle _eventHandle;
+
     private ITransactionDispenser _transactionDispenser = null!; // Late-initialized in ConnectToProxy
 
-    internal NotificationShimFactory(SafeWaitHandle notificationEventHandle)
-    {
-        Initialize(notificationEventHandle);
-    }
-
-    private void Initialize(SafeWaitHandle hEvent)
-    {
-        // TODO: DuplicateHandle into this->eventHandle
-        // TODO: Instantiate all the locks (critical sections)
-    }
+    internal NotificationShimFactory(EventWaitHandle notificationEventHandle)
+        => _eventHandle = notificationEventHandle;
 
     [UnconditionalSuppressMessage("Trimming", "IL2050", Justification = "Leave me alone")]
     public void ConnectToProxy(
@@ -122,14 +116,12 @@ internal class NotificationShimFactory : IDtcProxyShimFactory
 
     internal void NewNotification(NotificationShimBase notification)
     {
-        // assert( ! notification->link.IsLinked() );
         lock (_notificationLock)
         {
-            // notification->BaseAddRef();
-            // this->listOfNotifications.InsertLast(&notification->link);
+            _listOfNotifications.Enqueue(notification);
         }
 
-        // SetEvent(this->eventHandle);
+        _eventHandle.Set();
     }
 
     public void ReleaseNotificationLock()
