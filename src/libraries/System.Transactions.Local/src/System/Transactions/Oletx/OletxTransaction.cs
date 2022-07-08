@@ -1278,7 +1278,7 @@ namespace System.Transactions.Oletx
             _savedStatus = TransactionStatus.InDoubt;
         }
 
-        internal void SetRealTransaction( RealOletxTransaction realTx )
+        internal void SetRealTransaction(RealOletxTransaction realTx)
         {
             bool localHaveIssuedOutcome = false;
             TransactionStatus localStatus = TransactionStatus.InDoubt;
@@ -1376,7 +1376,6 @@ namespace System.Transactions.Oletx
                 localTxWeakRef.Target = null;
             }
         }
-
 
         //
         // We need to figure out if the transaction is InDoubt as a result of TMDown.  This

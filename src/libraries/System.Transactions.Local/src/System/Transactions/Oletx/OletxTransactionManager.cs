@@ -61,23 +61,17 @@ namespace System.Transactions.Oletx
         private string? _nodeNameField;
 //        byte[] propToken;
 
-        // Method that is used within SQLCLR as the WaitOrTimerCallback for the call to
-        // ThreadPool.RegisterWaitForSingleObject.
-        // This is here for the DangerousGetHandle call.  We need to do it.
-        [SuppressMessage("Microsoft.Reliability", "CA2001:AvoidCallingProblematicMethods")]
         internal static void ShimNotificationCallback(object? state, bool timeout)
         {
             // First we need to get the notification from the shim factory.
-            IntPtr enlistmentHandleIntPtr = IntPtr.Zero;
+            object? enlistment2 = null;
             ShimNotificationType shimNotificationType = ShimNotificationType.None;
             bool isSinglePhase;
             bool abortingHint;
 
-            uint prepareInfoSize;
-            CoTaskMemHandle? prepareInfoBuffer = null;
+            byte[]? prepareInfoBuffer = null;
 
             bool holdingNotificationLock = false;
-            bool cleanExit = false;
 
             IDtcProxyShimFactory localProxyShimFactory;
 
@@ -103,20 +97,19 @@ namespace System.Transactions.Oletx
                         RuntimeHelpers.PrepareConstrainedRegions();
                         try
                         {
-                            //localProxyShimFactory.GetNotification(
-                            //    out enlistmentHandleIntPtr,
-                            //    out shimNotificationType,
-                            //    out isSinglePhase,
-                            //    out abortingHint,
-                            //    out holdingNotificationLock,
-                            //    out prepareInfoSize,
-                            //    out prepareInfoBuffer);
+                            localProxyShimFactory.GetNotification(
+                                out enlistment2,
+                                out shimNotificationType,
+                                out isSinglePhase,
+                                out abortingHint,
+                                out holdingNotificationLock,
+                                out prepareInfoBuffer);
                         }
                         finally
                         {
                             if (holdingNotificationLock)
                             {
-                                if (HandleTable.FindHandle(enlistmentHandleIntPtr) is OletxInternalResourceManager)
+                                if (enlistment2 is OletxInternalResourceManager)
                                 {
                                     // In this case we know that the TM has gone down and we need to exchange
                                     // the native lock for a managed lock.
@@ -139,7 +132,7 @@ namespace System.Transactions.Oletx
                         // has been exchanged for a managed lock.  In that case we need to attempt
                         // to take a lock to hold up processing more events until the TM down
                         // processing is complete.
-                        if ( ProcessingTmDown )
+                        if (ProcessingTmDown)
                         {
                             lock (ProxyShimFactory)
                             {
@@ -150,46 +143,37 @@ namespace System.Transactions.Oletx
 
                         if (shimNotificationType != ShimNotificationType.None)
                         {
-                            object? target = HandleTable.FindHandle(enlistmentHandleIntPtr);
-
                             // Next, based on the notification type, cast the Handle accordingly and make
                             // the appropriate call on the enlistment.
                             switch (shimNotificationType)
                             {
                                 case ShimNotificationType.Phase0RequestNotify:
                                 {
-                                    try
+                                    if (enlistment2 is OletxPhase0VolatileEnlistmentContainer ph0VolEnlistContainer)
                                     {
-                                        if (target is OletxPhase0VolatileEnlistmentContainer ph0VolEnlistContainer)
+                                        DiagnosticTrace.SetActivityId(ph0VolEnlistContainer.TransactionIdentifier);
+                                        //CSDMain 91509 - We now synchronize this call with the AddDependentClone call in RealOleTxTransaction
+                                        ph0VolEnlistContainer.Phase0Request(abortingHint);
+                                    }
+                                    else
+                                    {
+                                        if (enlistment2 is OletxEnlistment oletxEnlistment)
                                         {
-                                            DiagnosticTrace.SetActivityId(ph0VolEnlistContainer.TransactionIdentifier);
-                                            //CSDMain 91509 - We now synchronize this call with the AddDependentClone call in RealOleTxTransaction
-                                            ph0VolEnlistContainer.Phase0Request(abortingHint);
+                                            DiagnosticTrace.SetActivityId(oletxEnlistment.TransactionIdentifier);
+                                            oletxEnlistment.Phase0Request(abortingHint);
                                         }
                                         else
                                         {
-                                            if (target is OletxEnlistment enlistment)
-                                            {
-                                                DiagnosticTrace.SetActivityId(enlistment.TransactionIdentifier);
-                                                enlistment.Phase0Request(abortingHint);
-                                            }
-                                            else
-                                            {
-                                                Environment.FailFast(SR.InternalError);
-                                            }
+                                            Environment.FailFast(SR.InternalError);
                                         }
                                     }
-                                    finally
-                                    {
-                                        // We aren't going to get any more notifications on this.
-                                        HandleTable.FreeHandle(enlistmentHandleIntPtr);
-                                    }
+
                                     break;
                                 }
 
                                 case ShimNotificationType.VoteRequestNotify:
                                 {
-                                    if (target is OletxPhase1VolatileEnlistmentContainer ph1VolEnlistContainer)
+                                    if (enlistment2 is OletxPhase1VolatileEnlistmentContainer ph1VolEnlistContainer)
                                     {
                                         DiagnosticTrace.SetActivityId(ph1VolEnlistContainer.TransactionIdentifier);
                                         ph1VolEnlistContainer.VoteRequest();
@@ -204,124 +188,91 @@ namespace System.Transactions.Oletx
 
                                 case ShimNotificationType.CommittedNotify:
                                 {
-                                    try
+                                    if (enlistment2 is OutcomeEnlistment outcomeEnlistment)
                                     {
-                                        if (target is OutcomeEnlistment outcomeEnlistment)
-                                        {
-                                            DiagnosticTrace.SetActivityId(outcomeEnlistment.TransactionIdentifier);
-                                            outcomeEnlistment.Committed();
-                                        }
-                                        else
-                                        {
-                                            if (target is OletxPhase1VolatileEnlistmentContainer ph1VolEnlistContainer)
-                                            {
-                                                DiagnosticTrace.SetActivityId(ph1VolEnlistContainer.TransactionIdentifier);
-                                                ph1VolEnlistContainer.Committed();
-                                            }
-                                            else
-                                            {
-                                                Environment.FailFast(SR.InternalError);
-                                            }
-                                        }
+                                        DiagnosticTrace.SetActivityId(outcomeEnlistment.TransactionIdentifier);
+                                        outcomeEnlistment.Committed();
                                     }
-                                    finally
+                                    else
                                     {
-                                        // We aren't going to get any more notifications on this.
-                                        HandleTable.FreeHandle(enlistmentHandleIntPtr);
-                                    }
-                                    break;
-                                }
-                                case ShimNotificationType.AbortedNotify:
-                                {
-                                    try
-                                    {
-                                        if (target is OutcomeEnlistment outcomeEnlistment)
+                                        if (enlistment2 is OletxPhase1VolatileEnlistmentContainer ph1VolEnlistContainer)
                                         {
-                                            DiagnosticTrace.SetActivityId(outcomeEnlistment.TransactionIdentifier);
-                                            outcomeEnlistment.Aborted();
-                                        }
-                                        else
-                                        {
-                                            if (target is OletxPhase1VolatileEnlistmentContainer ph1VolEnlistContainer)
-                                            {
-                                                DiagnosticTrace.SetActivityId(ph1VolEnlistContainer.TransactionIdentifier);
-                                                ph1VolEnlistContainer.Aborted();
-                                            }
-                                            // else
-                                                // Voters may receive notifications even
-                                                // in cases where they therwise respond
-                                                // negatively to the vote request.  It is
-                                                // also not guaranteed that we will get a
-                                                // notification if we do respond negatively.
-                                                // The only safe thing to do is to free the
-                                                // Handle when we abort the transaction
-                                                // with a voter.  These two things together
-                                                // mean that we cannot guarantee that this
-                                                // Handle will be alive when we get this
-                                                // notification.
-                                        }
-                                    }
-                                    finally
-                                    {
-                                        // We aren't going to get any more notifications on this.
-                                        HandleTable.FreeHandle(enlistmentHandleIntPtr);
-                                    }
-                                    break;
-                                }
-                                case ShimNotificationType.InDoubtNotify:
-                                {
-                                    try
-                                    {
-                                        if (target is OutcomeEnlistment outcomeEnlistment)
-                                        {
-                                            DiagnosticTrace.SetActivityId(outcomeEnlistment.TransactionIdentifier);
-                                            outcomeEnlistment.InDoubt();
-                                        }
-                                        else
-                                        {
-                                            if (target is OletxPhase1VolatileEnlistmentContainer ph1VolEnlistContainer)
-                                            {
-                                                DiagnosticTrace.SetActivityId(ph1VolEnlistContainer.TransactionIdentifier);
-                                                ph1VolEnlistContainer.InDoubt();
-                                            }
-                                            else
-                                            {
-                                                Environment.FailFast(SR.InternalError);
-                                            }
-                                        }
-                                    }
-                                    finally
-                                    {
-                                        // We aren't going to get any more notifications on this.
-                                        HandleTable.FreeHandle(enlistmentHandleIntPtr);
-                                    }
-                                    break;
-                                }
-
-                                case ShimNotificationType.PrepareRequestNotify:
-                                {
-                                    byte[] prepareInfo = new byte[prepareInfoSize];
-                                    Marshal.Copy(prepareInfoBuffer.DangerousGetHandle(), prepareInfo, 0, Convert.ToInt32(prepareInfoSize));
-                                    bool enlistmentDone = true;
-
-                                    try
-                                    {
-                                        if (target is OletxEnlistment enlistment)
-                                        {
-                                            DiagnosticTrace.SetActivityId(enlistment.TransactionIdentifier);
-                                            enlistmentDone = enlistment.PrepareRequest(isSinglePhase, prepareInfo);
+                                            DiagnosticTrace.SetActivityId(ph1VolEnlistContainer.TransactionIdentifier);
+                                            ph1VolEnlistContainer.Committed();
                                         }
                                         else
                                         {
                                             Environment.FailFast(SR.InternalError);
                                         }
                                     }
-                                    finally
+
+                                    break;
+                                }
+                                case ShimNotificationType.AbortedNotify:
+                                {
+                                    if (enlistment2 is OutcomeEnlistment outcomeEnlistment)
                                     {
-                                        if (enlistmentDone)
+                                        DiagnosticTrace.SetActivityId(outcomeEnlistment.TransactionIdentifier);
+                                        outcomeEnlistment.Aborted();
+                                    }
+                                    else
+                                    {
+                                        if (enlistment2 is OletxPhase1VolatileEnlistmentContainer ph1VolEnlistContainer)
                                         {
-                                            HandleTable.FreeHandle(enlistmentHandleIntPtr);
+                                            DiagnosticTrace.SetActivityId(ph1VolEnlistContainer.TransactionIdentifier);
+                                            ph1VolEnlistContainer.Aborted();
                                         }
+                                        // else
+                                            // Voters may receive notifications even
+                                            // in cases where they therwise respond
+                                            // negatively to the vote request.  It is
+                                            // also not guaranteed that we will get a
+                                            // notification if we do respond negatively.
+                                            // The only safe thing to do is to free the
+                                            // Handle when we abort the transaction
+                                            // with a voter.  These two things together
+                                            // mean that we cannot guarantee that this
+                                            // Handle will be alive when we get this
+                                            // notification.
+                                    }
+
+                                    break;
+                                }
+                                case ShimNotificationType.InDoubtNotify:
+                                {
+                                    if (enlistment2 is OutcomeEnlistment outcomeEnlistment)
+                                    {
+                                        DiagnosticTrace.SetActivityId(outcomeEnlistment.TransactionIdentifier);
+                                        outcomeEnlistment.InDoubt();
+                                    }
+                                    else
+                                    {
+                                        if (enlistment2 is OletxPhase1VolatileEnlistmentContainer ph1VolEnlistContainer)
+                                        {
+                                            DiagnosticTrace.SetActivityId(ph1VolEnlistContainer.TransactionIdentifier);
+                                            ph1VolEnlistContainer.InDoubt();
+                                        }
+                                        else
+                                        {
+                                            Environment.FailFast(SR.InternalError);
+                                        }
+                                    }
+
+                                    break;
+                                }
+
+                                case ShimNotificationType.PrepareRequestNotify:
+                                {
+                                    bool enlistmentDone = true;
+
+                                    if (enlistment2 is OletxEnlistment enlistment)
+                                    {
+                                        DiagnosticTrace.SetActivityId(enlistment.TransactionIdentifier);
+                                        enlistmentDone = enlistment.PrepareRequest(isSinglePhase, prepareInfoBuffer!);
+                                    }
+                                    else
+                                    {
+                                        Environment.FailFast(SR.InternalError);
                                     }
 
                                     break;
@@ -329,22 +280,14 @@ namespace System.Transactions.Oletx
 
                                 case ShimNotificationType.CommitRequestNotify:
                                 {
-                                    try
+                                    if (enlistment2 is OletxEnlistment enlistment)
                                     {
-                                        if (target is OletxEnlistment enlistment)
-                                        {
-                                            DiagnosticTrace.SetActivityId(enlistment.TransactionIdentifier);
-                                            enlistment.CommitRequest();
-                                        }
-                                        else
-                                        {
-                                            Environment.FailFast(SR.InternalError);
-                                        }
+                                        DiagnosticTrace.SetActivityId(enlistment.TransactionIdentifier);
+                                        enlistment.CommitRequest();
                                     }
-                                    finally
+                                    else
                                     {
-                                        // We aren't going to get any more notifications on this.
-                                        HandleTable.FreeHandle(enlistmentHandleIntPtr);
+                                        Environment.FailFast(SR.InternalError);
                                     }
 
                                     break;
@@ -352,22 +295,14 @@ namespace System.Transactions.Oletx
 
                                 case ShimNotificationType.AbortRequestNotify:
                                 {
-                                    try
+                                    if (enlistment2 is OletxEnlistment enlistment)
                                     {
-                                        if (target is OletxEnlistment enlistment)
-                                        {
-                                            DiagnosticTrace.SetActivityId(enlistment.TransactionIdentifier);
-                                            enlistment.AbortRequest();
-                                        }
-                                        else
-                                        {
-                                            Environment.FailFast(SR.InternalError);
-                                        }
+                                        DiagnosticTrace.SetActivityId(enlistment.TransactionIdentifier);
+                                        enlistment.AbortRequest();
                                     }
-                                    finally
+                                    else
                                     {
-                                        // We aren't going to get any more notifications on this.
-                                        HandleTable.FreeHandle(enlistmentHandleIntPtr);
+                                        Environment.FailFast(SR.InternalError);
                                     }
 
                                     break;
@@ -375,56 +310,36 @@ namespace System.Transactions.Oletx
 
                                 case ShimNotificationType.EnlistmentTmDownNotify:
                                 {
-                                    try
+                                    if (enlistment2 is OletxEnlistment enlistment)
                                     {
-                                        if (target is OletxEnlistment enlistment)
-                                        {
-                                            DiagnosticTrace.SetActivityId(enlistment.TransactionIdentifier);
-                                            enlistment.TMDown();
-                                        }
-                                        else
-                                        {
-                                            Environment.FailFast(SR.InternalError);
-                                        }
+                                        DiagnosticTrace.SetActivityId(enlistment.TransactionIdentifier);
+                                        enlistment.TMDown();
                                     }
-                                    finally
+                                    else
                                     {
-                                        // We aren't going to get any more notifications on this.
-                                        HandleTable.FreeHandle(enlistmentHandleIntPtr);
+                                        Environment.FailFast(SR.InternalError);
                                     }
 
                                     break;
                                 }
 
-
                                 case ShimNotificationType.ResourceManagerTmDownNotify:
                                 {
-                                    OletxResourceManager? resourceManager = target as OletxResourceManager;
-                                    try
+                                    switch (enlistment2)
                                     {
-                                        if (resourceManager != null)
-                                        {
+                                        case OletxResourceManager resourceManager:
                                             resourceManager.TMDown();
-                                        }
-                                        else
-                                        {
-                                            if (target is OletxInternalResourceManager internalResourceManager)
-                                            {
-                                                internalResourceManager.TMDown();
-                                            }
-                                            else
-                                            {
-                                                Environment.FailFast(SR.InternalError);
-                                            }
-                                        }
-                                    }
-                                    finally
-                                    {
-                                        HandleTable.FreeHandle(enlistmentHandleIntPtr);
+                                            break;
+
+                                        case OletxInternalResourceManager internalResourceManager:
+                                            internalResourceManager.TMDown();
+                                            break;
+
+                                        default:
+                                            Environment.FailFast(SR.InternalError);
+                                            break;
                                     }
 
-                                    // Note that we don't free the gchandle on the OletxResourceManager.  These objects
-                                    // are not going to go away.
                                     break;
                                 }
 
@@ -438,11 +353,6 @@ namespace System.Transactions.Oletx
                     }
                     finally
                     {
-                        if (prepareInfoBuffer != null)
-                        {
-                            prepareInfoBuffer.Close();
-                        }
-
                         if (holdingNotificationLock)
                         {
                             holdingNotificationLock = false;
@@ -452,8 +362,6 @@ namespace System.Transactions.Oletx
                     }
                 }
                 while (ShimNotificationType.None != shimNotificationType);
-
-                cleanExit = true;
             }
             finally
             {
@@ -462,11 +370,6 @@ namespace System.Transactions.Oletx
                     holdingNotificationLock = false;
                     ProcessingTmDown = false;
                     Monitor.Exit(ProxyShimFactory);
-                }
-
-                if (!cleanExit && enlistmentHandleIntPtr != IntPtr.Zero)
-                {
-                    HandleTable.FreeHandle(enlistmentHandleIntPtr);
                 }
 
                 Thread.EndCriticalRegion();
@@ -493,7 +396,7 @@ namespace System.Transactions.Oletx
                     //     throw TransactionException.Create(SR.UnableToGetNotificationShimFactory, null);
                     // }
 
-                    ProxyShimFactory = new NotificationShimFactory(ShimWaitHandle.SafeWaitHandle);
+                    ProxyShimFactory = new NotificationShimFactory(ShimWaitHandle);
 
                     ThreadPool.UnsafeRegisterWaitForSingleObject(
                         ShimWaitHandle,
