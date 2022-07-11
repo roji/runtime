@@ -46,11 +46,7 @@ namespace System.Transactions.Oletx
             if (etwLog.IsEnabled())
             {
                 etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this);
-            }
-
-            if (DiagnosticTrace.Verbose)
-            {
-                TransactionCommitCalledTraceRecord.Trace(SR.TraceSourceOletx, TransactionTraceId);
+                etwLog.TransactionCommit(TraceSourceType.TraceSourceOleTx, TransactionTraceId, "CommittableTransaction");
             }
 
             Debug.Assert(0 == Disposed, "OletxTransction object is disposed");
