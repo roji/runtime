@@ -43,9 +43,14 @@ namespace System.Transactions.Oletx
 
         internal void BeginCommit(InternalTransaction internalTransaction)
         {
+            TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+            if (etwLog.IsEnabled())
+            {
+                etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this);
+            }
+
             if (DiagnosticTrace.Verbose)
             {
-                MethodEnteredTraceRecord.Trace(SR.TraceSourceOletx, "CommittableTransaction.BeginCommit");
                 TransactionCommitCalledTraceRecord.Trace(SR.TraceSourceOletx, TransactionTraceId);
             }
 
@@ -56,9 +61,9 @@ namespace System.Transactions.Oletx
 
             RealOletxTransaction.Commit();
 
-            if (DiagnosticTrace.Verbose)
+            if (etwLog.IsEnabled())
             {
-                MethodExitedTraceRecord.Trace(SR.TraceSourceOletx, "CommittableTransaction.BeginCommit");
+                etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this, $"{nameof(OletxCommittableTransaction)}.{nameof(BeginCommit)}");
             }
         }
     }

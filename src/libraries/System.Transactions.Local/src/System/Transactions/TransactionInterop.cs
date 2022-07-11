@@ -54,7 +54,7 @@ namespace System.Transactions
             TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
             if (etwLog.IsEnabled())
             {
-                etwLog.MethodEnter(TraceSourceType.TraceSourceDistributed, "TransactionInterop.GetExportCookie");
+                etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, $"{nameof(TransactionInterop)}.{nameof(GetExportCookie)}");
             }
 
             byte[] cookie;
@@ -94,11 +94,10 @@ namespace System.Transactions
             //    }
             //}
 
-            // TODO
-            // if (DiagnosticTrace.Verbose)
-            // {
-            //     MethodExitedTraceRecord.Trace(SR.GetString(SR.TraceSourceOletx), "TransactionInterop.GetExportCookie");
-            // }
+            if (etwLog.IsEnabled())
+            {
+                etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, $"{nameof(TransactionInterop)}.{nameof(GetExportCookie)}");
+            }
 
             return cookie;
         }
@@ -115,7 +114,7 @@ namespace System.Transactions
             TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
             if (etwLog.IsEnabled())
             {
-                etwLog.MethodEnter(TraceSourceType.TraceSourceDistributed, "TransactionInterop.GetTransactionFromExportCookie");
+                etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, $"{nameof(TransactionInterop)}.{nameof(GetTransactionFromExportCookie)}");
             }
 
             var cookieCopy = new byte[cookie.Length];
@@ -141,7 +140,7 @@ namespace System.Transactions
             {
                 if (etwLog.IsEnabled())
                 {
-                    etwLog.MethodExit(TraceSourceType.TraceSourceDistributed, "TransactionInterop.GetTransactionFromExportCookie");
+                    etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, "TransactionInterop.GetTransactionFromExportCookie");
                 }
 
                 return transaction;
@@ -192,10 +191,9 @@ namespace System.Transactions
             // created.
             transaction = TransactionManager.FindOrCreatePromotedTransaction(txId, oleTx);
 
-            if (DiagnosticTrace.Verbose)
+            if (etwLog.IsEnabled())
             {
-                MethodExitedTraceRecord.Trace(SR.TraceSourceOletx,
-                    "TransactionInterop.GetTransactionFromExportCookie");
+                etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, $"{nameof(TransactionInterop)}.{nameof(GetTransactionFromExportCookie)}");
             }
 
             return transaction;
@@ -208,7 +206,7 @@ namespace System.Transactions
             TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
             if (etwLog.IsEnabled())
             {
-                etwLog.MethodEnter(TraceSourceType.TraceSourceDistributed, "TransactionInterop.GetTransmitterPropagationToken");
+                etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, $"{nameof(TransactionInterop)}.{nameof(GetTransmitterPropagationToken)}");
             }
 
             // First, make sure we are working with an OletxTransaction.
@@ -216,12 +214,10 @@ namespace System.Transactions
 
             byte[] token = GetTransmitterPropagationToken(oletxTx);
 
-            // if (DiagnosticTrace.Verbose)
-            // {
-            //     MethodExitedTraceRecord.Trace( SR.GetString( SR.TraceSourceOletx ),
-            //         "TransactionInterop.GetTransmitterPropagationToken"
-            //     );
-            // }
+            if (etwLog.IsEnabled())
+            {
+                etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, $"{nameof(TransactionInterop)}.{nameof(GetTransmitterPropagationToken)}");
+            }
 
             return token;
         }
@@ -257,7 +253,7 @@ namespace System.Transactions
             TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
             if (etwLog.IsEnabled())
             {
-                etwLog.MethodEnter(TraceSourceType.TraceSourceDistributed, "TransactionInterop.GetTransactionFromTransmitterPropagationToken");
+                etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, "TransactionInterop.GetTransactionFromTransmitterPropagationToken");
             }
 
             // Extract the transaction guid from the propagation token to see if we already have a
@@ -271,7 +267,7 @@ namespace System.Transactions
             {
                 if (etwLog.IsEnabled())
                 {
-                    etwLog.MethodExit(TraceSourceType.TraceSourceDistributed, "TransactionInterop.GetTransactionFromTransmitterPropagationToken");
+                    etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, "TransactionInterop.GetTransactionFromTransmitterPropagationToken");
                 }
 
                 return tx;
@@ -284,7 +280,7 @@ namespace System.Transactions
 
             if (etwLog.IsEnabled())
             {
-                etwLog.MethodExit(TraceSourceType.TraceSourceDistributed, "TransactionInterop.GetTransactionFromTransmitterPropagationToken");
+                etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, "TransactionInterop.GetTransactionFromTransmitterPropagationToken");
             }
             return returnValue;
         }
@@ -296,7 +292,7 @@ namespace System.Transactions
             TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
             if (etwLog.IsEnabled())
             {
-                etwLog.MethodEnter(TraceSourceType.TraceSourceDistributed, "TransactionInterop.GetDtcTransaction");
+                etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, $"{nameof(TransactionInterop)}.{nameof(GetDtcTransaction)}");
             }
 
             IDtcTransaction? transactionNative;
@@ -314,9 +310,9 @@ namespace System.Transactions
                 throw;
             }
 
-            if (DiagnosticTrace.Verbose)
+            if (etwLog.IsEnabled())
             {
-                MethodExitedTraceRecord.Trace(SR.TraceSourceOletx, "TransactionInterop.GetDtcTransaction");
+                etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, $"{nameof(TransactionInterop)}.{nameof(GetDtcTransaction)}");
             }
 
             return transactionNative;
@@ -332,7 +328,7 @@ namespace System.Transactions
             TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
             if (etwLog.IsEnabled())
             {
-                etwLog.MethodEnter(TraceSourceType.TraceSourceDistributed, "TransactionInterop.GetWhereabouts");
+                etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, $"{nameof(TransactionInterop)}.${nameof(GetWhereabouts)}");
             }
 
             OletxTransactionManager oletxTm = TransactionManager.DistributedTransactionManager;
@@ -353,10 +349,11 @@ namespace System.Transactions
                 oletxTm.DtcTransactionManagerLock.ReleaseReaderLock();
             }
 
-            if (DiagnosticTrace.Verbose)
+            if (etwLog.IsEnabled())
             {
-                MethodExitedTraceRecord.Trace(SR.TraceSourceOletx, "TransactionInterop.GetWhereabouts");
+                etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, $"{nameof(TransactionInterop)}.${nameof(GetWhereabouts)}");
             }
+
             return returnValue;
         }
 

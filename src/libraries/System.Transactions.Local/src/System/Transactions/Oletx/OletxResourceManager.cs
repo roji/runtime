@@ -412,7 +412,7 @@ namespace System.Transactions.Oletx
             Guid rmGuid = new(rmGuidArray);
             if (rmGuid != ResourceManagerIdentifier)
             {
-                throw TransactionException.Create(TraceSourceType.TraceSourceDistributed, SR.ResourceManagerIdDoesNotMatchRecoveryInformation, null);
+                throw TransactionException.Create(TraceSourceType.TraceSourceOleTx, SR.ResourceManagerIdDoesNotMatchRecoveryInformation, null);
             }
 
             // Ask the proxy resource manager to reenlist.
@@ -564,7 +564,7 @@ namespace System.Transactions.Oletx
                         if (!ReenlistThreadTimer.Change( 0, Timeout.Infinite))
                         {
                             throw TransactionException.CreateInvalidOperationException(
-                                TraceSourceType.TraceSourceDistributed,
+                                TraceSourceType.TraceSourceOleTx,
                                 SR.UnexpectedTimerFailure,
                                 null);
                         }
@@ -587,9 +587,10 @@ namespace System.Transactions.Oletx
 
             try
             {
-                if (DiagnosticTrace.Information)
+                TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+                if (etwLog.IsEnabled())
                 {
-                    MethodEnteredTraceRecord.Trace(SR.TraceSourceOletx, "OletxResourceManager.ReenlistThread");
+                    etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this, $"{nameof(OletxResourceManager)}.{nameof(ReenlistThread)}");
                 }
 
                 lock (resourceManager)
@@ -845,9 +846,10 @@ namespace System.Transactions.Oletx
 
                         resourceManager.reenlistThread = null;
                     }
-                    if (DiagnosticTrace.Information)
+
+                    if (etwLog.IsEnabled())
                     {
-                        MethodExitedTraceRecord.Trace(SR.TraceSourceOletx, "OletxResourceManager.ReenlistThread");
+                        etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this, $"{nameof(OletxResourceManager)}.{nameof(ReenlistThread)}");
                     }
                 }
             }  // end of outer-most try

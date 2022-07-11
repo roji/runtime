@@ -60,15 +60,19 @@ namespace System.Transactions.Oletx
         {
             get
             {
-                if (DiagnosticTrace.Verbose)
+                TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+                if (etwLog.IsEnabled())
                 {
-                    MethodEnteredTraceRecord.Trace(SR.TraceSourceOletx, "OletxTransaction.get_Identifier");
+                    etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this, $"{nameof(OletxTransaction)}.{nameof(Identifier)}");
                 }
+
                 Guid returnValue = RealOletxTransaction.Identifier;
-                if (DiagnosticTrace.Verbose)
+
+                if (etwLog.IsEnabled())
                 {
-                    MethodExitedTraceRecord.Trace(SR.TraceSourceOletx, "OletxTransaction.get_Identifier");
+                    etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this, $"{nameof(OletxTransaction)}.{nameof(Identifier)}");
                 }
+
                 return returnValue;
             }
         }
@@ -92,15 +96,19 @@ namespace System.Transactions.Oletx
         {
             get
             {
-                if (DiagnosticTrace.Verbose)
+                TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+                if (etwLog.IsEnabled())
                 {
-                    MethodEnteredTraceRecord.Trace(SR.TraceSourceOletx, "OletxTransaction.get_Status");
+                    etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this, $"{nameof(OletxTransaction)}.{nameof(Status)}");
                 }
+
                 TransactionStatus returnValue = RealOletxTransaction.Status;
-                if (DiagnosticTrace.Verbose)
+
+                if (etwLog.IsEnabled())
                 {
-                    MethodExitedTraceRecord.Trace(SR.TraceSourceOletx, "OletxTransaction.get_Status");
+                    etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this, $"{nameof(OletxTransaction)}.{nameof(Status)}");
                 }
+
                 return returnValue;
             }
         }
@@ -138,9 +146,10 @@ namespace System.Transactions.Oletx
 
         public object GetRealObject(StreamingContext context)
         {
-            if (DiagnosticTrace.Verbose)
+            TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+            if (etwLog.IsEnabled())
             {
-                MethodEnteredTraceRecord.Trace(SR.TraceSourceOletx, "IObjectReference.GetRealObject");
+                etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this, $"{nameof(IObjectReference)}.{nameof(GetRealObject)}");
             }
 
             if (_propagationTokenForDeserialize == null)
@@ -156,9 +165,9 @@ namespace System.Transactions.Oletx
             // This may be a second call.  If so, just return.
             if (SavedLtmPromotedTransaction != null)
             {
-                if (DiagnosticTrace.Verbose)
+                if (etwLog.IsEnabled())
                 {
-                    MethodExitedTraceRecord.Trace(SR.TraceSourceOletx, "IObjectReference.GetRealObject");
+                    etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this, $"{nameof(IObjectReference)}.{nameof(GetRealObject)}");
                 }
 
                 return SavedLtmPromotedTransaction;
@@ -176,9 +185,9 @@ namespace System.Transactions.Oletx
                     returnValue._internalTransaction.PromotedTransaction!.TransactionTraceId);
             }
 
-            if (DiagnosticTrace.Verbose)
+            if (etwLog.IsEnabled())
             {
-                MethodExitedTraceRecord.Trace(SR.TraceSourceOletx, "IObjectReference.GetRealObject");
+                etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this, $"{nameof(IObjectReference)}.{nameof(GetRealObject)}");
             }
 
             return returnValue;
@@ -190,9 +199,10 @@ namespace System.Transactions.Oletx
         /// </summary>
         internal void Dispose()
         {
-            if (DiagnosticTrace.Verbose)
+            TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+            if (etwLog.IsEnabled())
             {
-                MethodEnteredTraceRecord.Trace(SR.TraceSourceOletx, "IDisposable.Dispose");
+                etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this, $"{nameof(IDisposable)}.{nameof(Dispose)}");
             }
 
             int localDisposed = Interlocked.CompareExchange(ref Disposed, 1, 0);
@@ -201,9 +211,10 @@ namespace System.Transactions.Oletx
                 RealOletxTransaction.OletxTransactionDisposed();
             }
             GC.SuppressFinalize(this);
-            if (DiagnosticTrace.Verbose)
+
+            if (etwLog.IsEnabled())
             {
-                MethodExitedTraceRecord.Trace(SR.TraceSourceOletx, "IDisposable.Dispose");
+                etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this, $"{nameof(IDisposable)}.{nameof(Dispose)}");
             }
         }
 
@@ -225,9 +236,10 @@ namespace System.Transactions.Oletx
         /// </remarks>
         internal void Rollback()
         {
-            if (DiagnosticTrace.Verbose)
+            TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+            if (etwLog.IsEnabled())
             {
-                MethodEnteredTraceRecord.Trace(SR.TraceSourceOletx, "OletxTransaction.Rollback");
+                etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this, $"{nameof(OletxTransaction)}.{nameof(Rollback)}");
             }
 
             if (DiagnosticTrace.Warning)
@@ -239,9 +251,9 @@ namespace System.Transactions.Oletx
 
             RealOletxTransaction.Rollback();
 
-            if (DiagnosticTrace.Verbose)
+            if (etwLog.IsEnabled())
             {
-                MethodExitedTraceRecord.Trace(SR.TraceSourceOletx, "OletxTransaction.Rollback");
+                etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this, $"{nameof(OletxTransaction)}.{nameof(Rollback)}");
             }
         }
 
@@ -249,11 +261,10 @@ namespace System.Transactions.Oletx
             ISinglePhaseNotificationInternal singlePhaseNotification,
             EnlistmentOptions enlistmentOptions)
         {
-            if (DiagnosticTrace.Verbose)
+            TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+            if (etwLog.IsEnabled())
             {
-                MethodEnteredTraceRecord.Trace(
-                    SR.TraceSourceOletx,
-                    "OletxTransaction.EnlistVolatile( ISinglePhaseNotificationInternal )");
+                etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this, $"{nameof(OletxEnlistment)}.{nameof(EnlistVolatile)}(({nameof(ISinglePhaseNotificationInternal)}");
             }
 
             Debug.Assert(singlePhaseNotification != null, "Argument is null");
@@ -269,11 +280,9 @@ namespace System.Transactions.Oletx
                 enlistmentOptions,
                 this);
 
-            if (DiagnosticTrace.Verbose)
+            if (etwLog.IsEnabled())
             {
-                MethodExitedTraceRecord.Trace(
-                    SR.TraceSourceOletx,
-                    "OletxTransaction.EnlistVolatile( ISinglePhaseNotificationInternal )");
+                etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this, $"{nameof(OletxEnlistment)}.{nameof(EnlistVolatile)}(({nameof(ISinglePhaseNotificationInternal)}");
             }
 
             return enlistment;
@@ -283,10 +292,10 @@ namespace System.Transactions.Oletx
             IEnlistmentNotificationInternal enlistmentNotification,
             EnlistmentOptions enlistmentOptions)
         {
-            if (DiagnosticTrace.Verbose)
+            TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+            if (etwLog.IsEnabled())
             {
-                MethodEnteredTraceRecord.Trace(SR.TraceSourceOletx,
-                    "OletxTransaction.EnlistVolatile( IEnlistmentNotificationInternal )");
+                etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this, $"{nameof(OletxTransaction)}.{nameof(EnlistVolatile)}({nameof(IEnlistmentNotificationInternal)}");
             }
 
             Debug.Assert(enlistmentNotification != null, "Argument is null");
@@ -304,9 +313,10 @@ namespace System.Transactions.Oletx
 
             if (DiagnosticTrace.Verbose)
             {
-                MethodExitedTraceRecord.Trace(
-                    SR.TraceSourceOletx,
-                    "OletxTransaction.EnlistVolatile( IEnlistmentNotificationInternal )");
+                if (etwLog.IsEnabled())
+                {
+                    etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this, $"{nameof(OletxTransaction)}.{nameof(EnlistVolatile)}({nameof(IEnlistmentNotificationInternal)}");
+                }
             }
 
             return enlistment;
@@ -318,11 +328,13 @@ namespace System.Transactions.Oletx
             bool canDoSinglePhase,
             EnlistmentOptions enlistmentOptions)
         {
-            if (DiagnosticTrace.Verbose)
+            TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+            if (etwLog.IsEnabled())
             {
-                MethodEnteredTraceRecord.Trace(
-                    SR.TraceSourceOletx,
-                    "OletxTransaction.EnlistDurable( ISinglePhaseNotificationInternal )");
+                etwLog.MethodEnter(
+                    TraceSourceType.TraceSourceOleTx,
+                    this,
+                    $"{nameof(OletxTransaction)}.{nameof(EnlistDurable)}({nameof(ISinglePhaseNotificationInternal)})");
             }
 
             Debug.Assert(Disposed == 0, "OletxTransction object is disposed");
@@ -345,11 +357,12 @@ namespace System.Transactions.Oletx
                 singlePhaseNotification,
                 enlistmentOptions);
 
-            if (DiagnosticTrace.Verbose)
+            if (etwLog.IsEnabled())
             {
-                MethodExitedTraceRecord.Trace(
-                    SR.TraceSourceOletx,
-                    "OletxTransaction.EnlistDurable( ISinglePhaseNotificationInternal )");
+                etwLog.MethodExit(
+                    TraceSourceType.TraceSourceOleTx,
+                    this,
+                    $"{nameof(OletxTransaction)}.{nameof(EnlistDurable)}({nameof(ISinglePhaseNotificationInternal)})");
             }
 
             return enlistment;
@@ -360,9 +373,10 @@ namespace System.Transactions.Oletx
         {
             OletxDependentTransaction dependentClone;
 
-            if (DiagnosticTrace.Verbose)
+            TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+            if (etwLog.IsEnabled())
             {
-                MethodEnteredTraceRecord.Trace(SR.TraceSourceOletx, "OletxTransaction.DependentClone");
+                etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this, $"{nameof(OletxTransaction)}.{nameof(DependentClone)}");
             }
 
             Debug.Assert(Disposed == 0, "OletxTransction object is disposed");
@@ -384,9 +398,9 @@ namespace System.Transactions.Oletx
 
             dependentClone = new OletxDependentTransaction(RealOletxTransaction, delayCommit);
 
-            if (DiagnosticTrace.Verbose)
+            if (etwLog.IsEnabled())
             {
-                MethodExitedTraceRecord.Trace(SR.TraceSourceOletx, "OletxTransaction.DependentClone");
+                etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this, $"{nameof(OletxTransaction)}.{nameof(DependentClone)}");
             }
 
             return dependentClone;
@@ -438,9 +452,10 @@ namespace System.Transactions.Oletx
 
             byte[] propagationToken;
 
-            if (DiagnosticTrace.Verbose)
+            TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+            if (etwLog.IsEnabled())
             {
-                MethodEnteredTraceRecord.Trace(SR.TraceSourceOletx, "OletxTransaction.GetObjectData");
+                etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this, $"{nameof(OletxTransaction)}.{nameof(GetObjectData)}");
             }
 
             Debug.Assert(Disposed == 0, "OletxTransction object is disposed");
@@ -455,9 +470,9 @@ namespace System.Transactions.Oletx
                 TransactionSerializedTraceRecord.Trace(SR.TraceSourceOletx, TransactionTraceId);
             }
 
-            if (DiagnosticTrace.Verbose)
+            if (etwLog.IsEnabled())
             {
-                MethodExitedTraceRecord.Trace(SR.TraceSourceOletx, "OletxTransaction.GetObjectData");
+                etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this, $"{nameof(OletxTransaction)}.{nameof(GetObjectData)}");
             }
         }
 
