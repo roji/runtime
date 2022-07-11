@@ -1,4 +1,0 @@
-LIBRARY System.Transactions.Native.dll
-
-EXPORTS
-    GetNotificationFactory

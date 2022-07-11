@@ -87,7 +87,6 @@
     <Compile Include="System\Transactions\DtcProxyShim\TransactionOutcome.cs" />
     <Compile Include="System\Transactions\DtcProxyShim\TransactionShim.cs" />
     <Compile Include="System\Transactions\DtcProxyShim\Xactopt.cs" />
-    <Compile Include="System\Transactions\Oletx\CoTaskMemHandle.cs" />
     <Compile Include="System\Transactions\Oletx\DtcInterfaces.cs" />
     <Compile Include="System\Transactions\Oletx\DTCTransactionManager.cs" />
     <Compile Include="System\Transactions\Oletx\HandleTable.cs" />

@@ -390,13 +390,6 @@ namespace System.Transactions.Oletx
                 // thread, do so now.
                 if (ProxyShimFactory == null)
                 {
-                    //int error = NativeMethods.GetNotificationFactory(ShimWaitHandle.SafeWaitHandle, out ProxyShimFactory);
-                    //
-                    // if (error != 0)
-                    // {
-                    //     throw TransactionException.Create(SR.UnableToGetNotificationShimFactory, null);
-                    // }
-
                     ProxyShimFactory = new NotificationShimFactory(ShimWaitHandle);
 
                     ThreadPool.UnsafeRegisterWaitForSingleObject(

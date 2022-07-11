@@ -29,12 +29,6 @@ namespace System.Transactions.Oletx
             object? pvConfigPararms,
             [MarshalAs(UnmanagedType.Interface)] out ITransactionDispenser ppvObject);
 
-        // Note that this PInvoke does not pass any string params but specifying a charset makes FxCop happy
-        [DllImport("System.Transactions.Native.Dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Unicode)]
-        internal static extern int GetNotificationFactory(
-            SafeHandle notificationEventHandle,
-            [MarshalAs(UnmanagedType.Interface)] out IDtcProxyShimFactory ppProxyShimFactory);
-
         internal static int S_OK = 0;
         internal static int E_FAIL = -2147467259;  // 0x80004005, -2147467259
         internal static int XACT_S_READONLY = 315394;  // 0x0004D002, 315394
