@@ -434,7 +434,6 @@ namespace System.Transactions
             }
         }
 
-
         /// <summary>
         /// This static function throws an ArgumentOutOfRange if the specified TimeSpan does not meet
         /// requirements of a valid transaction timeout.  Timeout values must be positive.

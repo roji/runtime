@@ -1553,7 +1553,7 @@ namespace System.Transactions
             TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
             if (etwLog.IsEnabled())
             {
-                etwLog.TransactionCommitted(tx.TransactionTraceId);
+                etwLog.TransactionCommitted(TraceSourceType.TraceSourceLtm, tx.TransactionTraceId);
             }
 
             // Fire Completion for anyone listening
@@ -1616,7 +1616,7 @@ namespace System.Transactions
             TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
             if (etwLog.IsEnabled())
             {
-                etwLog.TransactionInDoubt(tx.TransactionTraceId);
+                etwLog.TransactionInDoubt(TraceSourceType.TraceSourceLtm, tx.TransactionTraceId);
             }
 
             // Fire Completion for anyone listening
@@ -2973,7 +2973,7 @@ namespace System.Transactions
             TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
             if (etwLog.IsEnabled())
             {
-                etwLog.TransactionAborted(tx.TransactionTraceId);
+                etwLog.TransactionAborted(TraceSourceType.TraceSourceLtm, tx.TransactionTraceId);
             }
         }
 
@@ -3117,7 +3117,7 @@ namespace System.Transactions
             TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
             if (etwLog.IsEnabled())
             {
-                etwLog.TransactionCommitted(tx.TransactionTraceId);
+                etwLog.TransactionCommitted(TraceSourceType.TraceSourceLtm, tx.TransactionTraceId);
             }
         }
 
@@ -3187,7 +3187,7 @@ namespace System.Transactions
             TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
             if (etwLog.IsEnabled())
             {
-                etwLog.TransactionInDoubt(tx.TransactionTraceId);
+                etwLog.TransactionInDoubt(TraceSourceType.TraceSourceLtm, tx.TransactionTraceId);
             }
         }
 
@@ -4092,7 +4092,7 @@ namespace System.Transactions
             TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
             if (etwLog.IsEnabled())
             {
-                etwLog.TransactionAborted(tx.TransactionTraceId);
+                etwLog.TransactionAborted(TraceSourceType.TraceSourceLtm, tx.TransactionTraceId);
             }
         }
 
@@ -4185,7 +4185,7 @@ namespace System.Transactions
             TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
             if (etwLog.IsEnabled())
             {
-                etwLog.TransactionCommitted(tx.TransactionTraceId);
+                etwLog.TransactionCommitted(TraceSourceType.TraceSourceLtm, tx.TransactionTraceId);
             }
         }
 
@@ -4229,7 +4229,7 @@ namespace System.Transactions
             TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
             if (etwLog.IsEnabled())
             {
-                etwLog.TransactionInDoubt(tx.TransactionTraceId);
+                etwLog.TransactionInDoubt(TraceSourceType.TraceSourceLtm, tx.TransactionTraceId);
             }
         }
 

@@ -584,7 +584,7 @@ namespace System.Transactions
             if (etwLog.IsEnabled())
             {
                 etwLog.MethodEnter(TraceSourceType.TraceSourceLtm, this);
-                etwLog.TransactionRollback(this, "Transaction");
+                etwLog.TransactionRollback(TraceSourceType.TraceSourceLtm, TransactionTraceId, "Transaction");
             }
 
             if (Disposed)
@@ -611,7 +611,7 @@ namespace System.Transactions
             if (etwLog.IsEnabled())
             {
                 etwLog.MethodEnter(TraceSourceType.TraceSourceLtm, this);
-                etwLog.TransactionRollback(this, "Transaction");
+                etwLog.TransactionRollback(TraceSourceType.TraceSourceLtm, TransactionTraceId, "Transaction");
             }
 
             if (Disposed)

@@ -115,17 +115,17 @@ namespace System.Transactions
         /// <summary>The event ID for method exit event.</summary>
         private const int METHOD_EXIT_BASE_EVENTID = 14;
         /// <summary>The event ID for method enter event.</summary>
-        private const int METHOD_ENTER_DISTRIBUTED_EVENTID = 15;
+        private const int METHOD_ENTER_OLETX_EVENTID = 15;
         /// <summary>The event ID for method exit event.</summary>
-        private const int METHOD_EXIT_DISTRIBUTED_EVENTID = 16;
+        private const int METHOD_EXIT_OLETX_EVENTID = 16;
         /// <summary>The event ID for transaction aborted event.</summary>
-        private const int TRANSACTION_ABORTED_EVENTID = 17;
+        private const int TRANSACTION_ABORTED_LTM_EVENTID = 17;
         /// <summary>The event ID for the transaction clone create event.</summary>
         private const int TRANSACTION_CLONECREATE_EVENTID = 18;
         /// <summary>The event ID for the transaction commit event.</summary>
-        private const int TRANSACTION_COMMIT_EVENTID = 19;
+        private const int TRANSACTION_COMMIT_LTM_EVENTID = 19;
         /// <summary>The event ID for transaction committed event.</summary>
-        private const int TRANSACTION_COMMITTED_EVENTID = 20;
+        private const int TRANSACTION_COMMITTED_LTM_EVENTID = 20;
         /// <summary>The event ID for when we encounter a new Transactions object that hasn't had its name traced to the trace file.</summary>
         private const int TRANSACTION_CREATED_EVENTID = 21;
         /// <summary>The event ID for the transaction dependent clone complete event.</summary>
@@ -135,13 +135,13 @@ namespace System.Transactions
         /// <summary>The event ID for the transaction exception event.</summary>
         private const int TRANSACTION_EXCEPTION_BASE_EVENTID = 24;
         /// <summary>The event ID for transaction indoubt event.</summary>
-        private const int TRANSACTION_INDOUBT_EVENTID = 25;
+        private const int TRANSACTION_INDOUBT_LTM_EVENTID = 25;
         /// <summary>The event ID for the transaction invalid operation event.</summary>
         private const int TRANSACTION_INVALID_OPERATION_EVENTID = 26;
         /// <summary>The event ID for transaction promoted event.</summary>
         private const int TRANSACTION_PROMOTED_EVENTID = 27;
         /// <summary>The event ID for the transaction rollback event.</summary>
-        private const int TRANSACTION_ROLLBACK_EVENTID = 28;
+        private const int TRANSACTION_ROLLBACK_LTM_EVENTID = 28;
         /// <summary>The event ID for the transaction serialized event.</summary>
         private const int TRANSACTION_SERIALIZED_EVENTID = 29;
         /// <summary>The event ID for transaction timeout event.</summary>
@@ -166,6 +166,20 @@ namespace System.Transactions
         private const int TRANSACTIONSCOPE_TIMEOUT_EVENTID = 39;
         /// <summary>The event ID for enlistment event.</summary>
         private const int TRANSACTIONSTATE_ENLIST_EVENTID = 40;
+
+        /// <summary>The event ID for the transaction commit event.</summary>
+        private const int TRANSACTION_COMMIT_OLETX_EVENTID = 41;
+        /// <summary>The event ID for the transaction rollback event.</summary>
+        private const int TRANSACTION_ROLLBACK_OLETX_EVENTID = 42;
+        /// <summary>The event ID for exception consumed event.</summary>
+        private const int EXCEPTION_CONSUMED_OLETX_EVENTID = 43;
+        /// <summary>The event ID for transaction committed event.</summary>
+        private const int TRANSACTION_COMMITTED_OLETX_EVENTID = 44;
+        /// <summary>The event ID for transaction aborted event.</summary>
+        private const int TRANSACTION_ABORTED_OLETX_EVENTID = 45;
+        /// <summary>The event ID for transaction indoubt event.</summary>
+        private const int TRANSACTION_INDOUBT_OLETX_EVENTID = 46;
+
 
         //-----------------------------------------------------------------------------------
         //
@@ -333,28 +347,34 @@ namespace System.Transactions
         #endregion
 
         #region Transaction Rollback
-        /// <summary>Trace an event when rollback on a transaction.</summary>
-        /// <param name="transaction">The transaction to rollback.</param>
-        /// <param name="type">The type of transaction.</param>
         [NonEvent]
-        internal void TransactionRollback(Transaction transaction, string? type)
+        internal void TransactionRollback(TraceSourceType traceSource, TransactionTraceIdentifier txTraceId, string? type)
         {
-            Debug.Assert(transaction != null, "Transaction needed for the ETW event.");
-
             if (IsEnabled(EventLevel.Warning, ALL_KEYWORDS))
             {
-                if (transaction != null && transaction.TransactionTraceId.TransactionIdentifier != null)
-                    TransactionRollback(transaction.TransactionTraceId.TransactionIdentifier, type);
-                else
-                    TransactionRollback(string.Empty, type);
+                if (traceSource == TraceSourceType.TraceSourceLtm)
+                {
+                    TransactionRollbackLtm(txTraceId.TransactionIdentifier, type);
+                }
+                else if (traceSource == TraceSourceType.TraceSourceOleTx)
+                {
+                    TransactionRollbackOleTx(txTraceId.TransactionIdentifier, type);
+                }
             }
         }
 
-        [Event(TRANSACTION_ROLLBACK_EVENTID, Keywords = Keywords.TraceLtm, Level = EventLevel.Warning, Task = Tasks.Transaction, Opcode = Opcodes.Rollback, Message = "Transaction Rollback. ID is {0}, type is {1}")]
-        private void TransactionRollback(string transactionIdentifier, string? type)
+        [Event(TRANSACTION_ROLLBACK_LTM_EVENTID, Keywords = Keywords.TraceLtm, Level = EventLevel.Warning, Task = Tasks.Transaction, Opcode = Opcodes.Rollback, Message = "Transaction LTM Rollback. ID is {0}, type is {1}")]
+        private void TransactionRollbackLtm(string transactionIdentifier, string? type)
         {
             SetActivityId(transactionIdentifier);
-            WriteEvent(TRANSACTION_ROLLBACK_EVENTID, transactionIdentifier, type);
+            WriteEvent(TRANSACTION_ROLLBACK_LTM_EVENTID, transactionIdentifier, type);
+        }
+
+        [Event(TRANSACTION_ROLLBACK_OLETX_EVENTID, Keywords = Keywords.TraceOleTx, Level = EventLevel.Warning, Task = Tasks.Transaction, Opcode = Opcodes.Rollback, Message = "Transaction OleTx Rollback. ID is {0}, type is {1}")]
+        private void TransactionRollbackOleTx(string transactionIdentifier, string? type)
+        {
+            SetActivityId(transactionIdentifier);
+            WriteEvent(TRANSACTION_ROLLBACK_OLETX_EVENTID, transactionIdentifier, type);
         }
         #endregion
 
@@ -385,28 +405,34 @@ namespace System.Transactions
         #endregion
 
         #region Transaction Commit
-        /// <summary>Trace an event when there is commit on that transaction.</summary>
-        /// <param name="transaction">The transaction to commit.</param>
-        /// <param name="type">The type of transaction.</param>
         [NonEvent]
-        internal void TransactionCommit(Transaction transaction, string? type)
+        internal void TransactionCommit(TraceSourceType traceSource, TransactionTraceIdentifier txTraceId, string? type)
         {
-            Debug.Assert(transaction != null, "Transaction needed for the ETW event.");
-
             if (IsEnabled(EventLevel.Verbose, ALL_KEYWORDS))
             {
-                if (transaction != null && transaction.TransactionTraceId.TransactionIdentifier != null)
-                    TransactionCommit(transaction.TransactionTraceId.TransactionIdentifier, type);
-                else
-                    TransactionCommit(string.Empty, type);
+                if (traceSource == TraceSourceType.TraceSourceLtm)
+                {
+                    TransactionCommitLtm(txTraceId.TransactionIdentifier, type);
+                }
+                else if (traceSource == TraceSourceType.TraceSourceOleTx)
+                {
+                    TransactionCommitOleTx(txTraceId.TransactionIdentifier, type);
+                }
             }
         }
 
-        [Event(TRANSACTION_COMMIT_EVENTID, Keywords = Keywords.TraceLtm, Level = EventLevel.Verbose, Task = Tasks.Transaction, Opcode = Opcodes.Commit, Message = "Transaction Commit: ID is {0}, type is {1}")]
-        private void TransactionCommit(string transactionIdentifier, string? type)
+        [Event(TRANSACTION_COMMIT_LTM_EVENTID, Keywords = Keywords.TraceLtm, Level = EventLevel.Verbose, Task = Tasks.Transaction, Opcode = Opcodes.Commit, Message = "Transaction LTM Commit: ID is {0}, type is {1}")]
+        private void TransactionCommitLtm(string transactionIdentifier, string? type)
         {
             SetActivityId(transactionIdentifier);
-            WriteEvent(TRANSACTION_COMMIT_EVENTID, transactionIdentifier, type);
+            WriteEvent(TRANSACTION_COMMIT_LTM_EVENTID, transactionIdentifier, type);
+        }
+
+        [Event(TRANSACTION_COMMIT_OLETX_EVENTID, Keywords = Keywords.TraceOleTx, Level = EventLevel.Verbose, Task = Tasks.Transaction, Opcode = Opcodes.Commit, Message = "Transaction OleTx Commit: ID is {0}, type is {1}")]
+        private void TransactionCommitOleTx(string transactionIdentifier, string? type)
+        {
+            SetActivityId(transactionIdentifier);
+            WriteEvent(TRANSACTION_COMMIT_OLETX_EVENTID, transactionIdentifier, type);
         }
         #endregion
 
@@ -647,11 +673,11 @@ namespace System.Transactions
             SetActivityId(string.Empty);
             WriteEvent(METHOD_ENTER_BASE_EVENTID, thisOrContextObject, methodname);
         }
-        [Event(METHOD_ENTER_DISTRIBUTED_EVENTID, Keywords = Keywords.TraceDistributed, Level = EventLevel.Verbose, Task = Tasks.Method, Opcode = Opcodes.Enter, Message = "Enter method : {0}.{1}")]
+        [Event(METHOD_ENTER_OLETX_EVENTID, Keywords = Keywords.TraceOleTx, Level = EventLevel.Verbose, Task = Tasks.Method, Opcode = Opcodes.Enter, Message = "Enter method : {0}.{1}")]
         private void MethodEnterTraceDistributed(string thisOrContextObject, string? methodname)
         {
             SetActivityId(string.Empty);
-            WriteEvent(METHOD_ENTER_DISTRIBUTED_EVENTID, thisOrContextObject, methodname);
+            WriteEvent(METHOD_ENTER_OLETX_EVENTID, thisOrContextObject, methodname);
         }
         #endregion
 
@@ -715,11 +741,11 @@ namespace System.Transactions
             SetActivityId(string.Empty);
             WriteEvent(METHOD_EXIT_BASE_EVENTID, thisOrContextObject, methodname);
         }
-        [Event(METHOD_EXIT_DISTRIBUTED_EVENTID, Keywords = Keywords.TraceDistributed, Level = EventLevel.Verbose, Task = Tasks.Method, Opcode = Opcodes.Exit, Message = "Exit method: {0}.{1}")]
+        [Event(METHOD_EXIT_OLETX_EVENTID, Keywords = Keywords.TraceOleTx, Level = EventLevel.Verbose, Task = Tasks.Method, Opcode = Opcodes.Exit, Message = "Exit method: {0}.{1}")]
         private void MethodExitTraceDistributed(string thisOrContextObject, string? methodname)
         {
             SetActivityId(string.Empty);
-            WriteEvent(METHOD_EXIT_DISTRIBUTED_EVENTID, thisOrContextObject, methodname);
+            WriteEvent(METHOD_EXIT_OLETX_EVENTID, thisOrContextObject, methodname);
         }
 
         #endregion
@@ -733,13 +759,17 @@ namespace System.Transactions
         {
             if (IsEnabled(EventLevel.Verbose, ALL_KEYWORDS))
             {
-                if (traceSource == TraceSourceType.TraceSourceBase)
+                switch (traceSource)
                 {
-                    ExceptionConsumedBase(exception.ToString());
-                }
-                else
-                {
-                    ExceptionConsumedLtm(exception.ToString());
+                    case TraceSourceType.TraceSourceBase:
+                        ExceptionConsumedBase(exception.ToString());
+                        return;
+                    case TraceSourceType.TraceSourceLtm:
+                        ExceptionConsumedLtm(exception.ToString());
+                        return;
+                    case TraceSourceType.TraceSourceOleTx:
+                        ExceptionConsumedOleTx(exception.ToString());
+                        return;
                 }
             }
         }
@@ -765,6 +795,12 @@ namespace System.Transactions
         {
             SetActivityId(string.Empty);
             WriteEvent(EXCEPTION_CONSUMED_LTM_EVENTID, exceptionStr);
+        }
+        [Event(EXCEPTION_CONSUMED_OLETX_EVENTID, Keywords = Keywords.TraceOleTx, Level = EventLevel.Verbose, Opcode = Opcodes.ExceptionConsumed, Message = "Exception consumed: {0}")]
+        private void ExceptionConsumedOleTx(string exceptionStr)
+        {
+            SetActivityId(string.Empty);
+            WriteEvent(EXCEPTION_CONSUMED_OLETX_EVENTID, exceptionStr);
         }
         #endregion
 
@@ -1003,7 +1039,7 @@ namespace System.Transactions
         }
         #endregion
 
-        #region Transactionstate Enlist
+        #region Transaction Enlist
         /// <summary>Trace an event when there is enlist.</summary>
         /// <param name="enlistmentID">The enlistment ID.</param>
         /// <param name="enlistmentType">The enlistment type.</param>
@@ -1028,43 +1064,65 @@ namespace System.Transactions
         }
         #endregion
 
-        #region Transactionstate committed
-        /// <summary>Trace an event when transaction is committed.</summary>
-        /// <param name="transactionID">The transaction ID.</param>
+        #region Transaction committed
         [NonEvent]
-        internal void TransactionCommitted(TransactionTraceIdentifier transactionID)
+        internal void TransactionCommitted(TraceSourceType traceSource, TransactionTraceIdentifier transactionID)
         {
             if (IsEnabled(EventLevel.Verbose, ALL_KEYWORDS))
             {
-                TransactionCommitted(transactionID.TransactionIdentifier ?? string.Empty);
+                if (traceSource == TraceSourceType.TraceSourceLtm)
+                {
+                    TransactionCommittedLtm(transactionID.TransactionIdentifier ?? string.Empty);
+                }
+                else if (traceSource == TraceSourceType.TraceSourceOleTx)
+                {
+                    TransactionCommittedOleTx(transactionID.TransactionIdentifier ?? string.Empty);
+                }
             }
         }
 
-        [Event(TRANSACTION_COMMITTED_EVENTID, Keywords = Keywords.TraceLtm, Level = EventLevel.Verbose, Task = Tasks.Transaction, Opcode = Opcodes.Committed, Message = "Transaction committed: transaction ID is {0}")]
-        private void TransactionCommitted(string transactionID)
+        [Event(TRANSACTION_COMMITTED_LTM_EVENTID, Keywords = Keywords.TraceLtm, Level = EventLevel.Verbose, Task = Tasks.Transaction, Opcode = Opcodes.Committed, Message = "Transaction committed LTM: transaction ID is {0}")]
+        private void TransactionCommittedLtm(string transactionID)
         {
             SetActivityId(transactionID);
-            WriteEvent(TRANSACTION_COMMITTED_EVENTID, transactionID);
+            WriteEvent(TRANSACTION_COMMITTED_LTM_EVENTID, transactionID);
+        }
+        [Event(TRANSACTION_COMMITTED_OLETX_EVENTID, Keywords = Keywords.TraceOleTx, Level = EventLevel.Verbose, Task = Tasks.Transaction, Opcode = Opcodes.Committed, Message = "Transaction committed OleTx: transaction ID is {0}")]
+        private void TransactionCommittedOleTx(string transactionID)
+        {
+            SetActivityId(transactionID);
+            WriteEvent(TRANSACTION_COMMITTED_OLETX_EVENTID, transactionID);
         }
         #endregion
 
-        #region Transactionstate indoubt
-        /// <summary>Trace an event when transaction is indoubt.</summary>
-        /// <param name="transactionID">The transaction ID.</param>
+        #region Transaction indoubt
         [NonEvent]
-        internal void TransactionInDoubt(TransactionTraceIdentifier transactionID)
+        internal void TransactionInDoubt(TraceSourceType traceSource, TransactionTraceIdentifier transactionID)
         {
             if (IsEnabled(EventLevel.Warning, ALL_KEYWORDS))
             {
-                TransactionInDoubt(transactionID.TransactionIdentifier ?? string.Empty);
+                if (traceSource == TraceSourceType.TraceSourceLtm)
+                {
+                    TransactionInDoubtLtm(transactionID.TransactionIdentifier ?? string.Empty);
+                }
+                else if (traceSource == TraceSourceType.TraceSourceOleTx)
+                {
+                    TransactionInDoubtOleTx(transactionID.TransactionIdentifier ?? string.Empty);
+                }
             }
         }
 
-        [Event(TRANSACTION_INDOUBT_EVENTID, Keywords = Keywords.TraceLtm, Level = EventLevel.Warning, Task = Tasks.Transaction, Opcode = Opcodes.InDoubt, Message = "Transaction indoubt: transaction ID is {0}")]
-        private void TransactionInDoubt(string transactionID)
+        [Event(TRANSACTION_INDOUBT_LTM_EVENTID, Keywords = Keywords.TraceLtm, Level = EventLevel.Warning, Task = Tasks.Transaction, Opcode = Opcodes.InDoubt, Message = "Transaction indoubt LTM: transaction ID is {0}")]
+        private void TransactionInDoubtLtm(string transactionID)
         {
             SetActivityId(transactionID);
-            WriteEvent(TRANSACTION_INDOUBT_EVENTID, transactionID);
+            WriteEvent(TRANSACTION_INDOUBT_LTM_EVENTID, transactionID);
+        }
+        [Event(TRANSACTION_INDOUBT_OLETX_EVENTID, Keywords = Keywords.TraceOleTx, Level = EventLevel.Warning, Task = Tasks.Transaction, Opcode = Opcodes.InDoubt, Message = "Transaction indoubt OleTx: transaction ID is {0}")]
+        private void TransactionInDoubtOleTx(string transactionID)
+        {
+            SetActivityId(transactionID);
+            WriteEvent(TRANSACTION_INDOUBT_OLETX_EVENTID, transactionID);
         }
         #endregion
 
@@ -1089,25 +1147,37 @@ namespace System.Transactions
         }
         #endregion
 
-        #region Transactionstate aborted
-        /// <summary>Trace an event when transaction is aborted.</summary>
-        /// <param name="transactionID">The transaction ID.</param>
+        #region Transaction aborted
         [NonEvent]
-        internal void TransactionAborted(TransactionTraceIdentifier transactionID)
+        internal void TransactionAborted(TraceSourceType traceSource, TransactionTraceIdentifier transactionID)
         {
             if (IsEnabled(EventLevel.Warning, ALL_KEYWORDS))
             {
-                TransactionAborted(transactionID.TransactionIdentifier ?? string.Empty);
+                if (traceSource == TraceSourceType.TraceSourceLtm)
+                {
+                    TransactionAbortedLtm(transactionID.TransactionIdentifier ?? string.Empty);
+                }
+                else if (traceSource == TraceSourceType.TraceSourceOleTx)
+                {
+                    TransactionAbortedOleTx(transactionID.TransactionIdentifier ?? string.Empty);
+                }
             }
         }
 
-        [Event(TRANSACTION_ABORTED_EVENTID, Keywords = Keywords.TraceLtm, Level = EventLevel.Warning, Task = Tasks.Transaction, Opcode = Opcodes.Aborted, Message = "Transaction aborted: transaction ID is {0}")]
-        private void TransactionAborted(string transactionID)
+        [Event(TRANSACTION_ABORTED_LTM_EVENTID, Keywords = Keywords.TraceLtm, Level = EventLevel.Warning, Task = Tasks.Transaction, Opcode = Opcodes.Aborted, Message = "Transaction aborted LTM: transaction ID is {0}")]
+        private void TransactionAbortedLtm(string transactionID)
         {
             SetActivityId(transactionID);
-            WriteEvent(TRANSACTION_ABORTED_EVENTID, transactionID);
+            WriteEvent(TRANSACTION_ABORTED_LTM_EVENTID, transactionID);
+        }
+        [Event(TRANSACTION_ABORTED_OLETX_EVENTID, Keywords = Keywords.TraceOleTx, Level = EventLevel.Warning, Task = Tasks.Transaction, Opcode = Opcodes.Aborted, Message = "Transaction aborted OleTx: transaction ID is {0}")]
+        private void TransactionAbortedOleTx(string transactionID)
+        {
+            SetActivityId(transactionID);
+            WriteEvent(TRANSACTION_ABORTED_OLETX_EVENTID, transactionID);
         }
         #endregion
+
         public static class Opcodes
         {
             public const EventOpcode Aborted = (EventOpcode)100;
@@ -1158,7 +1228,7 @@ namespace System.Transactions
         {
             public const EventKeywords TraceBase = (EventKeywords)0x0001;
             public const EventKeywords TraceLtm = (EventKeywords)0x0002;
-            public const EventKeywords TraceDistributed = (EventKeywords)0x0004;
+            public const EventKeywords TraceOleTx = (EventKeywords)0x0004;
         }
 
         private static void SetActivityId(string str)

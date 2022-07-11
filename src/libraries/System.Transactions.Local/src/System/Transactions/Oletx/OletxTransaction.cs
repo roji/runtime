@@ -240,11 +240,7 @@ namespace System.Transactions.Oletx
             if (etwLog.IsEnabled())
             {
                 etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this, $"{nameof(OletxTransaction)}.{nameof(Rollback)}");
-            }
-
-            if (DiagnosticTrace.Warning)
-            {
-                TransactionRollbackCalledTraceRecord.Trace(SR.TraceSourceOletx, TransactionTraceId);
+                etwLog.TransactionRollback(TraceSourceType.TraceSourceOleTx, TransactionTraceId, "Transaction");
             }
 
             Debug.Assert(Disposed == 0, "OletxTransction object is disposed");
@@ -426,9 +422,11 @@ namespace System.Transactions.Oletx
                                 // transaction because the transaction was already committed or aborted before the RealOletxTransaction was
                                 // created.  If that happens, we don't want to throw just because we are trying to trace.  So just use
                                 // the TransactionTraceIdentifier.Empty.
-                                if (DiagnosticTrace.Verbose)
+
+                                TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+                                if (etwLog.IsEnabled())
                                 {
-                                    ExceptionConsumedTraceRecord.Trace(SR.TraceSourceOletx, ex);
+                                    etwLog.ExceptionConsumed(TraceSourceType.TraceSourceOleTx, ex);
                                 }
                             }
 
@@ -1010,9 +1008,10 @@ namespace System.Transactions.Oletx
                 {
                     Interlocked.CompareExchange(ref InnerException, comException, null);
 
-                    if (DiagnosticTrace.Verbose)
+                    TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+                    if (etwLog.IsEnabled())
                     {
-                        ExceptionConsumedTraceRecord.Trace(SR.TraceSourceOletx, comException);
+                        etwLog.ExceptionConsumed(TraceSourceType.TraceSourceOleTx, comException);
                     }
                 }
                 else if (comException.ErrorCode == NativeMethods.XACT_E_ALREADYINPROGRESS)
@@ -1090,9 +1089,10 @@ namespace System.Transactions.Oletx
                 {
                     if (Doomed)
                     {
-                        if (DiagnosticTrace.Verbose)
+                        TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+                        if (etwLog.IsEnabled())
                         {
-                            ExceptionConsumedTraceRecord.Trace(SR.TraceSourceOletx, comException);
+                            etwLog.ExceptionConsumed(TraceSourceType.TraceSourceOleTx, comException);
                         }
                     }
                     else
@@ -1125,27 +1125,30 @@ namespace System.Transactions.Oletx
             {
                 if (statusArg == TransactionStatus.Committed)
                 {
-                    if (DiagnosticTrace.Verbose)
+                    TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+                    if (etwLog.IsEnabled())
                     {
-                        TransactionCommittedTraceRecord.Trace(SR.TraceSourceOletx, TransactionTraceId);
+                        etwLog.TransactionCommitted(TraceSourceType.TraceSourceOleTx, TransactionTraceId);
                     }
 
                     Status = TransactionStatus.Committed;
                 }
                 else if (statusArg == TransactionStatus.Aborted)
                 {
-                    if (DiagnosticTrace.Warning)
+                    TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+                    if (etwLog.IsEnabled())
                     {
-                        TransactionAbortedTraceRecord.Trace(SR.TraceSourceOletx, TransactionTraceId);
+                        etwLog.TransactionAborted(TraceSourceType.TraceSourceOleTx, TransactionTraceId);
                     }
 
                     Status = TransactionStatus.Aborted;
                 }
                 else
                 {
-                    if (DiagnosticTrace.Warning)
+                    TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+                    if (etwLog.IsEnabled())
                     {
-                        TransactionInDoubtTraceRecord.Trace(SR.TraceSourceOletx, TransactionTraceId);
+                        etwLog.TransactionInDoubt(TraceSourceType.TraceSourceOleTx, TransactionTraceId);
                     }
 
                     Status = TransactionStatus.InDoubt;
