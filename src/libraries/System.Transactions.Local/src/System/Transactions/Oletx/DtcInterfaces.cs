@@ -276,7 +276,7 @@ namespace System.Transactions.Oletx
     {
         void Enlist(ITransactionShim transactionShim, OletxEnlistment managedIdentifier, out IEnlistmentShim enlistmentShim);
 
-        void Reenlist(uint prepareInfoSize, byte[] prepareInfo, out OletxTransactionOutcome outcome);
+        void Reenlist(byte[] prepareInfo, out OletxTransactionOutcome outcome);
 
         void ReenlistComplete();
     }

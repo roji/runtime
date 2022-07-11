@@ -382,18 +382,18 @@ namespace System.Transactions
             try
             {
                 // Manually write the recovery information
-                BinaryWriter writer = new BinaryWriter( stream );
+                BinaryWriter writer = new BinaryWriter(stream);
 
-                writer.Write( TransactionManager.CurrentRecoveryVersion );
-                if ( startupInfo != null )
+                writer.Write(CurrentRecoveryVersion);
+                if (startupInfo != null)
                 {
-                    writer.Write( startupInfo );
+                    writer.Write(startupInfo);
                 }
                 else
                 {
-                    writer.Write( "" );
+                    writer.Write("");
                 }
-                writer.Write( resourceManagerRecoveryInformation );
+                writer.Write(resourceManagerRecoveryInformation);
                 writer.Flush();
                 returnValue = stream.ToArray();
             }
@@ -408,33 +408,6 @@ namespace System.Transactions
             }
 
             return returnValue;
-        }
-
-        internal static byte[] ConvertToByteArray( object thingToConvert )
-        {
-            throw new NotImplementedException();
-#if BINARY_FORMATTER_YAY
-            MemoryStream streamToWrite = new MemoryStream();
-            byte[] returnValue = null;
-
-            try
-            {
-                // First seralize the type to the stream.
-                IFormatter formatter = new BinaryFormatter();
-                formatter.Serialize( streamToWrite, thingToConvert );
-
-                returnValue = new byte[streamToWrite.Length];
-
-                streamToWrite.Position = 0;
-                streamToWrite.Read( returnValue, 0, Convert.ToInt32( streamToWrite.Length, CultureInfo.InvariantCulture ) );
-            }
-            finally
-            {
-                streamToWrite.Close();
-            }
-
-            return returnValue;
-#endif
         }
 
         /// <summary>
