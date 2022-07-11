@@ -47,7 +47,7 @@ namespace System.Transactions
             if (etwLog.IsEnabled())
             {
                 etwLog.MethodEnter(TraceSourceType.TraceSourceLtm, this);
-                etwLog.TransactionCommit(this, "CommittableTransaction");
+                etwLog.TransactionCommit(TraceSourceType.TraceSourceLtm, TransactionTraceId, "CommittableTransaction");
             }
 
             if (Disposed)
@@ -84,7 +84,8 @@ namespace System.Transactions
             if (etwLog.IsEnabled())
             {
                 etwLog.MethodEnter(TraceSourceType.TraceSourceLtm, this);
-                etwLog.TransactionCommit(this, "CommittableTransaction");
+                etwLog.TransactionCommit(TraceSourceType.TraceSourceLtm, TransactionTraceId, "CommittableTransaction");
+                //etwLog.TransactionCommit(this, "CommittableTransaction");
             }
 
             if (Disposed)
