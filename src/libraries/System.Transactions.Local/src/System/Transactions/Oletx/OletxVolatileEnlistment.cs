@@ -79,16 +79,17 @@ namespace System.Transactions.Oletx
 
         internal void TMDown()
         {
-            if (DiagnosticTrace.Verbose)
+            TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+            if (etwLog.IsEnabled())
             {
-                MethodEnteredTraceRecord.Trace(SR.TraceSourceOletx, "OletxPhase0VolatileEnlistmentContainer.TMDown");
+                etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this, $"{nameof(OletxPhase0VolatileEnlistmentContainer)}.{nameof(TMDown)}");
             }
 
             _tmWentDown = true;
 
-            if (DiagnosticTrace.Verbose)
+            if (etwLog.IsEnabled())
             {
-                MethodExitedTraceRecord.Trace(SR.TraceSourceOletx, "OletxPhase0VolatileEnlistmentContainer.TMDown");
+                etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this, $"{nameof(OletxPhase0VolatileEnlistmentContainer)}.{nameof(TMDown)}");
             }
         }
 
@@ -126,10 +127,12 @@ namespace System.Transactions.Oletx
 
         internal override void DependentCloneCompleted()
         {
+            TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+
             bool doDecrement = false;
             lock (this)
             {
-                if (DiagnosticTrace.Verbose)
+                if (etwLog.IsEnabled())
                 {
                     string description = "OletxPhase0VolatileEnlistmentContainer.DependentCloneCompleted, outstandingNotifications = " +
                         OutstandingNotifications.ToString(CultureInfo.CurrentCulture) +
@@ -137,8 +140,9 @@ namespace System.Transactions.Oletx
                         IncompleteDependentClones.ToString(CultureInfo.CurrentCulture) +
                         ", phase = " + Phase.ToString(CultureInfo.CurrentCulture);
 
-                    MethodEnteredTraceRecord.Trace(SR.TraceSourceOletx, description);
+                    etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this, description);
                 }
+
                 IncompleteDependentClones--;
                 Debug.Assert(IncompleteDependentClones >= 0, "OletxPhase0VolatileEnlistmentContainer.DependentCloneCompleted - incompleteDependentClones < 0");
 
@@ -153,25 +157,29 @@ namespace System.Transactions.Oletx
             {
                 DecrementOutstandingNotifications(true);
             }
-            if (DiagnosticTrace.Verbose)
+
+            if (etwLog.IsEnabled())
             {
                 string description = "OletxPhase0VolatileEnlistmentContainer.DependentCloneCompleted";
-                MethodExitedTraceRecord.Trace(SR.TraceSourceOletx, description);
+                etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this, description);
             }
         }
 
         internal override void RollbackFromTransaction()
         {
+            TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+
             lock (this)
             {
-                if (DiagnosticTrace.Verbose)
+                if (etwLog.IsEnabled())
                 {
                     string description = "OletxPhase0VolatileEnlistmentContainer.RollbackFromTransaction, outstandingNotifications = " +
                         OutstandingNotifications.ToString(CultureInfo.CurrentCulture) +
                         ", incompleteDependentClones = " + IncompleteDependentClones.ToString(CultureInfo.CurrentCulture);
 
-                    MethodEnteredTraceRecord.Trace(SR.TraceSourceOletx, description);
+                    etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this, description);
                 }
+
                 if (Phase == 0 && (OutstandingNotifications > 0 || IncompleteDependentClones > 0))
                 {
                     AlreadyVoted = true;
@@ -183,10 +191,11 @@ namespace System.Transactions.Oletx
                     }
                 }
             }
-            if (DiagnosticTrace.Verbose)
+
+            if (etwLog.IsEnabled())
             {
                 string description = "OletxPhase0VolatileEnlistmentContainer.RollbackFromTransaction";
-                MethodExitedTraceRecord.Trace(SR.TraceSourceOletx, description);
+                etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this, description);
             }
         }
 
@@ -218,18 +227,20 @@ namespace System.Transactions.Oletx
 
         internal override void DecrementOutstandingNotifications(bool voteYes)
         {
+            TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
             bool respondToProxy = false;
             IPhase0EnlistmentShim? localPhase0Shim = null;
 
             lock (this)
             {
-                if (DiagnosticTrace.Verbose)
+                if (etwLog.IsEnabled())
                 {
                     string description = "OletxPhase0VolatileEnlistmentContainer.DecrementOutstandingNotifications, outstandingNotifications = " +
                         OutstandingNotifications.ToString(CultureInfo.CurrentCulture) +
                         ", incompleteDependentClones = " +
                         IncompleteDependentClones.ToString(CultureInfo.CurrentCulture);
-                    MethodEnteredTraceRecord.Trace(SR.TraceSourceOletx, description);
+
+                    etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this, description);
                 }
                 OutstandingNotifications--;
                 Debug.Assert(OutstandingNotifications >= 0, "OletxPhase0VolatileEnlistmentContainer.DecrementOutstandingNotifications - outstandingNotifications < 0");
@@ -288,10 +299,11 @@ namespace System.Transactions.Oletx
                 }
             }
 
-            if (DiagnosticTrace.Verbose)
+            if (etwLog.IsEnabled())
             {
                 string description = "OletxPhase0VolatileEnlistmentContainer.DecrementOutstandingNotifications";
-                MethodExitedTraceRecord.Trace(SR.TraceSourceOletx, description);
+
+                etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this, description);
             }
         }
 
@@ -408,6 +420,7 @@ namespace System.Transactions.Oletx
 
         internal void Phase0Request(bool abortHint)
         {
+            TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
             OletxVolatileEnlistment? enlistment;
             int localCount;
             OletxCommittableTransaction? committableTx;
@@ -415,12 +428,13 @@ namespace System.Transactions.Oletx
 
             lock (this)
             {
-                if (DiagnosticTrace.Verbose)
+                if (etwLog.IsEnabled())
                 {
                     string description = "OletxPhase0VolatileEnlistmentContainer.Phase0Request, abortHint = " +
                         abortHint.ToString(CultureInfo.CurrentCulture) +
                         ", phase = " + Phase.ToString(CultureInfo.CurrentCulture);
-                    MethodEnteredTraceRecord.Trace(SR.TraceSourceOletx, description);
+
+                    etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this, description);
                 }
 
                 _aborting = abortHint;
@@ -531,10 +545,11 @@ namespace System.Transactions.Oletx
                 }
             }
 
-            if (DiagnosticTrace.Verbose)
+            if (etwLog.IsEnabled())
             {
                 string description = "OletxPhase0VolatileEnlistmentContainer.Phase0Request, abortHint = " + abortHint.ToString(CultureInfo.CurrentCulture);
-                MethodExitedTraceRecord.Trace(SR.TraceSourceOletx, description);
+
+                etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this, description);
             }
         }
     }
@@ -595,7 +610,8 @@ namespace System.Transactions.Oletx
 
         internal override void DependentCloneCompleted()
         {
-            if (DiagnosticTrace.Verbose)
+            TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+            if (etwLog.IsEnabled())
             {
                 string description = "OletxPhase1VolatileEnlistmentContainer.DependentCloneCompleted, outstandingNotifications = " +
                     OutstandingNotifications.ToString(CultureInfo.CurrentCulture) +
@@ -603,7 +619,7 @@ namespace System.Transactions.Oletx
                     IncompleteDependentClones.ToString(CultureInfo.CurrentCulture) +
                     ", phase = " + Phase.ToString(CultureInfo.CurrentCulture);
 
-                MethodEnteredTraceRecord.Trace(SR.TraceSourceOletx, description);
+                etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this, description);
             }
 
             //Fix for stress bug CSDMain 126887. This is to synchronize with the corresponding AddDependentClone
@@ -615,26 +631,28 @@ namespace System.Transactions.Oletx
 
             Debug.Assert(OutstandingNotifications >= 0, "OletxPhase1VolatileEnlistmentContainer.DependentCloneCompleted - DependentCloneCompleted < 0");
 
-            if (DiagnosticTrace.Verbose)
+            if (etwLog.IsEnabled())
             {
                 string description = "OletxPhase1VolatileEnlistmentContainer.DependentCloneCompleted";
-                MethodExitedTraceRecord.Trace(SR.TraceSourceOletx, description);
+                etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this, description);
             }
         }
 
         internal override void RollbackFromTransaction()
         {
+            TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
             bool voteNo = false;
             IVoterBallotShim? localVoterShim = null;
 
             lock (this)
             {
-                if (DiagnosticTrace.Verbose)
+                if (etwLog.IsEnabled())
                 {
                     string description = "OletxPhase1VolatileEnlistmentContainer.RollbackFromTransaction, outstandingNotifications = " +
                         OutstandingNotifications.ToString(CultureInfo.CurrentCulture) +
                         ", incompleteDependentClones = " + IncompleteDependentClones.ToString(CultureInfo.CurrentCulture);
-                    MethodEnteredTraceRecord.Trace(SR.TraceSourceOletx, description);
+
+                    etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this, description);
                 }
 
                 if (Phase == 1 && OutstandingNotifications > 0)
@@ -689,10 +707,10 @@ namespace System.Transactions.Oletx
                 }
             }
 
-            if (DiagnosticTrace.Verbose)
+            if (etwLog.IsEnabled())
             {
                 string description = "OletxPhase1VolatileEnlistmentContainer.RollbackFromTransaction";
-                MethodExitedTraceRecord.Trace(SR.TraceSourceOletx, description);
+                etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this, description);
             }
         }
 
@@ -707,7 +725,7 @@ namespace System.Transactions.Oletx
             }
             set
             {
-                lock ( this )
+                lock (this)
                 {
                     _voterBallotShim = value;
                 }
@@ -716,18 +734,20 @@ namespace System.Transactions.Oletx
 
         internal override void DecrementOutstandingNotifications(bool voteYes)
         {
+            TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
             bool respondToProxy = false;
             IVoterBallotShim? localVoterShim = null;
 
             lock (this)
             {
-                if (DiagnosticTrace.Verbose)
+                if (etwLog.IsEnabled())
                 {
                     string description = "OletxPhase1VolatileEnlistmentContainer.DecrementOutstandingNotifications, outstandingNotifications = " +
                         OutstandingNotifications.ToString(CultureInfo.CurrentCulture) +
                         ", incompleteDependentClones = " +
                         IncompleteDependentClones.ToString(CultureInfo.CurrentCulture);
-                    MethodEnteredTraceRecord.Trace(SR.TraceSourceOletx, description);
+
+                    etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this, description);
                 }
 
                 OutstandingNotifications--;
@@ -802,10 +822,10 @@ namespace System.Transactions.Oletx
                 }
             }
 
-            if (DiagnosticTrace.Verbose)
+            if (etwLog.IsEnabled())
             {
                 string description = "OletxPhase1VolatileEnlistmentContainer.DecrementOutstandingNotifications";
-                MethodExitedTraceRecord.Trace(SR.TraceSourceOletx, description);
+                etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this, description);
             }
         }
 
@@ -938,16 +958,17 @@ namespace System.Transactions.Oletx
 
         internal void VoteRequest()
         {
+            TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
             OletxVolatileEnlistment? enlistment;
             int localPhase1Count = 0;
             bool voteNo = false;
 
             lock (this)
             {
-                if (DiagnosticTrace.Verbose)
+                if (etwLog.IsEnabled())
                 {
                     string description = "OletxPhase1VolatileEnlistmentContainer.VoteRequest";
-                    MethodEnteredTraceRecord.Trace(SR.TraceSourceOletx, description);
+                    etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this, description);
                 }
 
                 Phase = 1;
@@ -1002,10 +1023,10 @@ namespace System.Transactions.Oletx
                 }
             }
 
-            if (DiagnosticTrace.Verbose)
+            if (etwLog.IsEnabled())
             {
                 string description = "OletxPhase1VolatileEnlistmentContainer.VoteRequest";
-                MethodExitedTraceRecord.Trace(SR.TraceSourceOletx, description);
+                etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this, description);
             }
         }
     }
@@ -1346,9 +1367,14 @@ namespace System.Transactions.Oletx
 
         void IPromotedEnlistment.EnlistmentDone()
         {
+            TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+            if (etwLog.IsEnabled())
+            {
+                etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this, $"{nameof(OletxEnlistment)}.{nameof(IPromotedEnlistment.EnlistmentDone)}");
+            }
+
             if (DiagnosticTrace.Verbose)
             {
-                MethodEnteredTraceRecord.Trace(SR.TraceSourceOletx, "OletxEnlistment.EnlistmentDone");
                 EnlistmentCallbackPositiveTraceRecord.Trace(
                     SR.TraceSourceOletx,
                     InternalTraceIdentifier,
@@ -1388,17 +1414,22 @@ namespace System.Transactions.Oletx
                 }
             }
 
-            if (DiagnosticTrace.Verbose)
+            if (etwLog.IsEnabled())
             {
-                MethodExitedTraceRecord.Trace(SR.TraceSourceOletx, "OletxEnlistment.EnlistmentDone");
+                etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this, $"{nameof(OletxEnlistment)}.{nameof(IPromotedEnlistment.EnlistmentDone)}");
             }
         }
 
         void IPromotedEnlistment.Prepared()
         {
+            TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+            if (etwLog.IsEnabled())
+            {
+                etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this, $"OletxPreparingEnlistment.{nameof(IPromotedEnlistment.Prepared)}");
+            }
+
             if (DiagnosticTrace.Verbose)
             {
-                MethodEnteredTraceRecord.Trace(SR.TraceSourceOletx, "OletxPreparingEnlistment.Prepared");
                 EnlistmentCallbackPositiveTraceRecord.Trace(
                     SR.TraceSourceOletx,
                     InternalTraceIdentifier,
@@ -1469,9 +1500,9 @@ namespace System.Transactions.Oletx
                 }
             }
 
-            if (DiagnosticTrace.Verbose)
+            if (etwLog.IsEnabled())
             {
-                MethodExitedTraceRecord.Trace(SR.TraceSourceOletx, "OletxPreparingEnlistment.Prepared");
+                etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this, $"OletxPreparingEnlistment.{nameof(IPromotedEnlistment.Prepared)}");
             }
         }
 
@@ -1480,9 +1511,10 @@ namespace System.Transactions.Oletx
 
         void IPromotedEnlistment.ForceRollback(Exception? e)
         {
-            if (DiagnosticTrace.Verbose)
+            TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+            if (etwLog.IsEnabled())
             {
-                MethodEnteredTraceRecord.Trace(SR.TraceSourceOletx, "OletxPreparingEnlistment.ForceRollback");
+                etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this, $"OletxPreparingEnlistment.{nameof(IPromotedEnlistment.ForceRollback)}");
             }
 
             if (DiagnosticTrace.Warning)
@@ -1524,9 +1556,9 @@ namespace System.Transactions.Oletx
             // Vote no.
             localContainer.DecrementOutstandingNotifications(false);
 
-            if (DiagnosticTrace.Verbose)
+            if (etwLog.IsEnabled())
             {
-                MethodExitedTraceRecord.Trace(SR.TraceSourceOletx, "OletxPreparingEnlistment.ForceRollback");
+                etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this, $"OletxPreparingEnlistment.{nameof(IPromotedEnlistment.ForceRollback)}");
             }
         }
 
@@ -1538,7 +1570,7 @@ namespace System.Transactions.Oletx
 
         byte[] IPromotedEnlistment.GetRecoveryInformation()
             => throw TransactionException.CreateInvalidOperationException(
-                TraceSourceType.TraceSourceDistributed,
+                TraceSourceType.TraceSourceOleTx,
                 SR.VolEnlistNoRecoveryInfo,
                 null,
                 DistributedTxId);

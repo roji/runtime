@@ -38,9 +38,10 @@ namespace System.Transactions.Oletx
 
         public void Complete()
         {
-            if (DiagnosticTrace.Verbose)
+            TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+            if (etwLog.IsEnabled())
             {
-                MethodEnteredTraceRecord.Trace(SR.TraceSourceOletx, "DependentTransaction.Complete");
+                etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this, $"{nameof(DependentTransaction)}.{nameof(Complete)}");
             }
 
             Debug.Assert(Disposed == 0, "OletxTransction object is disposed");
@@ -58,9 +59,9 @@ namespace System.Transactions.Oletx
 
             _volatileEnlistmentContainer.DependentCloneCompleted();
 
-            if (DiagnosticTrace.Verbose)
+            if (etwLog.IsEnabled())
             {
-                MethodExitedTraceRecord.Trace(SR.TraceSourceOletx, "DependentTransaction.Complete");
+                etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this, $"{nameof(DependentTransaction)}.{nameof(Complete)}");
             }
         }
     }

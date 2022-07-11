@@ -965,7 +965,7 @@ namespace System.Transactions
             TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
             if (etwLog.IsEnabled())
             {
-                etwLog.MethodEnter(TraceSourceType.TraceSourceDistributed, this);
+                etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this);
             }
 
             ObjectDisposedException.ThrowIf(Disposed, this);
@@ -996,7 +996,7 @@ namespace System.Transactions
 
                 if (etwLog.IsEnabled())
                 {
-                    etwLog.MethodExit(TraceSourceType.TraceSourceDistributed, this);
+                    etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this);
                 }
 
                 return enlistment;

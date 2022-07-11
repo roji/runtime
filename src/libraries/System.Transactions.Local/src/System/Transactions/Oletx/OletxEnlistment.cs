@@ -325,7 +325,7 @@ namespace System.Transactions.Oletx
                     ISinglePhaseNotificationInternal singlePhaseNotification = (ISinglePhaseNotificationInternal)localEnlistmentNotification;
                     State = OletxEnlistmentState.SinglePhaseCommitting;
                     // We don't call DecrementUndecidedEnlistments for Phase1 enlistments.
-                    if ( DiagnosticTrace.Verbose )
+                    if (DiagnosticTrace.Verbose)
                     {
                         EnlistmentNotificationCallTraceRecord.Trace(
                             SR.TraceSourceOletx,
@@ -613,9 +613,10 @@ namespace System.Transactions.Oletx
             OletxCommittableTransaction? committableTx;
             bool commitNotYetCalled = false;
 
-            if (DiagnosticTrace.Verbose)
+            TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+            if (etwLog.IsEnabled())
             {
-                MethodEnteredTraceRecord.Trace(SR.TraceSourceOletx, "OletxEnlistment.Phase0Request");
+                etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this, $"{nameof(OletxEnlistment)}.{nameof(Phase0Request)}");
             }
 
             committableTx = oletxTransaction!.RealOletxTransaction.CommittableTransaction;
@@ -716,9 +717,9 @@ namespace System.Transactions.Oletx
                 {
                     // We must have had a race between EnlistmentDone and the proxy telling
                     // us Phase0Request.  Just return.
-                    if (DiagnosticTrace.Verbose)
+                    if (etwLog.IsEnabled())
                     {
-                        MethodExitedTraceRecord.Trace(SR.TraceSourceOletx, "OletxEnlistment.Phase0Request");
+                        etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this, $"{nameof(OletxEnlistment)}.{nameof(Phase0Request)}");
                     }
 
                     return;
@@ -726,9 +727,9 @@ namespace System.Transactions.Oletx
 
             }
 
-            if (DiagnosticTrace.Verbose)
+            if (etwLog.IsEnabled())
             {
-                MethodExitedTraceRecord.Trace(SR.TraceSourceOletx, "OletxEnlistment.Phase0Request");
+                etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this, $"{nameof(OletxEnlistment)}.{nameof(Phase0Request)}");
             }
         }
 
@@ -736,9 +737,14 @@ namespace System.Transactions.Oletx
 
         public void EnlistmentDone()
         {
+            TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+            if (etwLog.IsEnabled())
+            {
+                etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this, $"{nameof(OletxEnlistment)}.{nameof(EnlistmentDone)}");
+            }
+
             if (DiagnosticTrace.Verbose)
             {
-                MethodEnteredTraceRecord.Trace(SR.TraceSourceOletx, "OletxEnlistment.EnlistmentDone");
                 EnlistmentCallbackPositiveTraceRecord.Trace(
                     SR.TraceSourceOletx,
                     InternalTraceIdentifier,
@@ -890,9 +896,10 @@ namespace System.Transactions.Oletx
                     FinishEnlistment();
                 }
             }
-            if (DiagnosticTrace.Verbose)
+
+            if (etwLog.IsEnabled())
             {
-                MethodExitedTraceRecord.Trace(SR.TraceSourceOletx, "OletxEnlistment.EnlistmentDone");
+                etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this, $"{nameof(OletxEnlistment)}.{nameof(EnlistmentDone)}");
             }
         }
 
@@ -900,10 +907,11 @@ namespace System.Transactions.Oletx
         {
             get
             {
-                if (DiagnosticTrace.Verbose)
+                TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+                if (etwLog.IsEnabled())
                 {
-                    MethodEnteredTraceRecord.Trace(SR.TraceSourceOletx, "OletxEnlistment.get_TraceIdentifier");
-                    MethodExitedTraceRecord.Trace( SR.TraceSourceOletx, "OletxEnlistment.get_TraceIdentifier");
+                    etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this, $"{nameof(OletxEnlistment)}.{nameof(EnlistmentTraceId)}");
+                    etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this, $"{nameof(OletxEnlistment)}.{nameof(EnlistmentTraceId)}");
                 }
 
                 return InternalTraceIdentifier;
@@ -917,9 +925,14 @@ namespace System.Transactions.Oletx
             IPhase0EnlistmentShim? localPhase0Shim = null;
             bool localFabricateRollback = false;
 
+            TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+            if (etwLog.IsEnabled())
+            {
+                etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this, $"OletxPreparingEnlistment.{nameof(Prepared)}");
+            }
+
             if (DiagnosticTrace.Verbose)
             {
-                MethodEnteredTraceRecord.Trace(SR.TraceSourceOletx, "OletxPreparingEnlistment.Prepared");
                 EnlistmentCallbackPositiveTraceRecord.Trace(
                     SR.TraceSourceOletx,
                     InternalTraceIdentifier,
@@ -1015,9 +1028,10 @@ namespace System.Transactions.Oletx
                     throw;
                 }
             }
-            if (DiagnosticTrace.Verbose)
+
+            if (etwLog.IsEnabled())
             {
-                MethodExitedTraceRecord.Trace(SR.TraceSourceOletx, "OletxPreparingEnlistment.Prepared");
+                etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this, $"OletxPreparingEnlistment.{nameof(Prepared)}");
             }
         }
 
@@ -1029,9 +1043,10 @@ namespace System.Transactions.Oletx
             IEnlistmentShim? localEnlistmentShim = null;
             IPhase0EnlistmentShim? localPhase0Shim = null;
 
-            if (DiagnosticTrace.Verbose)
+            TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+            if (etwLog.IsEnabled())
             {
-                MethodEnteredTraceRecord.Trace(SR.TraceSourceOletx, "OletxPreparingEnlistment.ForceRollback");
+                etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this, $"OletxPreparingEnlistment.{nameof(ForceRollback)}");
             }
 
             if (DiagnosticTrace.Warning)
@@ -1112,18 +1127,21 @@ namespace System.Transactions.Oletx
             {
                 FinishEnlistment();
             }
-            if (DiagnosticTrace.Verbose)
+
+            if (etwLog.IsEnabled())
             {
-                MethodExitedTraceRecord.Trace(SR.TraceSourceOletx, "OletxPreparingEnlistment.ForceRollback");
+                etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this, $"OletxPreparingEnlistment.{nameof(ForceRollback)}");
             }
         }
 
         public void Committed()
         {
             IEnlistmentShim? localEnlistmentShim = null;
-            if (DiagnosticTrace.Verbose)
+
+            TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+            if (etwLog.IsEnabled())
             {
-                MethodEnteredTraceRecord.Trace(SR.TraceSourceOletx, "OletxSinglePhaseEnlistment.Committed");
+                etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this, $"OletxSinglePhaseEnlistment.{nameof(Committed)}");
                 EnlistmentCallbackPositiveTraceRecord.Trace(
                     SR.TraceSourceOletx,
                     InternalTraceIdentifier,
@@ -1170,9 +1188,10 @@ namespace System.Transactions.Oletx
             {
                 FinishEnlistment();
             }
-            if (DiagnosticTrace.Verbose)
+
+            if (etwLog.IsEnabled())
             {
-                MethodExitedTraceRecord.Trace(SR.TraceSourceOletx, "OletxSinglePhaseEnlistment.Committed");
+                etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this, $"OletxSinglePhaseEnlistment.{nameof(Committed)}");
             }
         }
 
@@ -1182,9 +1201,11 @@ namespace System.Transactions.Oletx
         public void Aborted(Exception? e)
         {
             IEnlistmentShim? localEnlistmentShim = null;
-            if (DiagnosticTrace.Verbose)
+
+            TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+            if (etwLog.IsEnabled())
             {
-                MethodEnteredTraceRecord.Trace(SR.TraceSourceOletx, "OletxSinglePhaseEnlistment.Aborted");
+                etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this, $"OletxSinglePhaseEnlistment.{nameof(Aborted)}");
             }
 
             if (DiagnosticTrace.Warning)
@@ -1236,9 +1257,10 @@ namespace System.Transactions.Oletx
             {
                 FinishEnlistment();
             }
-            if (DiagnosticTrace.Verbose)
+
+            if (etwLog.IsEnabled())
             {
-                MethodExitedTraceRecord.Trace(SR.TraceSourceOletx, "OletxSinglePhaseEnlistment.Aborted");
+                etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this, $"OletxSinglePhaseEnlistment.{nameof(Aborted)}");
             }
         }
 
@@ -1248,9 +1270,10 @@ namespace System.Transactions.Oletx
         public void InDoubt(Exception? e)
         {
             IEnlistmentShim? localEnlistmentShim = null;
-            if (DiagnosticTrace.Verbose)
+            TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+            if (etwLog.IsEnabled())
             {
-                MethodEnteredTraceRecord.Trace(SR.TraceSourceOletx, "OletxSinglePhaseEnlistment.InDoubt");
+                etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this, $"OletxSinglePhaseEnlistment.{nameof(InDoubt)}");
             }
 
             if (DiagnosticTrace.Warning)
@@ -1304,9 +1327,10 @@ namespace System.Transactions.Oletx
             {
                 FinishEnlistment();
             }
-            if (DiagnosticTrace.Verbose)
+
+            if (etwLog.IsEnabled())
             {
-                MethodExitedTraceRecord.Trace(SR.TraceSourceOletx, "OletxSinglePhaseEnlistment.InDoubt");
+                etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this, $"OletxSinglePhaseEnlistment.{nameof(InDoubt)}");
             }
         }
 

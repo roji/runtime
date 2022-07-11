@@ -11,6 +11,7 @@ using System.Diagnostics.Tracing;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Collections;
+using System.Transactions.Oletx;
 
 namespace System.Transactions
 {
@@ -57,7 +58,7 @@ namespace System.Transactions
     {
         TraceSourceBase = 0,
         TraceSourceLtm = 1,
-        TraceSourceDistributed = 2
+        TraceSourceOleTx = 2
     }
     /// <summary>Provides an event source for tracing Transactions information.</summary>
     [EventSource(
@@ -604,7 +605,7 @@ namespace System.Transactions
                 {
                     MethodEnterTraceBase(IdOf(thisOrContextObject), methodname);
                 }
-                else if (traceSource == TraceSourceType.TraceSourceDistributed)
+                else if (traceSource == TraceSourceType.TraceSourceOleTx)
                 {
                     MethodEnterTraceDistributed(IdOf(thisOrContextObject), methodname);
                 }
@@ -627,7 +628,7 @@ namespace System.Transactions
                 {
                     MethodEnterTraceBase(string.Empty, methodname);
                 }
-                else if (traceSource == TraceSourceType.TraceSourceDistributed)
+                else if (traceSource == TraceSourceType.TraceSourceOleTx)
                 {
                     MethodEnterTraceDistributed(string.Empty, methodname);
                 }
@@ -672,7 +673,7 @@ namespace System.Transactions
                 {
                     MethodExitTraceBase(IdOf(thisOrContextObject), methodname);
                 }
-                else if (traceSource == TraceSourceType.TraceSourceDistributed)
+                else if (traceSource == TraceSourceType.TraceSourceOleTx)
                 {
                     MethodExitTraceDistributed(IdOf(thisOrContextObject), methodname);
                 }
@@ -695,7 +696,7 @@ namespace System.Transactions
                 {
                     MethodExitTraceBase(string.Empty, methodname);
                 }
-                else if (traceSource == TraceSourceType.TraceSourceDistributed)
+                else if (traceSource == TraceSourceType.TraceSourceOleTx)
                 {
                     MethodExitTraceDistributed(string.Empty, methodname);
                 }

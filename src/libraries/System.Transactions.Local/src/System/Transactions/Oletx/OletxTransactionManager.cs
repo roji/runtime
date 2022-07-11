@@ -80,9 +80,10 @@ namespace System.Transactions.Oletx
 
             IDtcProxyShimFactory localProxyShimFactory;
 
-            if (DiagnosticTrace.Verbose)
+            TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+            if (etwLog.IsEnabled())
             {
-                MethodEnteredTraceRecord.Trace(SR.TraceSourceOletx, "OletxTransactionManager.ShimNotificationCallback");
+                etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, $"{nameof(OletxTransactionManager)}.{nameof(ShimNotificationCallback)}");
             }
 
             // This lock doesn't really protect any of our data.  It is here so that if an exception occurs
@@ -471,9 +472,9 @@ namespace System.Transactions.Oletx
                 Thread.EndCriticalRegion();
             }
 
-            if (DiagnosticTrace.Verbose)
+            if (etwLog.IsEnabled())
             {
-                MethodExitedTraceRecord.Trace(SR.TraceSourceOletx, "OletxTransactionManager.ShimNotificationCallback");
+                etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, $"{nameof(OletxTransactionManager)}.{nameof(ShimNotificationCallback)}");
             }
         }
 
@@ -857,9 +858,10 @@ namespace System.Transactions.Oletx
             RealOletxTransaction realTx;
             IDictionaryEnumerator tableEnum;
 
-            if (DiagnosticTrace.Verbose)
+            TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+            if (etwLog.IsEnabled())
             {
-                MethodEnteredTraceRecord.Trace(SR.TraceSourceOletx, "OletxInternalResourceManager.TMDown");
+                etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this, $"{nameof(OletxInternalResourceManager)}.{nameof(TMDown)}");
             }
 
             // make a local copy of the hash table to avoid possible deadlocks when we lock both the global hash table
@@ -934,11 +936,10 @@ namespace System.Transactions.Oletx
                 _oletxTm.DtcTransactionManagerLock.ReleaseWriterLock();
             }
 
-            if (DiagnosticTrace.Verbose)
+            if (etwLog.IsEnabled())
             {
-                MethodExitedTraceRecord.Trace(SR.TraceSourceOletx, "OletxInternalResourceManager.TMDown");
+                etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this, $"{nameof(OletxInternalResourceManager)}.{nameof(TMDown)}");
             }
-
         }
 
         internal void CallReenlistComplete()
