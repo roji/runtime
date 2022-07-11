@@ -4,7 +4,6 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Globalization;
-using System.Security.Permissions;
 using System.Runtime.CompilerServices;
 using System.Transactions.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -28,8 +27,6 @@ namespace System.Transactions.Oletx
             _proxyShimFactory = OletxTransactionManager.ProxyShimFactory;
         }
 
-        // This is here for the DangerousGetHandle call.  We need to do it.
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2001:AvoidCallingProblematicMethods")]
         [MemberNotNull(nameof(_whereabouts))]
         void Initialize()
         {

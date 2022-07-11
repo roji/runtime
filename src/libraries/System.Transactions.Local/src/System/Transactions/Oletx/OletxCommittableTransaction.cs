@@ -7,7 +7,6 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 // using System.Runtime.Remoting.Messaging;
 using System.Runtime.Serialization;
-using System.Security.Permissions;
 using System.Threading;
 using System.Transactions.Diagnostics;
 

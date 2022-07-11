@@ -222,8 +222,6 @@ namespace System.Transactions
             return token;
         }
 
-        // This is here for the DangerousGetHandle call.  We need to do it.
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2001:AvoidCallingProblematicMethods")]
         internal static byte[] GetTransmitterPropagationToken(OletxTransaction oletxTx)
         {
             byte[]? propagationToken = null;

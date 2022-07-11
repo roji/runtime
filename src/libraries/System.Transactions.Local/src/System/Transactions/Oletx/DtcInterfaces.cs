@@ -11,14 +11,12 @@ using System.Transactions.DtcProxyShim.DTCInterfaces;
 
 namespace System.Transactions.Oletx
 {
-    [Security.SuppressUnmanagedCodeSecurity]
     internal static class NativeMethods
     {
         private const int RetryInterval = 50;  // in milliseconds
         private const int MaxRetryCount = 100;
 
-        // TODO: Move to Safe/UnsafeNativeMethods under DtcProxyShim
-        // TODO: Use LibraryImport
+        // TODO: Is LibraryImport possible here? UnmanagedType.Interface doesn't seem to be supported.
         // https://docs.microsoft.com/en-us/previous-versions/windows/desktop/ms678898(v=vs.85)
         [DllImport(Interop.Libraries.Xolehlp, CharSet = CharSet.Unicode)]
         internal static extern void DtcGetTransactionManagerExW(
@@ -59,7 +57,7 @@ namespace System.Transactions.Oletx
                     action();
                     return;
                 }
-                catch (COMException e) when (e.ErrorCode == NativeMethods.XACT_E_ALREADYINPROGRESS)
+                catch (COMException e) when (e.ErrorCode == XACT_E_ALREADYINPROGRESS)
                 {
                     Thread.Sleep(RetryInterval);
                     nRetries--;
@@ -222,7 +220,6 @@ namespace System.Transactions.Oletx
         // the compiler complains with a warning because the fields are never initialized away from their default value.
         // So we added this constructor to get rid of the warning.  But since the structure is only ever filled in by
         // unmanaged code through a proxy call, FXCop complains that this internal method is never called.
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal OletxXactTransInfo(Guid guid, OletxTransactionIsolationLevel isoLevel)
         {
             this.uow = guid;
@@ -235,24 +232,16 @@ namespace System.Transactions.Oletx
         }
     }
 
-    [Security.SuppressUnmanagedCodeSecurity,
-    ComImport,
-    Guid("A5FAB903-21CB-49eb-93AE-EF72CD45169E"),
-    InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     internal interface IVoterBallotShim
     {
-        void Vote([MarshalAs(UnmanagedType.Bool)] bool voteYes);
+        void Vote(bool voteYes);
     }
 
-    [Security.SuppressUnmanagedCodeSecurity,
-    ComImport,
-    Guid("55FF6514-948A-4307-A692-73B84E2AF53E"),
-    InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     internal interface IPhase0EnlistmentShim
     {
         void Unenlist();
 
-        void Phase0Done([MarshalAs(UnmanagedType.Bool)] bool voteYes);
+        void Phase0Done(bool voteYes);
     }
 
     internal interface IEnlistmentShim
@@ -337,12 +326,5 @@ namespace System.Transactions.Oletx
             out Guid transactionIdentifier,
             out OletxTransactionIsolationLevel isolationLevel,
             out ITransactionShim transactionShim);
-
-        //void CreateTransactionShim(
-        //    IDtcTransaction transactionNative,
-        //    IntPtr managedIdentifier,
-        //    out Guid transactionIdentifier,
-        //    out OletxTransactionIsolationLevel isolationLevel,
-        //    out ITransactionShim transactionShim);
     }
 }
