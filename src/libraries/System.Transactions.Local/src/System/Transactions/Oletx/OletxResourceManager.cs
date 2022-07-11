@@ -392,50 +392,31 @@ namespace System.Transactions.Oletx
         }
 
         internal OletxEnlistment Reenlist(
-            int prepareInfoLength,
             byte[] prepareInfo,
             IEnlistmentNotificationInternal enlistmentNotification)
         {
-            throw new NotImplementedException();
-
-#if BINARY_FORMATTER_YAY
             OletxTransactionOutcome outcome = OletxTransactionOutcome.NotKnownYet;
             OletxTransactionStatus xactStatus = OletxTransactionStatus.OLETX_TRANSACTION_STATUS_NONE;
 
-            // Put the recovery information into a stream.
-            MemoryStream stream = new(prepareInfo);
-
-            // First extract the OletxRecoveryInformation from the stream.
-            IFormatter formatter = new BinaryFormatter();
-            OletxRecoveryInformation oletxRecoveryInformation;
-            try
-            {
-                oletxRecoveryInformation = formatter.Deserialize(stream) as OletxRecoveryInformation;
-            }
-            catch (SerializationException se)
-            {
-                throw new ArgumentException(SR.InvalidArgument, "prepareInfo", se);
-            }
-
-            if (null == oletxRecoveryInformation)
+            if (prepareInfo == null)
             {
                 throw new ArgumentException(SR.InvalidArgument, "prepareInfo");
             }
 
             // Verify that the resource manager guid in the recovery info matches that of the calling resource manager.
             byte[] rmGuidArray = new byte[16];
-            for ( int i = 0; i < 16; i++ )
+            for (int i = 0; i < 16; i++)
             {
-                rmGuidArray[i] = oletxRecoveryInformation.proxyRecoveryInformation[i + 16];
+                rmGuidArray[i] = prepareInfo[i + 16];
             }
             Guid rmGuid = new(rmGuidArray);
-            if (rmGuid != this.resourceManagerIdentifier)
+            if (rmGuid != ResourceManagerIdentifier)
             {
                 throw TransactionException.Create(TraceSourceType.TraceSourceDistributed, SR.ResourceManagerIdDoesNotMatchRecoveryInformation, null);
             }
 
             // Ask the proxy resource manager to reenlist.
-            IResourceManagerShim localResourceManagerShim = null;
+            IResourceManagerShim? localResourceManagerShim = null;
             try
             {
                 localResourceManagerShim = ResourceManagerShim;
@@ -449,10 +430,7 @@ namespace System.Transactions.Oletx
 
                 // Only wait for 5 milliseconds.  If the TM doesn't have the outcome now, we will
                 // put the enlistment on the reenlistList for later processing.
-                localResourceManagerShim.Reenlist(
-                    Convert.ToUInt32(oletxRecoveryInformation.proxyRecoveryInformation.Length, CultureInfo.InvariantCulture),
-                    oletxRecoveryInformation.proxyRecoveryInformation,
-                    out outcome);
+                localResourceManagerShim.Reenlist(prepareInfo, out outcome);
 
                 if (OletxTransactionOutcome.Committed == outcome)
                 {
@@ -491,14 +469,7 @@ namespace System.Transactions.Oletx
             }
 
             // Now create our enlistment to tell the client the outcome.
-            OletxEnlistment enlistment = new(
-                enlistmentNotification,
-                xactStatus,
-                oletxRecoveryInformation.proxyRecoveryInformation,
-                this);
-
-            return enlistment;
-#endif
+            return new OletxEnlistment(enlistmentNotification, xactStatus, prepareInfo, this);
         }
 
         internal void RecoveryComplete()
@@ -704,10 +675,8 @@ namespace System.Transactions.Oletx
 
                                     throw TransactionException.Create(SR.InternalError, null);
                                 }
-                                localResourceManagerShim.Reenlist(
-                                    (uint)localEnlistment.ProxyPrepareInfoByteArray.Length,
-                                    localEnlistment.ProxyPrepareInfoByteArray,
-                                    out localOutcome);
+
+                                localResourceManagerShim.Reenlist(localEnlistment.ProxyPrepareInfoByteArray, out localOutcome);
 
                                 if (localOutcome == OletxTransactionOutcome.NotKnownYet)
                                 {

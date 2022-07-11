@@ -1,29 +1,13 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System;
-using System.Collections;
 using System.Diagnostics;
-using System.Globalization;
-using System.IO;
-using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Security.Permissions;
 using System.Threading;
-using System.Transactions;
 using System.Transactions.Diagnostics;
 
 namespace System.Transactions.Oletx
 {
-    [Serializable]
-    internal class OletxRecoveryInformation
-    {
-        internal byte[] ProxyRecoveryInformation;
-
-        internal OletxRecoveryInformation(byte[] proxyRecoveryInformation)
-            => ProxyRecoveryInformation = proxyRecoveryInformation;
-    }
-
     class OletxEnlistment : OletxBaseEnlistment, IPromotedEnlistment
     {
         internal enum OletxEnlistmentState
@@ -284,7 +268,6 @@ namespace System.Transactions.Oletx
             IEnlistmentShim? localEnlistmentShim;
             OletxEnlistmentState localState = OletxEnlistmentState.Active;
             IEnlistmentNotificationInternal localEnlistmentNotification;
-            OletxRecoveryInformation oletxRecoveryInformation;
             bool enlistmentDone;
 
             lock (this)
@@ -311,7 +294,6 @@ namespace System.Transactions.Oletx
             // a prepare request.
             if (OletxEnlistmentState.Preparing == localState)
             {
-                oletxRecoveryInformation = new OletxRecoveryInformation(prepareInfo);
                 _isSinglePhase = singlePhase;
 
                 // Store the prepare info we are given.
@@ -338,15 +320,12 @@ namespace System.Transactions.Oletx
                 }
                 else
                 {
-                    // We need to turn the oletxRecoveryInformation into a byte array.
-                    byte[] oletxRecoveryInformationByteArray = TransactionManager.ConvertToByteArray( oletxRecoveryInformation );
-
                     State = OletxEnlistmentState.Preparing;
 
                     // TODO: Can this be more efficient.
                     _prepareInfoByteArray = TransactionManager.GetRecoveryInformation(
                         OletxResourceManager.OletxTransactionManager.CreationNodeName,
-                        oletxRecoveryInformationByteArray);
+                        prepareInfo);
 
                     if (DiagnosticTrace.Verbose)
                     {
@@ -694,13 +673,10 @@ namespace System.Transactions.Oletx
                             rmGuidArray[index];
                     }
 
-                    OletxRecoveryInformation oletxRecoveryInformation = new(_proxyPrepareInfoByteArray);
-                    byte[] oletxRecoveryInformationByteArray = TransactionManager.ConvertToByteArray(oletxRecoveryInformation);
-
                     // TODO: Seems like this could be more efficient.
                     _prepareInfoByteArray = TransactionManager.GetRecoveryInformation(
                         OletxResourceManager.OletxTransactionManager.CreationNodeName,
-                        oletxRecoveryInformationByteArray);
+                        _proxyPrepareInfoByteArray);
 
                     if (DiagnosticTrace.Verbose)
                     {

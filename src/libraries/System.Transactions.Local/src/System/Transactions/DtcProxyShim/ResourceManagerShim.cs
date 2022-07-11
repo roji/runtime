@@ -13,44 +13,27 @@ namespace System.Transactions.DtcProxyShim;
 
 internal class ResourceManagerShim : IResourceManagerShim
 {
-    private long _refCount;
     private NotificationShimFactory _shimFactory;
-    //private IUnknown* _pMarshaler;
-    private IResourceManager? _pResourceManager;
     private ResourceManagerNotifyShim _pResourceManagerNotifyShim;
 
     internal ResourceManagerShim(NotificationShimFactory shimFactory, ResourceManagerNotifyShim pNotifyShim)
     {
         _shimFactory = shimFactory;
-        //_shimFactory->AddRef();
         _pResourceManagerNotifyShim = pNotifyShim;
-        //_pResourceManagerNotifyShim->AddRef();
-        _refCount = 0;
     }
 
-    public IResourceManager? ResourceManager
-    {
-        get => _pResourceManager;
-        set
-        {
-            _pResourceManager = value;
-            //this->pResourceManager->AddRef();
-        }
-    }
+    public IResourceManager? ResourceManager { get; set; }
 
     public void Enlist(
         ITransactionShim transactionShim,
-        //IntPtr managedIdentifier,
         OletxEnlistment managedIdentifier,
         out IEnlistmentShim enlistmentShim)
     {
         var pEnlistmentNotifyShim = new EnlistmentNotifyShim(_shimFactory, managedIdentifier);
         var pEnlistmentShim = new EnlistmentShim(_shimFactory, pEnlistmentNotifyShim);
 
-        // hr = pEnlistmentShim->Initialize();
-
         transactionShim.GetTransaction(out var pTransaction);
-        _pResourceManager!.Enlist(pTransaction, pEnlistmentNotifyShim, out var txUow, out var isoLevel, out var pEnlistmentAsync);
+        ResourceManager!.Enlist(pTransaction, pEnlistmentNotifyShim, out var txUow, out var isoLevel, out var pEnlistmentAsync);
 
         pEnlistmentNotifyShim.EnlistmentAsync = pEnlistmentAsync;
         pEnlistmentShim.EnlistmentAsync = pEnlistmentAsync;
@@ -58,12 +41,28 @@ internal class ResourceManagerShim : IResourceManagerShim
         enlistmentShim = pEnlistmentShim;
     }
 
-    public void Reenlist(
-        [MarshalAs(UnmanagedType.U4)] uint prepareInfoSize,
-        [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] byte[] prepareInfo,
-        out OletxTransactionOutcome outcome)
-        => throw new NotImplementedException();
+    public void Reenlist(byte[] prepareInfo, out OletxTransactionOutcome outcome)
+    {
+        // Call Reenlist on the proxy, waiting for 5 milliseconds for it to get the outcome.  If it doesn't know that outcome in that
+        // amount of time, tell the caller we don't know the outcome yet.  The managed code will reschedule the check by using the
+        // ReenlistThread.
+        try
+        {
+            ResourceManager!.Reenlist(prepareInfo, (ulong)prepareInfo.Length, 5, out var xactStatus);
+            outcome = xactStatus switch
+            {
+                OletxXactStat.XACTSTAT_ABORTED => OletxTransactionOutcome.Aborted,
+                OletxXactStat.XACTSTAT_COMMITTED => OletxTransactionOutcome.Committed,
+                _ => OletxTransactionOutcome.Aborted
+            };
+        }
+        catch (COMException e) when (e.ErrorCode == NativeMethods.XACT_E_REENLISTTIMEOUT)
+        {
+            outcome = OletxTransactionOutcome.NotKnownYet;
+            return;
+        }
+    }
 
     public void ReenlistComplete()
-        => _pResourceManager!.ReenlistmentComplete();
+        => ResourceManager!.ReenlistmentComplete();
 }

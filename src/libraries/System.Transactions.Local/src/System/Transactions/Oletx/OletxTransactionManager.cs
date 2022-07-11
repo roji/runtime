@@ -539,10 +539,7 @@ namespace System.Transactions.Oletx
             }
 
             // Now ask the resource manager to reenlist.
-            OletxEnlistment returnValue = oletxResourceManager.Reenlist(
-                recoveryInformation.Length,
-                recoveryInformation,
-                enlistmentNotification);
+            OletxEnlistment returnValue = oletxResourceManager.Reenlist(recoveryInformation, enlistmentNotification);
 
             return returnValue;
         }

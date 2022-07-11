@@ -49,10 +49,10 @@ internal interface IResourceManager
     /// The status of the transaction, provided by the transaction manager. It is one of the following values: XACTSTAT_ABORTED XACTSTAT_COMMITTED.
     /// </param>
     internal void Reenlist(
-        [MarshalAs(UnmanagedType.LPArray)] byte[] pPrepInfo,
+        [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] byte[] pPrepInfo,
         ulong cbPrepInfom,
         int lTimeout,
-        out OletxXactStat pXactStat);
+        [MarshalAs(UnmanagedType.I4)] out OletxXactStat pXactStat);
 
     /// <summary>
     /// The resource manager calls the ReenlistmentComplete method after resolving all the in-doubt transactions it knows about.
