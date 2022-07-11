@@ -370,9 +370,10 @@ namespace System.Transactions
             byte[] resourceManagerRecoveryInformation
         )
         {
-            if ( DiagnosticTrace.Verbose )
+            TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+            if (etwLog.IsEnabled())
             {
-                MethodEnteredTraceRecord.Trace(SR.TraceSourceBase, "TransactionManager.GetRecoveryInformation");
+                etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, $"{nameof(TransactionManager)}.{nameof(GetRecoveryInformation)}");
             }
 
             MemoryStream stream = new MemoryStream();
@@ -401,9 +402,9 @@ namespace System.Transactions
                 stream.Close();
             }
 
-            if ( DiagnosticTrace.Verbose )
+            if (etwLog.IsEnabled())
             {
-                MethodExitedTraceRecord.Trace(SR.TraceSourceBase, "TransactionManager.GetRecoveryInformation");
+                etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, $"{nameof(TransactionManager)}.{nameof(GetRecoveryInformation)}");
             }
 
             return returnValue;
