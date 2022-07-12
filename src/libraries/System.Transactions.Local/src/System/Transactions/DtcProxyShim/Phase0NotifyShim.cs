@@ -11,7 +11,6 @@ internal sealed class Phase0NotifyShim : NotificationShimBase, ITransactionPhase
     internal Phase0NotifyShim(NotificationShimFactory shimFactory, object enlistmentIdentifier)
         : base(shimFactory, enlistmentIdentifier)
     {
-
     }
 
     public void Phase0Request(bool fAbortHint)
@@ -23,6 +22,6 @@ internal sealed class Phase0NotifyShim : NotificationShimBase, ITransactionPhase
 
     public void EnlistCompleted(int status)
     {
-        // We don't care about these.  The managed code waited for the enlistment to be completed.
+        // We don't care about these. The managed code waited for the enlistment to be completed.
     }
 }

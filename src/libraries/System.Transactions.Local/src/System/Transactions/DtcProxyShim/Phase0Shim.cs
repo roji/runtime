@@ -18,7 +18,6 @@ internal sealed class Phase0Shim : IPhase0EnlistmentShim
     {
         _shimFactory = shimFactory;
         _phase0NotifyShim = notifyShim;
-        Phase0EnlistmentAsync = null;
     }
 
     public void Unenlist()

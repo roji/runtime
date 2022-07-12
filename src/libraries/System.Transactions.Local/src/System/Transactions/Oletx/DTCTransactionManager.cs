@@ -1,12 +1,10 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Globalization;
-using System.Runtime.CompilerServices;
 using System.Transactions.Diagnostics;
 
 namespace System.Transactions.Oletx
@@ -16,24 +14,20 @@ namespace System.Transactions.Oletx
         private readonly string? _nodeName;
         private readonly OletxTransactionManager _oletxTm;
         private readonly IDtcProxyShimFactory _proxyShimFactory;
-        private byte[] _whereabouts = null!; // Late-initialized
-        private bool _initialized;
+        private byte[]? _whereabouts;
 
         internal DtcTransactionManager(string? nodeName, OletxTransactionManager oletxTm)
         {
             _nodeName = nodeName;
             _oletxTm = oletxTm;
-            _initialized = false;
             _proxyShimFactory = OletxTransactionManager.ProxyShimFactory;
         }
 
         [MemberNotNull(nameof(_whereabouts))]
         private void Initialize()
         {
-            if (_initialized)
+            if (_whereabouts is not null)
             {
-                Debug.Assert(_whereabouts is not null);
-
                 return;
             }
 
@@ -48,7 +42,7 @@ namespace System.Transactions.Oletx
                     internalRM,
                     out nodeNameMatches,
                     out _whereabouts,
-                    out var resourceManagerShim);
+                    out IResourceManagerShim resourceManagerShim);
 
                 // If the node name does not match, throw.
                 if (!nodeNameMatches)
@@ -59,8 +53,6 @@ namespace System.Transactions.Oletx
                 // Give the IResourceManagerShim to the internalRM and tell it to call ReenlistComplete.
                 internalRM.ResourceManagerShim = resourceManagerShim;
                 internalRM.CallReenlistComplete();
-
-                _initialized = true;
             }
             catch (COMException ex)
             {
@@ -75,22 +67,13 @@ namespace System.Transactions.Oletx
                 // that error should be propagated back as a TransactionManagerCommunicationException.
                 throw TransactionManagerCommunicationException.Create(SR.TransactionManagerCommunicationException, ex);
             }
-            finally
-            {
-                // If we weren't successful at initializing ourself, clear things out
-                // for next time around.
-                if (!_initialized)
-                {
-                    _whereabouts = null!;
-                }
-            }
         }
 
         internal IDtcProxyShimFactory ProxyShimFactory
         {
             get
             {
-                if (!_initialized)
+                if (_whereabouts is null)
                 {
                     lock (this)
                     {
@@ -106,8 +89,7 @@ namespace System.Transactions.Oletx
         {
             lock (this)
             {
-                _whereabouts = null!;
-                _initialized = false;
+                _whereabouts = null;
             }
         }
 
@@ -115,7 +97,7 @@ namespace System.Transactions.Oletx
         {
             get
             {
-                if (!_initialized)
+                if (_whereabouts is null)
                 {
                     lock (this)
                     {

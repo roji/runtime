@@ -31,14 +31,14 @@ internal sealed class TransactionShim : ITransactionShim
     {
         var voterNotifyShim = new VoterNotifyShim(_shimFactory, managedIdentifier);
         var voterShim = new VoterShim(_shimFactory, voterNotifyShim);
-        _shimFactory.VoterFactory.Create(Transaction!, voterNotifyShim, out var voterBallot);
+        _shimFactory.VoterFactory.Create(Transaction!, voterNotifyShim, out ITransactionVoterBallotAsync2 voterBallot);
         voterShim.VoterBallotAsync2 = voterBallot;
         voterBallotShim = voterShim;
     }
 
     public void Export(byte[] whereabouts, out byte[] cookieBuffer)
     {
-        _shimFactory.ExportFactory.Create((ulong)whereabouts.Length, whereabouts, out var export);
+        _shimFactory.ExportFactory.Create((ulong)whereabouts.Length, whereabouts, out ITransactionExport export);
 
         uint cookieSizeULong = 0;
 
@@ -59,12 +59,12 @@ internal sealed class TransactionShim : ITransactionShim
     public unsafe byte[] GetPropagationToken()
     {
         var cachedTransmitter = _shimFactory.GetCachedTransmitter(Transaction!);
-        cachedTransmitter.TxTransmitter.GetPropagationTokenSize(out var propagationTokenSizeULong);
+        cachedTransmitter.TxTransmitter.GetPropagationTokenSize(out uint propagationTokenSizeULong);
 
         var propagationTokenSize = (int)propagationTokenSizeULong;
         var propagationToken = new byte[propagationTokenSize];
 
-        cachedTransmitter.TxTransmitter.MarshalPropagationToken((uint)propagationTokenSize, propagationToken, out var propagationTokenSizeUsed);
+        cachedTransmitter.TxTransmitter.MarshalPropagationToken((uint)propagationTokenSize, propagationToken, out uint propagationTokenSizeUsed);
 
         return propagationToken;
     }
@@ -75,7 +75,7 @@ internal sealed class TransactionShim : ITransactionShim
         var phase0NotifyShim = new Phase0NotifyShim(_shimFactory, managedIdentifier);
         var phase0Shim = new Phase0Shim(_shimFactory, phase0NotifyShim);
 
-        phase0Factory.Create(phase0NotifyShim, out var phase0Async);
+        phase0Factory.Create(phase0NotifyShim, out ITransactionPhase0EnlistmentAsync phase0Async);
         phase0Shim.Phase0EnlistmentAsync = phase0Async;
 
         phase0Async.Enable();

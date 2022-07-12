@@ -16,7 +16,6 @@ namespace System.Transactions.Oletx
         private const int RetryInterval = 50;  // in milliseconds
         private const int MaxRetryCount = 100;
 
-        // TODO: Is LibraryImport possible here? UnmanagedType.Interface doesn't seem to be supported.
         // https://docs.microsoft.com/en-us/previous-versions/windows/desktop/ms678898(v=vs.85)
         [DllImport(Interop.Libraries.Xolehlp, CharSet = CharSet.Unicode)]
         internal static extern void DtcGetTransactionManagerExW(
@@ -48,7 +47,7 @@ namespace System.Transactions.Oletx
 
         internal static void Retry(Action action)
         {
-            var nRetries = MaxRetryCount;
+            int nRetries = MaxRetryCount;
 
             while (nRetries > 0)
             {
