@@ -101,7 +101,7 @@ namespace System.Transactions.Diagnostics
     /// <summary>
     /// Trace record for the TransactionCreated trace code.
     /// </summary>
-    internal class TransactionCreatedTraceRecord : TraceRecord
+    internal sealed class TransactionCreatedTraceRecord : TraceRecord
     {
         /// <summary>
         /// Defines object layout.
@@ -135,7 +135,7 @@ namespace System.Transactions.Diagnostics
     /// <summary>
     /// Trace record for the TransactionPromoted trace code.
     /// </summary>
-    internal class TransactionPromotedTraceRecord : TraceRecord
+    internal sealed class TransactionPromotedTraceRecord : TraceRecord
     {
         /// <summary>
         /// Defines object layout.
@@ -176,7 +176,7 @@ namespace System.Transactions.Diagnostics
     /// <summary>
     /// Trace record for the Enlistment trace code.
     /// </summary>
-    internal class EnlistmentTraceRecord : TraceRecord
+    internal sealed class EnlistmentTraceRecord : TraceRecord
     {
         /// <summary>
         /// Defines object layout.
@@ -187,7 +187,7 @@ namespace System.Transactions.Diagnostics
         private EnlistmentTraceIdentifier enTraceId;
         private EnlistmentType enType;
         private EnlistmentOptions enOptions;
-        string traceSource;
+        private string traceSource;
 
         internal static void Trace(string traceSource, EnlistmentTraceIdentifier enTraceId, EnlistmentType enType,
             EnlistmentOptions enOptions)
@@ -217,7 +217,7 @@ namespace System.Transactions.Diagnostics
     /// <summary>
     /// Trace record for the EnlistmentNotificationCall trace code.
     /// </summary>
-    internal class EnlistmentNotificationCallTraceRecord : TraceRecord
+    internal sealed class EnlistmentNotificationCallTraceRecord : TraceRecord
     {
         /// <summary>
         /// Defines object layout.
@@ -254,7 +254,7 @@ namespace System.Transactions.Diagnostics
     /// <summary>
     /// Trace record for the EnlistmentCallbackPositive trace code.
     /// </summary>
-    internal class EnlistmentCallbackPositiveTraceRecord : TraceRecord
+    internal sealed class EnlistmentCallbackPositiveTraceRecord : TraceRecord
     {
         /// <summary>
         /// Defines object layout.
@@ -291,7 +291,7 @@ namespace System.Transactions.Diagnostics
     /// <summary>
     /// Trace record for the EnlistmentCallbackNegative trace code.
     /// </summary>
-    internal class EnlistmentCallbackNegativeTraceRecord : TraceRecord
+    internal sealed class EnlistmentCallbackNegativeTraceRecord : TraceRecord
     {
         /// <summary>
         /// Defines object layout.
@@ -330,7 +330,7 @@ namespace System.Transactions.Diagnostics
     /// <summary>
     /// Trace record for the TransactionCommitCalled trace code.
     /// </summary>
-    internal class TransactionCommitCalledTraceRecord : TraceRecord
+    internal sealed class TransactionCommitCalledTraceRecord : TraceRecord
     {
         /// <summary>
         /// Defines object layout.
@@ -339,7 +339,7 @@ namespace System.Transactions.Diagnostics
 
         private static TransactionCommitCalledTraceRecord record = new TransactionCommitCalledTraceRecord();
         private TransactionTraceIdentifier txTraceId;
-        string traceSource;
+        private string traceSource;
 
         internal static void Trace(string traceSource, TransactionTraceIdentifier txTraceId)
         {
@@ -364,7 +364,7 @@ namespace System.Transactions.Diagnostics
     /// <summary>
     /// Trace record for the TransactionRollbackCalled trace code.
     /// </summary>
-    internal class TransactionRollbackCalledTraceRecord : TraceRecord
+    internal sealed class TransactionRollbackCalledTraceRecord : TraceRecord
     {
         /// <summary>
         /// Defines object layout.
@@ -398,7 +398,7 @@ namespace System.Transactions.Diagnostics
     /// <summary>
     /// Trace record for the TransactionCommitted trace code.
     /// </summary>
-    internal class TransactionCommittedTraceRecord : TraceRecord
+    internal sealed class TransactionCommittedTraceRecord : TraceRecord
     {
         /// <summary>
         /// Defines object layout.
@@ -432,7 +432,7 @@ namespace System.Transactions.Diagnostics
     /// <summary>
     /// Trace record for the TransactionAborted trace code.
     /// </summary>
-    internal class TransactionAbortedTraceRecord : TraceRecord
+    internal sealed class TransactionAbortedTraceRecord : TraceRecord
     {
         /// <summary>
         /// Defines object layout.
@@ -466,7 +466,7 @@ namespace System.Transactions.Diagnostics
     /// <summary>
     /// Trace record for the TransactionInDoubt trace code.
     /// </summary>
-    internal class TransactionInDoubtTraceRecord : TraceRecord
+    internal sealed class TransactionInDoubtTraceRecord : TraceRecord
     {
         /// <summary>
         /// Defines object layout.
@@ -500,7 +500,7 @@ namespace System.Transactions.Diagnostics
     /// <summary>
     /// Trace record for the TransactionScopeCreated trace code.
     /// </summary>
-    internal class TransactionScopeCreatedTraceRecord : TraceRecord
+    internal sealed class TransactionScopeCreatedTraceRecord : TraceRecord
     {
         /// <summary>
         /// Defines object layout.
@@ -537,7 +537,7 @@ namespace System.Transactions.Diagnostics
     /// <summary>
     /// Trace record for the TransactionScopeDisposed trace code.
     /// </summary>
-    internal class TransactionScopeDisposedTraceRecord : TraceRecord
+    internal sealed class TransactionScopeDisposedTraceRecord : TraceRecord
     {
         /// <summary>
         /// Defines object layout.
@@ -571,7 +571,7 @@ namespace System.Transactions.Diagnostics
     /// <summary>
     /// Trace record for the TransactionScopeIncomplete trace code.
     /// </summary>
-    internal class TransactionScopeIncompleteTraceRecord : TraceRecord
+    internal sealed class TransactionScopeIncompleteTraceRecord : TraceRecord
     {
         /// <summary>
         /// Defines object layout.
@@ -605,7 +605,7 @@ namespace System.Transactions.Diagnostics
     /// <summary>
     /// Trace record for the TransactionScopeNestedIncorrectly trace code.
     /// </summary>
-    internal class TransactionScopeNestedIncorrectlyTraceRecord : TraceRecord
+    internal sealed class TransactionScopeNestedIncorrectlyTraceRecord : TraceRecord
     {
         /// <summary>
         /// Defines object layout.
@@ -640,7 +640,7 @@ namespace System.Transactions.Diagnostics
     /// <summary>
     /// Trace record for the TransactionScopeCurrentChanged trace code.
     /// </summary>
-    internal class TransactionScopeCurrentChangedTraceRecord : TraceRecord
+    internal sealed class TransactionScopeCurrentChangedTraceRecord : TraceRecord
     {
         /// <summary>
         /// Defines object layout.
@@ -677,7 +677,7 @@ namespace System.Transactions.Diagnostics
     /// <summary>
     /// Trace record for the TransactionScopeTimeoutTraceRecord trace code.
     /// </summary>
-    internal class TransactionScopeTimeoutTraceRecord : TraceRecord
+    internal sealed class TransactionScopeTimeoutTraceRecord : TraceRecord
     {
         /// <summary>
         /// Defines object layout.
@@ -712,7 +712,7 @@ namespace System.Transactions.Diagnostics
     /// <summary>
     /// Trace record for the TransactionTimeoutTraceRecord trace code.
     /// </summary>
-    internal class TransactionTimeoutTraceRecord : TraceRecord
+    internal sealed class TransactionTimeoutTraceRecord : TraceRecord
     {
         /// <summary>
         /// Defines object layout.
@@ -748,7 +748,7 @@ namespace System.Transactions.Diagnostics
     /// <summary>
     /// Trace record for the DependentCloneCreatedTraceRecord trace code.
     /// </summary>
-    internal class DependentCloneCreatedTraceRecord : TraceRecord
+    internal sealed class DependentCloneCreatedTraceRecord : TraceRecord
     {
         /// <summary>
         /// Defines object layout.
@@ -785,7 +785,7 @@ namespace System.Transactions.Diagnostics
     /// <summary>
     /// Trace record for the DependentCloneComplete trace code.
     /// </summary>
-    internal class DependentCloneCompleteTraceRecord : TraceRecord
+    internal sealed class DependentCloneCompleteTraceRecord : TraceRecord
     {
         /// <summary>
         /// Defines object layout.
@@ -820,7 +820,7 @@ namespace System.Transactions.Diagnostics
     /// <summary>
     /// Trace record for the CloneCreated trace code.
     /// </summary>
-    internal class CloneCreatedTraceRecord : TraceRecord
+    internal sealed class CloneCreatedTraceRecord : TraceRecord
     {
         /// <summary>
         /// Defines object layout.
@@ -857,7 +857,7 @@ namespace System.Transactions.Diagnostics
     /// <summary>
     /// Trace record for the RecoveryComplete trace code.
     /// </summary>
-    internal class RecoveryCompleteTraceRecord : TraceRecord
+    internal sealed class RecoveryCompleteTraceRecord : TraceRecord
     {
         /// <summary>
         /// Defines object layout.
@@ -893,7 +893,7 @@ namespace System.Transactions.Diagnostics
     /// <summary>
     /// Trace record for the Reenlist trace code.
     /// </summary>
-    internal class ReenlistTraceRecord : TraceRecord
+    internal sealed class ReenlistTraceRecord : TraceRecord
     {
         /// <summary>
         /// Defines object layout.
@@ -926,7 +926,7 @@ namespace System.Transactions.Diagnostics
 
     /// <summary>
     /// </summary>
-    internal class DistributedTransactionManagerCreatedTraceRecord : TraceRecord
+    internal sealed class DistributedTransactionManagerCreatedTraceRecord : TraceRecord
     {
         /// <summary>
         /// Defines object layout.
@@ -968,7 +968,7 @@ namespace System.Transactions.Diagnostics
     /// <summary>
     /// Trace record for the TransactionSerialized trace code.
     /// </summary>
-    internal class TransactionSerializedTraceRecord : TraceRecord
+    internal sealed class TransactionSerializedTraceRecord : TraceRecord
     {
         /// <summary>
         /// Defines object layout.
@@ -1002,7 +1002,7 @@ namespace System.Transactions.Diagnostics
     /// <summary>
     /// Trace record for the TransactionDeserialized trace code.
     /// </summary>
-    internal class TransactionDeserializedTraceRecord : TraceRecord
+    internal sealed class TransactionDeserializedTraceRecord : TraceRecord
     {
         /// <summary>
         /// Defines object layout.
@@ -1036,7 +1036,7 @@ namespace System.Transactions.Diagnostics
     /// <summary>
     /// Trace record for the TransactionException trace code.
     /// </summary>
-    internal class TransactionExceptionTraceRecord : TraceRecord
+    internal sealed class TransactionExceptionTraceRecord : TraceRecord
     {
         /// <summary>
         /// Defines object layout.
@@ -1067,9 +1067,9 @@ namespace System.Transactions.Diagnostics
         }
     }
 
-    class DictionaryTraceRecord : TraceRecord
+    internal sealed class DictionaryTraceRecord : TraceRecord
     {
-        System.Collections.IDictionary dictionary;
+        private System.Collections.IDictionary dictionary;
 
         internal DictionaryTraceRecord(System.Collections.IDictionary dictionary)
         {
@@ -1109,7 +1109,7 @@ namespace System.Transactions.Diagnostics
     /// <summary>
     /// Trace record for the ExceptionConsumed trace code.
     /// </summary>
-    internal class ExceptionConsumedTraceRecord : TraceRecord
+    internal sealed class ExceptionConsumedTraceRecord : TraceRecord
     {
         /// <summary>
         /// Defines object layout.
@@ -1145,7 +1145,7 @@ namespace System.Transactions.Diagnostics
     /// <summary>
     /// Trace record for the InvalidOperationException trace code.
     /// </summary>
-    internal class InvalidOperationExceptionTraceRecord : TraceRecord
+    internal sealed class InvalidOperationExceptionTraceRecord : TraceRecord
     {
         /// <summary>
         /// Defines object layout.
@@ -1180,7 +1180,7 @@ namespace System.Transactions.Diagnostics
     /// <summary>
     /// Trace record for the InternalError trace code.
     /// </summary>
-    internal class InternalErrorTraceRecord : TraceRecord
+    internal sealed class InternalErrorTraceRecord : TraceRecord
     {
         /// <summary>
         /// Defines object layout.
@@ -1214,7 +1214,7 @@ namespace System.Transactions.Diagnostics
     /// <summary>
     /// Trace record for the MethodEntered trace code.
     /// </summary>
-    internal class ConfiguredDefaultTimeoutAdjustedTraceRecord : TraceRecord
+    internal sealed class ConfiguredDefaultTimeoutAdjustedTraceRecord : TraceRecord
     {
         /// <summary>
         /// Defines object layout.

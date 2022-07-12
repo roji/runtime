@@ -30,36 +30,32 @@ namespace System.Transactions.Diagnostics
     internal static class DiagnosticTrace
     {
         internal const string DefaultTraceListenerName = "Default";
-        static TraceSource traceSource = null;
-        static bool tracingEnabled = true;
-        static bool haveListeners = false;
-        static Dictionary<int, string> traceEventTypeNames;
-        static object localSyncObject = new object();
-        static int traceFailureCount = 0;
-        static int traceFailureThreshold = 0;
-        static SourceLevels level;
-        static bool calledShutdown = false;
-        static bool shouldCorrelate = false;
-        static bool shouldTraceVerbose = false;
-        static bool shouldTraceInformation = false;
-        static bool shouldTraceWarning = false;
-        static bool shouldTraceError = false;
-        static bool shouldTraceCritical = false;
+        private static TraceSource traceSource = null;
+        private static bool tracingEnabled = true;
+        private static bool haveListeners = false;
+        private static Dictionary<int, string> traceEventTypeNames;
+        private static object localSyncObject = new object();
+        private static int traceFailureCount = 0;
+        private static int traceFailureThreshold = 0;
+        private static SourceLevels level;
+        private static bool calledShutdown = false;
+        private static bool shouldCorrelate = false;
+        private static bool shouldTraceVerbose = false;
+        private static bool shouldTraceInformation = false;
+        private static bool shouldTraceWarning = false;
+        private static bool shouldTraceError = false;
+        private static bool shouldTraceCritical = false;
         internal static Guid EmptyGuid = Guid.Empty;
-        static string AppDomainFriendlyName = null;
+        private static string AppDomainFriendlyName = null;
 
-        const string subType = "";
-        const string version = "1";
-
-        const int traceFailureLogThreshold = 10;
-        const string EventLogSourceName = ".NET Runtime";
-        const string TraceSourceName = "System.Transactions";
-        const string TraceRecordVersion = "http://schemas.microsoft.com/2004/10/E2ETraceEvent/TraceRecord";
+        private const int traceFailureLogThreshold = 10;
+        private const string EventLogSourceName = ".NET Runtime";
+        private const string TraceSourceName = "System.Transactions";
+        private const string TraceRecordVersion = "http://schemas.microsoft.com/2004/10/E2ETraceEvent/TraceRecord";
 
         // System.Diagnostics.Process has a FullTrust link demand. We satisfy that FullTrust demand and do not leak the
         // Process object out of this call.
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Security", "CA2122:DoNotIndirectlyExposeMethodsWithLinkDemands")]
-        static string ProcessName
+        private static string ProcessName
         {
             get
             {
@@ -75,8 +71,7 @@ namespace System.Transactions.Diagnostics
 
         // System.Diagnostics.Process has a FullTrust link demand. We satisfy that FullTrust demand and do not leak the
         // Process object out of this call.
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Security", "CA2122:DoNotIndirectlyExposeMethodsWithLinkDemands")]
-        static int ProcessId
+        private static int ProcessId
         {
             get
             {
@@ -90,7 +85,7 @@ namespace System.Transactions.Diagnostics
             }
         }
 
-        static TraceSource TraceSource
+        private static TraceSource TraceSource
         {
             get
             {
@@ -103,7 +98,7 @@ namespace System.Transactions.Diagnostics
             }
         }
 
-        static Dictionary<int, string> TraceEventTypeNames
+        private static Dictionary<int, string> TraceEventTypeNames
         {
             get
             {
@@ -111,7 +106,7 @@ namespace System.Transactions.Diagnostics
             }
         }
 
-        static SourceLevels FixLevel(SourceLevels level)
+        private static SourceLevels FixLevel(SourceLevels level)
         {
             //the bit fixing below is meant to keep the trace level legal even if somebody uses numbers in config
             if (((level & ~SourceLevels.Information) & SourceLevels.Verbose) != 0)
@@ -138,7 +133,7 @@ namespace System.Transactions.Diagnostics
             return (level & ~SourceLevels.Warning) != 0 ? level | SourceLevels.ActivityTracing : level;
         }
 
-        static void SetLevel(SourceLevels level)
+        private static void SetLevel(SourceLevels level)
         {
             SourceLevels fixedLevel = FixLevel(level);
             DiagnosticTrace.level = fixedLevel;
@@ -154,7 +149,7 @@ namespace System.Transactions.Diagnostics
             }
         }
 
-        static void SetLevelThreadSafe(SourceLevels level)
+        private static void SetLevelThreadSafe(SourceLevels level)
         {
             if (DiagnosticTrace.TracingEnabled && level != DiagnosticTrace.Level)
             {
@@ -318,22 +313,22 @@ namespace System.Transactions.Diagnostics
             get { return DiagnosticTrace.shouldTraceVerbose; }
         }
 
-        static internal void TraceEvent(TraceEventType type, string code, string description)
+        internal static void TraceEvent(TraceEventType type, string code, string description)
         {
             DiagnosticTrace.TraceEvent(type, code, description, null, null, ref DiagnosticTrace.EmptyGuid, false, null);
         }
 
-        static internal void TraceEvent(TraceEventType type, string code, string description, TraceRecord trace)
+        internal static void TraceEvent(TraceEventType type, string code, string description, TraceRecord trace)
         {
             DiagnosticTrace.TraceEvent(type, code, description, trace, null, ref DiagnosticTrace.EmptyGuid, false, null);
         }
 
-        static internal void TraceEvent(TraceEventType type, string code, string description, TraceRecord trace, Exception exception)
+        internal static void TraceEvent(TraceEventType type, string code, string description, TraceRecord trace, Exception exception)
         {
             DiagnosticTrace.TraceEvent(type, code, description, trace, exception, ref DiagnosticTrace.EmptyGuid, false, null);
         }
 
-        static internal void TraceEvent(TraceEventType type, string code, string description, TraceRecord trace, Exception exception, ref Guid activityId, bool emitTransfer, object source)
+        internal static void TraceEvent(TraceEventType type, string code, string description, TraceRecord trace, Exception exception, ref Guid activityId, bool emitTransfer, object source)
         {
 #if DEBUG
             Debug.Assert(exception == null || type <= TraceEventType.Information);
@@ -377,7 +372,7 @@ namespace System.Transactions.Diagnostics
             }
         }
 
-        static internal void TraceAndLogEvent(TraceEventType type, string code, string description, TraceRecord trace, Exception exception, ref Guid activityId, object source)
+        internal static void TraceAndLogEvent(TraceEventType type, string code, string description, TraceRecord trace, Exception exception, ref Guid activityId, object source)
         {
             bool shouldTrace = DiagnosticTrace.ShouldTrace(type);
             string traceString = null;
@@ -408,7 +403,7 @@ namespace System.Transactions.Diagnostics
             }
         }
 
-        static internal void TraceTransfer(Guid newId)
+        internal static void TraceTransfer(Guid newId)
         {
             Guid oldId = DiagnosticTrace.GetActivityId();
             if (DiagnosticTrace.ShouldCorrelate && newId != oldId)
@@ -442,14 +437,13 @@ namespace System.Transactions.Diagnostics
             }
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Security", "CA2122:DoNotIndirectlyExposeMethodsWithLinkDemands")]
-        static internal Guid GetActivityId()
+        internal static Guid GetActivityId()
         {
             object id = Trace.CorrelationManager.ActivityId;
             return id == null ? Guid.Empty : (Guid)id;
         }
 
-        static internal void GetActivityId(ref Guid guid)
+        internal static void GetActivityId(ref Guid guid)
         {
             //If activity id propagation is disabled for performance, we return nothing avoiding CallContext access.
             if (DiagnosticTrace.ShouldCorrelate)
@@ -458,18 +452,17 @@ namespace System.Transactions.Diagnostics
             }
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Security", "CA2122:DoNotIndirectlyExposeMethodsWithLinkDemands")]
-        static internal void SetActivityId(Guid id)
+        internal static void SetActivityId(Guid id)
         {
             Trace.CorrelationManager.ActivityId = id;
         }
 
-        static string CreateSourceString(object source)
+        private static string CreateSourceString(object source)
         {
             return source.GetType().ToString() + "/" + source.GetHashCode().ToString(CultureInfo.CurrentCulture);
         }
 
-        static void LogEvent(TraceEventType type, string code, string description, TraceRecord trace, Exception exception, object source)
+        private static void LogEvent(TraceEventType type, string code, string description, TraceRecord trace, Exception exception, object source)
         {
             StringBuilder traceString = new StringBuilder(string.Format(SR.EventLogValue,
                 DiagnosticTrace.ProcessName,
@@ -495,7 +488,7 @@ namespace System.Transactions.Diagnostics
             LogEvent(type, traceString.ToString(), false);
         }
 
-        static internal void LogEvent(TraceEventType type, string message, bool addProcessInfo)
+        internal static void LogEvent(TraceEventType type, string message, bool addProcessInfo)
         {
             if (addProcessInfo)
             {
@@ -505,7 +498,7 @@ namespace System.Transactions.Diagnostics
             LogEvent(type, message);
         }
 
-        static internal void LogEvent(TraceEventType type, string message)
+        internal static void LogEvent(TraceEventType type, string message)
         {
             try
             {
@@ -533,7 +526,7 @@ namespace System.Transactions.Diagnostics
             }
         }
 
-        static string LookupSeverity(TraceEventType type)
+        private static string LookupSeverity(TraceEventType type)
         {
             int level = (int)type & (int)SourceLevels.Verbose;
             if (((int)type & ((int)TraceEventType.Start | (int)TraceEventType.Stop)) != 0)
@@ -547,24 +540,24 @@ namespace System.Transactions.Diagnostics
             return DiagnosticTrace.TraceEventTypeNames[level];
         }
 
-        static int TraceFailureCount
+        private static int TraceFailureCount
         {
             get { return DiagnosticTrace.traceFailureCount; }
             set { DiagnosticTrace.traceFailureCount = value; }
         }
 
-        static int TraceFailureThreshold
+        private static int TraceFailureThreshold
         {
             get { return DiagnosticTrace.traceFailureThreshold; }
             set { DiagnosticTrace.traceFailureThreshold = value; }
         }
 
         //log failure every traceFailureLogThreshold time, increase the threshold progressively
-        static void LogTraceFailure(string traceString, Exception e)
+        private static void LogTraceFailure(string traceString, Exception e)
         {
             if (e != null)
             {
-                traceString = string.Format(CultureInfo.CurrentCulture, SR.FailedToTraceEvent, e, traceString != null ? traceString : "");
+                traceString = string.Format(CultureInfo.CurrentCulture, SR.FailedToTraceEvent, e, traceString ?? "");
             }
             lock (DiagnosticTrace.localSyncObject)
             {
@@ -581,7 +574,7 @@ namespace System.Transactions.Diagnostics
             }
         }
 
-        static void ShutdownTracing()
+        private static void ShutdownTracing()
         {
             if (null != DiagnosticTrace.TraceSource)
             {
@@ -621,19 +614,19 @@ namespace System.Transactions.Diagnostics
             }
         }
 
-        static void ExitOrUnloadEventHandler(object sender, EventArgs e)
+        private static void ExitOrUnloadEventHandler(object sender, EventArgs e)
         {
             ShutdownTracing();
         }
 
-        static void UnhandledExceptionHandler(object sender, UnhandledExceptionEventArgs args)
+        private static void UnhandledExceptionHandler(object sender, UnhandledExceptionEventArgs args)
         {
             Exception e = (Exception)args.ExceptionObject;
             TraceEvent(TraceEventType.Critical, DiagnosticTraceCode.UnhandledException, SR.UnhandledException, null, e, ref DiagnosticTrace.EmptyGuid, false, null);
             ShutdownTracing();
         }
 
-        static XPathNavigator BuildTraceString(TraceEventType type,
+        private static XPathNavigator BuildTraceString(TraceEventType type,
                                       string code,
                                       string description,
                                       TraceRecord trace,
@@ -643,7 +636,7 @@ namespace System.Transactions.Diagnostics
             return DiagnosticTrace.BuildTraceString(new PlainXmlWriter(), type, code, description, trace, exception, source);
         }
 
-        static XPathNavigator BuildTraceString(PlainXmlWriter xml,
+        private static XPathNavigator BuildTraceString(PlainXmlWriter xml,
                                        TraceEventType type,
                                        string code,
                                        string description,
@@ -686,7 +679,7 @@ namespace System.Transactions.Diagnostics
             return xml.ToNavigator();
         }
 
-        static void AddExceptionToTraceString(XmlWriter xml, Exception exception)
+        private static void AddExceptionToTraceString(XmlWriter xml, Exception exception)
         {
             throw new NotImplementedException();
 
@@ -727,7 +720,7 @@ namespace System.Transactions.Diagnostics
 #endif
         }
 
-        static string StackTraceString(Exception exception)
+        private static string StackTraceString(Exception exception)
         {
             throw new NotImplementedException();
 
@@ -759,7 +752,7 @@ namespace System.Transactions.Diagnostics
         }
 
         //only used for exceptions, perf is not important
-        static internal string XmlEncode(string text)
+        internal static string XmlEncode(string text)
         {
             if (text == null)
             {
@@ -794,7 +787,7 @@ namespace System.Transactions.Diagnostics
         //<summary>
         // Converts incompatible serverity enumeration TraceEvetType into EventLogEntryType
         //</summary>
-        static EventLogEntryType EventLogEntryTypeFromEventType(TraceEventType type)
+        private static EventLogEntryType EventLogEntryTypeFromEventType(TraceEventType type)
         {
             EventLogEntryType retval = EventLogEntryType.Information;
             switch (type)

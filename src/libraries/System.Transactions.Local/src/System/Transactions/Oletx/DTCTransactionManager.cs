@@ -11,7 +11,7 @@ using System.Transactions.Diagnostics;
 
 namespace System.Transactions.Oletx
 {
-    internal class DtcTransactionManager
+    internal sealed class DtcTransactionManager
     {
         private string? _nodeName;
         private OletxTransactionManager _oletxTm;
@@ -28,7 +28,7 @@ namespace System.Transactions.Oletx
         }
 
         [MemberNotNull(nameof(_whereabouts))]
-        void Initialize()
+        private void Initialize()
         {
             if (_initialized)
             {

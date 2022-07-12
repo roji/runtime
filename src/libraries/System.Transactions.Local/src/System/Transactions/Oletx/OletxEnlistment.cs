@@ -8,7 +8,7 @@ using System.Transactions.Diagnostics;
 
 namespace System.Transactions.Oletx
 {
-    class OletxEnlistment : OletxBaseEnlistment, IPromotedEnlistment
+    internal sealed class OletxEnlistment : OletxBaseEnlistment, IPromotedEnlistment
     {
         internal enum OletxEnlistmentState
         {
@@ -47,7 +47,7 @@ namespace System.Transactions.Oletx
         private bool _tmWentDown;
         private bool _aborting;
 
-        byte[]? _prepareInfoByteArray;
+        private byte[]? _prepareInfoByteArray;
 
         internal Guid TransactionIdentifier => _transactionGuid;
 

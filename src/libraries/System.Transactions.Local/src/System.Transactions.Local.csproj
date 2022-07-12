@@ -3,8 +3,7 @@
     <IsPartialFacadeAssembly>true</IsPartialFacadeAssembly>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <TargetFrameworks>$(NetCoreAppCurrent)-windows;$(NetCoreAppCurrent)</TargetFrameworks>
-    <NoWarn>CA1507;CA1805;CA1822;CA1823;CA1852;SA1121;SA1129;SA1206;SA1207;SA1400;SA1404;SA1411;IDE0029;IDE0036;IDE0059;IL2026;IL2050</NoWarn>
-    <NoWarn>$(NoWarn);CS1591</NoWarn> <!-- TODO -->
+    <NoWarn>CA1805;IDE0059;CS1591</NoWarn>
     <TargetPlatformIdentifier>$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)'))</TargetPlatformIdentifier>
   </PropertyGroup>
   <ItemGroup>

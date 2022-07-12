@@ -51,7 +51,7 @@ namespace System.Transactions.Oletx
             => RealOletxTransaction.Identifier;
     }
 
-    internal class OletxPhase0VolatileEnlistmentContainer : OletxVolatileEnlistmentContainer
+    internal sealed class OletxPhase0VolatileEnlistmentContainer : OletxVolatileEnlistmentContainer
     {
         private IPhase0EnlistmentShim? _phase0EnlistmentShim;
         private bool _aborting;
@@ -553,7 +553,7 @@ namespace System.Transactions.Oletx
         }
     }
 
-    internal class OletxPhase1VolatileEnlistmentContainer : OletxVolatileEnlistmentContainer
+    internal sealed class OletxPhase1VolatileEnlistmentContainer : OletxVolatileEnlistmentContainer
     {
         private IVoterBallotShim? _voterBallotShim;
 
@@ -1030,9 +1030,9 @@ namespace System.Transactions.Oletx
         }
     }
 
-    class OletxVolatileEnlistment : OletxBaseEnlistment, IPromotedEnlistment
+    internal sealed class OletxVolatileEnlistment : OletxBaseEnlistment, IPromotedEnlistment
     {
-        enum OletxVolatileEnlistmentState
+        private enum OletxVolatileEnlistmentState
         {
             Active,
             Preparing,

@@ -6,7 +6,7 @@ using System.Transactions.DtcProxyShim.DTCInterfaces;
 
 namespace System.Transactions.DtcProxyShim;
 
-internal class CachedOptions : CachedInterfaceBase
+internal sealed class CachedOptions : CachedInterfaceBase
 {
     public ITransactionOptions PTxOptions { get; }
 

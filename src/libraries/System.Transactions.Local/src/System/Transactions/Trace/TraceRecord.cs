@@ -16,8 +16,8 @@ namespace System.Transactions.Diagnostics
     /// </summary>
     internal abstract class TraceRecord
     {
-        internal protected const string EventIdBase = "http://schemas.microsoft.com/2004/03/Transactions/";
-        internal protected const string NamespaceSuffix = "TraceRecord";
+        protected internal const string EventIdBase = "http://schemas.microsoft.com/2004/03/Transactions/";
+        protected internal const string NamespaceSuffix = "TraceRecord";
 
         /// <summary>
         /// Defines object layout.

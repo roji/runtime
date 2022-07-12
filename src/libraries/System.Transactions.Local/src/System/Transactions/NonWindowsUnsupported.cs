@@ -7,6 +7,8 @@ using System.Transactions.Oletx;
 // This files contains non-Windows stubs for Windows-only functionality, so that Sys.Tx can build. The APIs below
 // are only ever called when a distributed transaction is needed, and throw PlatformNotSupportedException.
 
+#pragma warning disable CA1822
+
 namespace System.Transactions.Oletx
 {
     internal sealed class OletxTransactionManager

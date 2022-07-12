@@ -7,7 +7,7 @@ using System.Transactions.Oletx;
 
 namespace System.Transactions.DtcProxyShim;
 
-internal class TransactionShim : ITransactionShim
+internal sealed class TransactionShim : ITransactionShim
 {
     private NotificationShimFactory _shimFactory;
     private TransactionNotifyShim _transactionNotifyShim;

@@ -7,7 +7,7 @@ using System.Transactions.Oletx;
 
 namespace System.Transactions.DtcProxyShim;
 
-internal class CachedReceiver : CachedInterfaceBase
+internal sealed class CachedReceiver : CachedInterfaceBase
 {
     public ITransactionReceiver TxReceiver { get; private set; }
 

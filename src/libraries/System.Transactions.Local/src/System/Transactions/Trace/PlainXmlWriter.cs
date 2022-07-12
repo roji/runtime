@@ -17,15 +17,15 @@ namespace System.Transactions.Diagnostics
     /// <summary>
     /// Writes out plain xml as fast as possible
     /// </summary>
-    internal class PlainXmlWriter : XmlWriter
+    internal sealed class PlainXmlWriter : XmlWriter
     {
-        TraceXPathNavigator navigator;
-        Stack<string> stack;
-        bool writingAttribute  = false;
-        string currentAttributeName;
-        string currentAttributePrefix;
-        string currentAttributeNs;
-        bool format;
+        private TraceXPathNavigator navigator;
+        private Stack<string> stack;
+        private bool writingAttribute  = false;
+        private string currentAttributeName;
+        private string currentAttributePrefix;
+        private string currentAttributeNs;
+        private bool format;
 
         public PlainXmlWriter(bool format)
         {

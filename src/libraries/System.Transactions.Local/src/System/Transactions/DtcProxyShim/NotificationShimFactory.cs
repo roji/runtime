@@ -11,7 +11,7 @@ using Microsoft.Win32.SafeHandles;
 
 namespace System.Transactions.DtcProxyShim;
 
-internal class NotificationShimFactory : IDtcProxyShimFactory
+internal sealed class NotificationShimFactory : IDtcProxyShimFactory
 {
     // Used to synchronize access to the proxy.  This is necessary in
     // initialization because the proxy doesn't like multiple simultaneous callers

@@ -7,7 +7,7 @@ using System.Transactions.Oletx;
 
 namespace System.Transactions.DtcProxyShim;
 
-internal class EnlistmentShim : IEnlistmentShim
+internal sealed class EnlistmentShim : IEnlistmentShim
 {
     private readonly NotificationShimFactory _shimFactory;
     private readonly EnlistmentNotifyShim _enlistmentNotifyShim;

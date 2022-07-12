@@ -8,7 +8,7 @@ using System.Transactions.Oletx;
 
 namespace System.Transactions.DtcProxyShim;
 
-internal class EnlistmentNotifyShim : NotificationShimBase, ITransactionResourceAsync
+internal sealed class EnlistmentNotifyShim : NotificationShimBase, ITransactionResourceAsync
 {
     private ITransactionEnlistmentAsync? _enlistmentAsync;
 

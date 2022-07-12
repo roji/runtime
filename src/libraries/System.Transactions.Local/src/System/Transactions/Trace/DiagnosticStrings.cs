@@ -5,7 +5,7 @@
 
 namespace System.Transactions.Diagnostics
 {
-    static class DiagnosticStrings
+    internal static class DiagnosticStrings
     {
         internal const string DiagnosticsNamespace = "http://schemas.microsoft.com/2004/09/ServiceModel/Diagnostics";
 

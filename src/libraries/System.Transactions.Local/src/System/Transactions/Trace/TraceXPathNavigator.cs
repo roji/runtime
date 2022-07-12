@@ -13,14 +13,14 @@ using System.Xml;
 
 namespace System.Transactions.Diagnostics
 {
-    class TraceXPathNavigator : XPathNavigator
+    internal sealed class TraceXPathNavigator : XPathNavigator
     {
-        ElementNode root = null;
-        ElementNode current = null;
-        bool closed = false;
-        XPathNodeType state = XPathNodeType.Element;
+        private ElementNode root = null;
+        private ElementNode current = null;
+        private bool closed = false;
+        private XPathNodeType state = XPathNodeType.Element;
 
-        class ElementNode
+        private sealed class ElementNode
         {
             internal ElementNode(string name, string prefix, string xmlns, ElementNode parent)
             {
@@ -85,11 +85,11 @@ namespace System.Transactions.Diagnostics
                 }
             }
 
-            int attributeIndex = 0;
-            int elementIndex = 0;
+            private int attributeIndex = 0;
+            private int elementIndex = 0;
         }
 
-        class AttributeNode
+        private sealed class AttributeNode
         {
             internal AttributeNode(string name, string prefix, string xmlns, string value)
             {
@@ -105,7 +105,7 @@ namespace System.Transactions.Diagnostics
             internal string nodeValue;
         }
 
-        class TextNode
+        private sealed class TextNode
         {
             internal TextNode(string value)
             {

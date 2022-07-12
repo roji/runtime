@@ -24,7 +24,7 @@ namespace System.Transactions.Oletx
     /// the transaction.
     /// </summary>
     [Serializable]
-    internal class OletxCommittableTransaction : OletxTransaction
+    internal sealed class OletxCommittableTransaction : OletxTransaction
     {
         private bool _commitCalled;
 

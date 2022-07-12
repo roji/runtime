@@ -9,7 +9,7 @@ using System.Transactions.Diagnostics;
 namespace System.Transactions.Oletx
 {
     [Serializable]
-    internal class OletxDependentTransaction : OletxTransaction
+    internal sealed class OletxDependentTransaction : OletxTransaction
     {
         private OletxVolatileEnlistmentContainer _volatileEnlistmentContainer;
 
@@ -20,7 +20,7 @@ namespace System.Transactions.Oletx
         {
             if (realTransaction == null)
             {
-                throw new ArgumentNullException( "realTransaction" );
+                throw new ArgumentNullException(nameof(realTransaction));
             }
 
             _volatileEnlistmentContainer = RealOletxTransaction.AddDependentClone(delayCommit);
