@@ -699,10 +699,7 @@ namespace System.Transactions.Oletx
             OletxVolatileEnlistmentContainer? returnValue = null;
             OletxPhase0VolatileEnlistmentContainer? localPhase0VolatileContainer = null;
             OletxPhase1VolatileEnlistmentContainer? localPhase1VolatileContainer = null;
-            bool enlistmentSucceeded = false;
             bool phase0ContainerLockAcquired = false;
-
-            IntPtr phase0Handle = IntPtr.Zero;
 
             // Yes, we are talking to the proxy while holding the lock on the RealOletxTransaction.
             // If we don't then things get real sticky with other threads allocating containers.
@@ -715,12 +712,10 @@ namespace System.Transactions.Oletx
                 {
                     if (delayCommit)
                     {
-                        if (Phase0EnlistVolatilementContainerList == null)
-                        {
-                            // Not using a MemoryBarrier because all access to this member variable is under a lock of the
-                            // object.
-                            Phase0EnlistVolatilementContainerList = new ArrayList(1);
-                        }
+                        // Not using a MemoryBarrier because all access to this member variable is under a lock of the
+                        // object.
+                        Phase0EnlistVolatilementContainerList ??= new ArrayList(1);
+
                         // We may have failed the proxy enlistment for the first container, but we would have
                         // allocated the list.  That is why we have this check here.
                         if (Phase0EnlistVolatilementContainerList.Count == 0)
@@ -752,24 +747,13 @@ namespace System.Transactions.Oletx
                                 needPhase0Enlistment = false;
                             }
                         }
-
-                        if (needPhase0Enlistment)
-                        {
-                            // We need to create a VoterNotifyShim if native threads are not allowed to enter managed code.
-                            phase0Handle = HandleTable.AllocHandle(localPhase0VolatileContainer);
-                        }
                     }
-
                     else // ! delayCommit
                     {
                         if (Phase1EnlistVolatilementContainer == null)
                         {
                             localPhase1VolatileContainer = new OletxPhase1VolatileEnlistmentContainer(this);
                             needVoterEnlistment = true;
-
-                            // We need to create a VoterNotifyShim.
-                            localPhase1VolatileContainer.VoterHandle =
-                                HandleTable.AllocHandle(localPhase1VolatileContainer);
                         }
                         else
                         {
@@ -790,8 +774,7 @@ namespace System.Transactions.Oletx
                         // If enlistDuringPrepareRequired is true, we need to ask the proxy to create a Phase0 enlistment.
                         if (needPhase0Enlistment)
                         {
-                            // We need to use shims if native threads are not allowed to enter managed code.
-                            _transactionShim.Phase0Enlist(phase0Handle, out phase0Shim);
+                            _transactionShim.Phase0Enlist(localPhase0VolatileContainer!, out phase0Shim);
                             localPhase0VolatileContainer!.Phase0EnlistmentShim = phase0Shim;
                         }
 
@@ -801,16 +784,14 @@ namespace System.Transactions.Oletx
                             OletxTransactionManagerInstance.DtcTransactionManagerLock.AcquireReaderLock(-1);
                             try
                             {
-                                _transactionShim.CreateVoter(localPhase1VolatileContainer!.VoterHandle, out voterShim);
-
-                                enlistmentSucceeded = true;
+                                _transactionShim.CreateVoter(localPhase1VolatileContainer!, out voterShim);
                             }
                             finally
                             {
                                 OletxTransactionManagerInstance.DtcTransactionManagerLock.ReleaseReaderLock();
                             }
 
-                            localPhase1VolatileContainer.VoterBallotShim = voterShim;
+                            localPhase1VolatileContainer!.VoterBallotShim = voterShim;
                         }
 
                         if (delayCommit)
@@ -854,19 +835,6 @@ namespace System.Transactions.Oletx
                 {
                     ReleaseContainerLock(localPhase0VolatileContainer, ref phase0ContainerLockAcquired);
                 }
-
-                if (phase0Handle != IntPtr.Zero && localPhase0VolatileContainer!.Phase0EnlistmentShim == null)
-                {
-                    HandleTable.FreeHandle(phase0Handle);
-                }
-
-                if (!enlistmentSucceeded &&
-                    localPhase1VolatileContainer != null &&
-                    localPhase1VolatileContainer.VoterHandle != IntPtr.Zero &&
-                    needVoterEnlistment)
-                {
-                    HandleTable.FreeHandle(localPhase1VolatileContainer.VoterHandle);
-                }
             }
             return returnValue;
         }
@@ -902,140 +870,109 @@ namespace System.Transactions.Oletx
             bool needPhase0Enlistment = false;
             OletxPhase0VolatileEnlistmentContainer? localPhase0VolatileContainer = null;
             OletxPhase1VolatileEnlistmentContainer? localPhase1VolatileContainer = null;
-            IntPtr phase0Handle = IntPtr.Zero;
             IVoterBallotShim? voterShim = null;
             IPhase0EnlistmentShim? phase0Shim = null;
-            bool enlistmentSucceeded = false;
 
             // Yes, we are talking to the proxy while holding the lock on the RealOletxTransaction.
             // If we don't then things get real sticky with other threads allocating containers.
             // We only do this the first time we get a depenent clone of a given type (delay vs. non-delay).
             // After that, we don't create a new container, except for Phase0 if we need to create one
             // for a second wave.
-            try
+            lock (this)
             {
-                lock (this)
-                {
-                    enlistment = new OletxVolatileEnlistment(
-                        enlistmentNotification,
-                        enlistmentOptions,
-                        oletxTransaction);
+                enlistment = new OletxVolatileEnlistment(
+                    enlistmentNotification,
+                    enlistmentOptions,
+                    oletxTransaction);
 
-                    if ((enlistmentOptions & EnlistmentOptions.EnlistDuringPrepareRequired) != 0)
+                if ((enlistmentOptions & EnlistmentOptions.EnlistDuringPrepareRequired) != 0)
+                {
+                    if (Phase0EnlistVolatilementContainerList == null)
                     {
-                        if (Phase0EnlistVolatilementContainerList == null)
-                        {
-                            // Not using a MemoryBarrier because all access to this member variable is done when holding
-                            // a lock on the object.
-                            Phase0EnlistVolatilementContainerList = new ArrayList(1);
-                        }
-                        // We may have failed the proxy enlistment for the first container, but we would have
-                        // allocated the list.  That is why we have this check here.
-                        if (Phase0EnlistVolatilementContainerList.Count == 0)
+                        // Not using a MemoryBarrier because all access to this member variable is done when holding
+                        // a lock on the object.
+                        Phase0EnlistVolatilementContainerList = new ArrayList(1);
+                    }
+                    // We may have failed the proxy enlistment for the first container, but we would have
+                    // allocated the list.  That is why we have this check here.
+                    if (Phase0EnlistVolatilementContainerList.Count == 0)
+                    {
+                        localPhase0VolatileContainer = new OletxPhase0VolatileEnlistmentContainer(this);
+                        needPhase0Enlistment = true;
+                    }
+                    else
+                    {
+                        localPhase0VolatileContainer = Phase0EnlistVolatilementContainerList[^1] as OletxPhase0VolatileEnlistmentContainer;
+                        if (!localPhase0VolatileContainer!.NewEnlistmentsAllowed)
                         {
                             localPhase0VolatileContainer = new OletxPhase0VolatileEnlistmentContainer(this);
                             needPhase0Enlistment = true;
                         }
                         else
                         {
-                            localPhase0VolatileContainer = Phase0EnlistVolatilementContainerList[^1] as OletxPhase0VolatileEnlistmentContainer;
-                            if (!localPhase0VolatileContainer!.NewEnlistmentsAllowed)
-                            {
-                                localPhase0VolatileContainer = new OletxPhase0VolatileEnlistmentContainer(this);
-                                needPhase0Enlistment = true;
-                            }
-                            else
-                            {
-                                needPhase0Enlistment = false;
-                            }
-                        }
-
-                        if (needPhase0Enlistment)
-                        {
-                            // We need to create a VoterNotifyShim if native threads are not allowed to enter managed code.
-                            phase0Handle = HandleTable.AllocHandle(localPhase0VolatileContainer);
+                            needPhase0Enlistment = false;
                         }
                     }
-                    else  // not EDPR = TRUE - may need a voter...
+                }
+                else  // not EDPR = TRUE - may need a voter...
+                {
+                    if (Phase1EnlistVolatilementContainer == null)
                     {
-                        if (Phase1EnlistVolatilementContainer == null)
-                        {
-                            needVoterEnlistment = true;
-                            localPhase1VolatileContainer = new OletxPhase1VolatileEnlistmentContainer(this);
+                        needVoterEnlistment = true;
+                        localPhase1VolatileContainer = new OletxPhase1VolatileEnlistmentContainer(this);
+                    }
+                    else
+                    {
+                        needVoterEnlistment = false;
+                        localPhase1VolatileContainer = Phase1EnlistVolatilementContainer;
+                    }
+                }
 
-                            // We need to create a VoterNotifyShim.
-                            localPhase1VolatileContainer.VoterHandle =
-                                HandleTable.AllocHandle(localPhase1VolatileContainer);
-                        }
-                        else
+
+                try
+                {
+                    // If enlistDuringPrepareRequired is true, we need to ask the proxy to create a Phase0 enlistment.
+                    if (needPhase0Enlistment)
+                    {
+                        lock (localPhase0VolatileContainer!)
                         {
-                            needVoterEnlistment = false;
-                            localPhase1VolatileContainer = Phase1EnlistVolatilementContainer;
+                            _transactionShim.Phase0Enlist(localPhase0VolatileContainer, out phase0Shim);
+
+                            localPhase0VolatileContainer.Phase0EnlistmentShim = phase0Shim;
                         }
                     }
 
-
-                    try
+                    if (needVoterEnlistment)
                     {
-                        // If enlistDuringPrepareRequired is true, we need to ask the proxy to create a Phase0 enlistment.
+                        _transactionShim.CreateVoter(localPhase1VolatileContainer!, out voterShim);
+
+                        localPhase1VolatileContainer!.VoterBallotShim = voterShim;
+                    }
+
+                    if ((enlistmentOptions & EnlistmentOptions.EnlistDuringPrepareRequired) != 0)
+                    {
+                        localPhase0VolatileContainer!.AddEnlistment(enlistment);
                         if (needPhase0Enlistment)
                         {
-                            lock (localPhase0VolatileContainer!)
-                            {
-                                _transactionShim.Phase0Enlist(phase0Handle, out phase0Shim);
-
-                                localPhase0VolatileContainer.Phase0EnlistmentShim = phase0Shim;
-                            }
+                            Phase0EnlistVolatilementContainerList!.Add(localPhase0VolatileContainer);
                         }
+                    }
+                    else
+                    {
+                        localPhase1VolatileContainer!.AddEnlistment(enlistment);
 
                         if (needVoterEnlistment)
                         {
-                            _transactionShim.CreateVoter(localPhase1VolatileContainer!.VoterHandle, out voterShim);
-
-                            enlistmentSucceeded = true;
-                            localPhase1VolatileContainer.VoterBallotShim = voterShim;
-                        }
-
-                        if ((enlistmentOptions & EnlistmentOptions.EnlistDuringPrepareRequired) != 0)
-                        {
-                            localPhase0VolatileContainer!.AddEnlistment(enlistment);
-                            if (needPhase0Enlistment)
-                            {
-                                Phase0EnlistVolatilementContainerList!.Add( localPhase0VolatileContainer);
-                            }
-                        }
-                        else
-                        {
-                            localPhase1VolatileContainer!.AddEnlistment(enlistment);
-
-                            if (needVoterEnlistment)
-                            {
-                                Debug.Assert(Phase1EnlistVolatilementContainer == null,
-                                    "RealOletxTransaction.CommonEnlistVolatile - phase1VolContainer not null when expected.");
-                                Phase1EnlistVolatilementContainer = localPhase1VolatileContainer;
-                            }
+                            Debug.Assert(Phase1EnlistVolatilementContainer == null,
+                                "RealOletxTransaction.CommonEnlistVolatile - phase1VolContainer not null when expected.");
+                            Phase1EnlistVolatilementContainer = localPhase1VolatileContainer;
                         }
                     }
-                    catch (COMException comException)
-                    {
-                        OletxTransactionManager.ProxyException(comException);
-                        throw;
-                    }
                 }
-            }
-            finally
-            {
-                if (phase0Handle != IntPtr.Zero && localPhase0VolatileContainer!.Phase0EnlistmentShim == null)
+                catch (COMException comException)
                 {
-                    HandleTable.FreeHandle(phase0Handle);
-                }
-
-                if (!enlistmentSucceeded &&
-                    localPhase1VolatileContainer != null&&
-                    localPhase1VolatileContainer.VoterHandle != IntPtr.Zero &&
-                    needVoterEnlistment)
-                {
-                    HandleTable.FreeHandle(localPhase1VolatileContainer.VoterHandle);
+                    OletxTransactionManager.ProxyException(comException);
+                    throw;
                 }
             }
 

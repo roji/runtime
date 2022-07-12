@@ -379,24 +379,12 @@ namespace System.Transactions
             try
             {
                 outcomeEnlistment = new OutcomeEnlistment();
-                IntPtr outcomeEnlistmentHandle = IntPtr.Zero;
-                try
-                {
-                    //outcomeEnlistmentHandle = HandleTable.AllocHandle(outcomeEnlistment);
-                    oletxTm.DtcTransactionManager.ProxyShimFactory.ReceiveTransaction(
-                        propagationToken,
-                        outcomeEnlistment,
-                        out identifier,
-                        out oletxIsoLevel,
-                        out transactionShim);
-                }
-                finally
-                {
-                    if (transactionShim == null && outcomeEnlistmentHandle != IntPtr.Zero)
-                    {
-                        HandleTable.FreeHandle(outcomeEnlistmentHandle);
-                    }
-                }
+                oletxTm.DtcTransactionManager.ProxyShimFactory.ReceiveTransaction(
+                    propagationToken,
+                    outcomeEnlistment,
+                    out identifier,
+                    out oletxIsoLevel,
+                    out transactionShim);
             }
             catch (COMException comException)
             {
