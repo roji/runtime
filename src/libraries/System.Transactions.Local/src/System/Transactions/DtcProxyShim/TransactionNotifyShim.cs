@@ -12,15 +12,12 @@ internal sealed class TransactionNotifyShim : NotificationShimBase, ITransaction
     internal TransactionNotifyShim(NotificationShimFactory shimFactory, object? enlistmentIdentifier)
         : base(shimFactory, enlistmentIdentifier)
     {
-        // link.Init( this );
     }
 
     public void Committed(bool fRetaining, Guid pNewUOW /* always null? */, uint hresult)
     {
         NotificationType = ShimNotificationType.CommittedNotify;
         ShimFactory.NewNotification(this);
-
-        //throw new Exception("Transaction committed notification");
     }
 
     public void Aborted(IntPtr pboidReason, bool fRetaining, Guid pNewUOW, uint hresult)

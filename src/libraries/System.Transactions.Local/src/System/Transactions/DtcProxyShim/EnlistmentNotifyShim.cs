@@ -27,7 +27,6 @@ internal sealed class EnlistmentNotifyShim : NotificationShimBase, ITransactionR
     internal EnlistmentNotifyShim(NotificationShimFactory shimFactory, OletxEnlistment enlistmentIdentifier)
         : base(shimFactory, enlistmentIdentifier)
     {
-        // link.Init( this );
         _ignoreSpuriousProxyNotifications = false;
     }
 
@@ -44,7 +43,7 @@ internal sealed class EnlistmentNotifyShim : NotificationShimBase, ITransactionR
         }
 
         var pPrepareInfo = (IPrepareInfo)pEnlistmentAsync;
-        pPrepareInfo.GetPrepareInfoSize(out var prepareInfoLength);
+        pPrepareInfo.GetPrepareInfoSize(out uint prepareInfoLength);
         var prepareInfoBuffer = new byte[prepareInfoLength];
         pPrepareInfo.GetPrepareInfo(prepareInfoBuffer);
 

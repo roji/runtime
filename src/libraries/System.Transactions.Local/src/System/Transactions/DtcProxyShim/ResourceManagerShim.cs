@@ -32,8 +32,8 @@ internal sealed class ResourceManagerShim : IResourceManagerShim
         var pEnlistmentNotifyShim = new EnlistmentNotifyShim(_shimFactory, managedIdentifier);
         var pEnlistmentShim = new EnlistmentShim(_shimFactory, pEnlistmentNotifyShim);
 
-        transactionShim.GetTransaction(out var pTransaction);
-        ResourceManager!.Enlist(pTransaction, pEnlistmentNotifyShim, out var txUow, out var isoLevel, out var pEnlistmentAsync);
+        transactionShim.GetTransaction(out ITransaction pTransaction);
+        ResourceManager!.Enlist(pTransaction, pEnlistmentNotifyShim, out Guid txUow, out OletxTransactionIsolationLevel isoLevel, out ITransactionEnlistmentAsync pEnlistmentAsync);
 
         pEnlistmentNotifyShim.EnlistmentAsync = pEnlistmentAsync;
         pEnlistmentShim.EnlistmentAsync = pEnlistmentAsync;
@@ -48,7 +48,7 @@ internal sealed class ResourceManagerShim : IResourceManagerShim
         // ReenlistThread.
         try
         {
-            ResourceManager!.Reenlist(prepareInfo, (uint)prepareInfo.Length, 5, out var xactStatus);
+            ResourceManager!.Reenlist(prepareInfo, (uint)prepareInfo.Length, 5, out OletxXactStat xactStatus);
             outcome = xactStatus switch
             {
                 OletxXactStat.XACTSTAT_ABORTED => OletxTransactionOutcome.Aborted,
