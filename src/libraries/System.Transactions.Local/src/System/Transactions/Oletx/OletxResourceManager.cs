@@ -14,15 +14,13 @@ using System.Security.Permissions;
 using System.Threading;
 using System.Transactions.Diagnostics;
 
-#nullable disable
-
 namespace System.Transactions.Oletx
 {
     internal sealed class OletxResourceManager
     {
         internal Guid ResourceManagerIdentifier;
 
-        internal IResourceManagerShim resourceManagerShim;
+        internal IResourceManagerShim? resourceManagerShim;
         internal Hashtable EnlistmentHashtable;
         internal static Hashtable VolatileEnlistmentHashtable = new Hashtable();
         internal OletxTransactionManager OletxTransactionManager;
@@ -50,8 +48,8 @@ namespace System.Transactions.Oletx
         // fire off a reenlist thread when it expires.  Only one or the other should be non-null at a time.  However, they
         // could both be null, which means that there is no reenlist thread running and there is no timer scheduled to
         // create one.  Access to these members should be done only after obtaining a lock on the OletxResourceManager object.
-        internal Timer ReenlistThreadTimer;
-        internal Thread reenlistThread;
+        internal Timer? ReenlistThreadTimer;
+        internal Thread? reenlistThread;
 
         // This boolean is set to true if the resource manager application has called RecoveryComplete.
         // A lock on the OletxResourceManager instance will be obtained when retrieving or modifying
@@ -76,11 +74,11 @@ namespace System.Transactions.Oletx
             RecoveryCompleteCalledByApplication = false;
         }
 
-        internal IResourceManagerShim ResourceManagerShim
+        internal IResourceManagerShim? ResourceManagerShim
         {
             get
             {
-                IResourceManagerShim localResourceManagerShim = null;
+                IResourceManagerShim? localResourceManagerShim = null;
 
                 if (resourceManagerShim == null)
                 {
@@ -179,7 +177,7 @@ namespace System.Transactions.Oletx
             bool success = false;
             if (RecoveryCompleteCalledByApplication)
             {
-                IResourceManagerShim localResourceManagerShim;
+                IResourceManagerShim? localResourceManagerShim;
                 try
                 {
                     localResourceManagerShim = ResourceManagerShim;
@@ -241,7 +239,7 @@ namespace System.Transactions.Oletx
         {
             Hashtable localEnlistmentHashtable;
             IDictionaryEnumerator enlistEnum;
-            OletxEnlistment enlistment;
+            OletxEnlistment? enlistment;
 
             // If the internal RM got a TMDown, we will shortly, so null out our ResourceManagerShim now.
             ResourceManagerShim = null;
@@ -281,7 +279,7 @@ namespace System.Transactions.Oletx
             IEnlistmentNotificationInternal enlistmentNotification,
             EnlistmentOptions enlistmentOptions)
         {
-            IResourceManagerShim localResourceManagerShim;
+            IResourceManagerShim? localResourceManagerShim;
 
             Debug.Assert(oletxTransaction != null, "Argument is null" );
             Debug.Assert(enlistmentNotification != null, "Argument is null" );
@@ -516,7 +514,7 @@ namespace System.Transactions.Oletx
 
         internal void RecoveryComplete()
         {
-            Timer localTimer = null;
+            Timer? localTimer = null;
 
             // Remember that the application has called RecoveryComplete.
             RecoveryCompleteCalledByApplication = true;
@@ -615,17 +613,17 @@ namespace System.Transactions.Oletx
             }
         }
 
-        internal void ReenlistThread( object state )
+        internal void ReenlistThread(object? state)
         {
             int localLoopCount;
             bool done;
-            OletxEnlistment localEnlistment;
-            IResourceManagerShim localResourceManagerShim;
+            OletxEnlistment? localEnlistment;
+            IResourceManagerShim? localResourceManagerShim;
             bool success;
-            Timer localTimer = null;
+            Timer? localTimer = null;
             bool disposeLocalTimer = false;
 
-            OletxResourceManager resourceManager = (OletxResourceManager)state;
+            OletxResourceManager resourceManager = (OletxResourceManager)state!;
 
             try
             {
@@ -806,7 +804,7 @@ namespace System.Transactions.Oletx
                                                     NotificationCall.Commit);
                                             }
 
-                                            localEnlistment.EnlistmentNotification.Commit(localEnlistment);
+                                            localEnlistment.EnlistmentNotification!.Commit(localEnlistment);
                                         }
                                         else if (OletxTransactionOutcome.Aborted == localOutcome)
                                         {
@@ -819,7 +817,7 @@ namespace System.Transactions.Oletx
                                                     NotificationCall.Rollback);
                                             }
 
-                                            localEnlistment.EnlistmentNotification.Rollback(localEnlistment);
+                                            localEnlistment.EnlistmentNotification!.Rollback(localEnlistment);
                                         }
                                         else
                                         {
@@ -864,7 +862,7 @@ namespace System.Transactions.Oletx
                                 // We couldn't talk to the proxy to do ReenlistComplete, so schedule
                                 // the thread again for 10 seconds from now.
                                 resourceManager.ReenlistThreadTimer = localTimer;
-                                if (!localTimer.Change(10000, Timeout.Infinite))
+                                if (!localTimer!.Change(10000, Timeout.Infinite))
                                 {
                                     throw TransactionException.CreateInvalidOperationException(
                                         TraceSourceType.TraceSourceLtm,
@@ -878,7 +876,7 @@ namespace System.Transactions.Oletx
                             // There are still entries on the list, so they must not be
                             // resovled, yet.  Schedule the thread again in 10 seconds.
                             resourceManager.ReenlistThreadTimer = localTimer;
-                            if (!localTimer.Change(10000, Timeout.Infinite))
+                            if (!localTimer!.Change(10000, Timeout.Infinite))
                             {
                                 throw TransactionException.CreateInvalidOperationException(
                                     TraceSourceType.TraceSourceLtm,
@@ -912,8 +910,8 @@ namespace System.Transactions.Oletx
     {
         protected Guid EnlistmentGuid;
         protected OletxResourceManager OletxResourceManager;
-        protected OletxTransaction oletxTransaction;
-        internal OletxTransaction OletxTransaction => oletxTransaction;
+        protected OletxTransaction? oletxTransaction;
+        internal OletxTransaction? OletxTransaction => oletxTransaction;
 
         internal Guid DistributedTxId
         {
@@ -935,9 +933,9 @@ namespace System.Transactions.Oletx
         internal EnlistmentTraceIdentifier TraceIdentifier;
 
         // Owning public Enlistment object
-        protected InternalEnlistment InternalEnlistment;
+        protected InternalEnlistment? InternalEnlistment;
 
-        public OletxBaseEnlistment(OletxResourceManager oletxResourceManager, OletxTransaction oletxTransaction)
+        public OletxBaseEnlistment(OletxResourceManager oletxResourceManager, OletxTransaction? oletxTransaction)
         {
             Guid resourceManagerId = Guid.Empty;
 
@@ -972,7 +970,7 @@ namespace System.Transactions.Oletx
                                 rmId = OletxResourceManager.ResourceManagerIdentifier;
                             }
                             EnlistmentTraceIdentifier temp;
-                            if (null != oletxTransaction)
+                            if (oletxTransaction != null)
                             {
                                 temp = new EnlistmentTraceIdentifier(rmId, oletxTransaction.TransactionTraceId, EnlistmentId);
                             }

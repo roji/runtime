@@ -13,8 +13,6 @@ using System.Threading;
 using System.Transactions;
 using System.Transactions.Diagnostics;
 
-#nullable disable
-
 namespace System.Transactions.Oletx
 {
     [Serializable]
@@ -43,11 +41,11 @@ namespace System.Transactions.Oletx
             Done
         }
 
-        private IPhase0EnlistmentShim _phase0Shim;
+        private IPhase0EnlistmentShim? _phase0Shim;
         private bool _canDoSinglePhase;
-        private IEnlistmentNotificationInternal _iEnlistmentNotification;
+        private IEnlistmentNotificationInternal? _iEnlistmentNotification;
         // The information that comes from/goes to the proxy.
-        private byte[] _proxyPrepareInfoByteArray;
+        private byte[]? _proxyPrepareInfoByteArray;
 
         private bool _isSinglePhase;
         private Guid _transactionGuid = Guid.Empty;
@@ -65,7 +63,7 @@ namespace System.Transactions.Oletx
         private bool _tmWentDown;
         private bool _aborting;
 
-        byte[] _prepareInfoByteArray;
+        byte[]? _prepareInfoByteArray;
 
         internal Guid TransactionIdentifier => _transactionGuid;
 
@@ -222,11 +220,11 @@ namespace System.Transactions.Oletx
         }
         #endregion
 
-        internal IEnlistmentNotificationInternal EnlistmentNotification => _iEnlistmentNotification;
+        internal IEnlistmentNotificationInternal? EnlistmentNotification => _iEnlistmentNotification;
 
-        internal IEnlistmentShim EnlistmentShim { get; set; }
+        internal IEnlistmentShim? EnlistmentShim { get; set; }
 
-        internal IPhase0EnlistmentShim Phase0EnlistmentShim
+        internal IPhase0EnlistmentShim? Phase0EnlistmentShim
         {
             get => _phase0Shim;
             set
@@ -247,7 +245,7 @@ namespace System.Transactions.Oletx
 
         internal OletxEnlistmentState State { get; set; } = OletxEnlistmentState.Active;
 
-        internal byte[] ProxyPrepareInfoByteArray => _proxyPrepareInfoByteArray;
+        internal byte[]? ProxyPrepareInfoByteArray => _proxyPrepareInfoByteArray;
 
         internal void FinishEnlistment()
         {
@@ -283,7 +281,7 @@ namespace System.Transactions.Oletx
         // ITranactionResourceAsync.PrepareRequest
         public bool PrepareRequest(bool singlePhase, byte[] prepareInfo)
         {
-            IEnlistmentShim localEnlistmentShim;
+            IEnlistmentShim? localEnlistmentShim;
             OletxEnlistmentState localState = OletxEnlistmentState.Active;
             IEnlistmentNotificationInternal localEnlistmentNotification;
             OletxRecoveryInformation oletxRecoveryInformation;
@@ -302,11 +300,11 @@ namespace System.Transactions.Oletx
                     localState = State;
                 }
 
-                localEnlistmentNotification = _iEnlistmentNotification;
+                localEnlistmentNotification = _iEnlistmentNotification!;
 
                 localEnlistmentShim = EnlistmentShim;
 
-                oletxTransaction.RealOletxTransaction.TooLateForEnlistments = true;
+                oletxTransaction!.RealOletxTransaction.TooLateForEnlistments = true;
             }
 
             // If we went to Preparing state, send the app
@@ -367,7 +365,7 @@ namespace System.Transactions.Oletx
                 // We must have done our prepare work during Phase0 so just vote Yes.
                 try
                 {
-                    localEnlistmentShim.PrepareRequestDone(OletxPrepareVoteType.Prepared);
+                    localEnlistmentShim!.PrepareRequestDone(OletxPrepareVoteType.Prepared);
                     enlistmentDone = false;
                 }
                 catch (COMException comException)
@@ -383,7 +381,7 @@ namespace System.Transactions.Oletx
                     // This was an early vote.  Respond ReadOnly
                     try
                     {
-                        localEnlistmentShim.PrepareRequestDone(OletxPrepareVoteType.ReadOnly);
+                        localEnlistmentShim!.PrepareRequestDone(OletxPrepareVoteType.ReadOnly);
                         enlistmentDone = true;
                     }
                     finally
@@ -402,7 +400,7 @@ namespace System.Transactions.Oletx
                 // Any other state means we should vote NO to the proxy.
                 try
                 {
-                    localEnlistmentShim.PrepareRequestDone(OletxPrepareVoteType.Failed);
+                    localEnlistmentShim!.PrepareRequestDone(OletxPrepareVoteType.Failed);
                 }
                 catch (COMException ex)
                 {
@@ -425,8 +423,8 @@ namespace System.Transactions.Oletx
         public void CommitRequest()
         {
             OletxEnlistmentState localState = OletxEnlistmentState.Active;
-            IEnlistmentNotificationInternal localEnlistmentNotification = null;
-            IEnlistmentShim localEnlistmentShim = null;
+            IEnlistmentNotificationInternal? localEnlistmentNotification = null;
+            IEnlistmentShim? localEnlistmentShim = null;
             bool finishEnlistment = false;
 
             lock (this)
@@ -496,8 +494,8 @@ namespace System.Transactions.Oletx
         public void AbortRequest()
         {
             OletxEnlistmentState localState = OletxEnlistmentState.Active;
-            IEnlistmentNotificationInternal localEnlistmentNotification = null;
-            IEnlistmentShim localEnlistmentShim = null;
+            IEnlistmentNotificationInternal? localEnlistmentNotification = null;
+            IEnlistmentShim? localEnlistmentShim = null;
             bool finishEnlistment = false;
 
             lock ( this )
@@ -610,9 +608,9 @@ namespace System.Transactions.Oletx
             bool abortingHint
             )
         {
-            IEnlistmentNotificationInternal localEnlistmentNotification = null;
+            IEnlistmentNotificationInternal? localEnlistmentNotification = null;
             OletxEnlistmentState localState = OletxEnlistmentState.Active;
-            OletxCommittableTransaction committableTx;
+            OletxCommittableTransaction? committableTx;
             bool commitNotYetCalled = false;
 
             if (DiagnosticTrace.Verbose)
@@ -620,7 +618,7 @@ namespace System.Transactions.Oletx
                 MethodEnteredTraceRecord.Trace(SR.TraceSourceOletx, "OletxEnlistment.Phase0Request");
             }
 
-            committableTx = oletxTransaction.RealOletxTransaction.CommittableTransaction;
+            committableTx = oletxTransaction!.RealOletxTransaction.CommittableTransaction;
             if (committableTx != null)
             {
                 // We are dealing with the committable transaction.  If Commit or BeginCommit has NOT been
@@ -747,8 +745,8 @@ namespace System.Transactions.Oletx
                     EnlistmentCallback.Done);
             }
 
-            IEnlistmentShim localEnlistmentShim = null;
-            IPhase0EnlistmentShim localPhase0Shim = null;
+            IEnlistmentShim? localEnlistmentShim = null;
+            IPhase0EnlistmentShim? localPhase0Shim = null;
             OletxEnlistmentState localState = OletxEnlistmentState.Active;
             bool finishEnlistment;
             bool localFabricateRollback;
@@ -765,7 +763,7 @@ namespace System.Transactions.Oletx
                     {
                         // We are a Phase0 enlistment and we have a vote - decrement the undecided enlistment count.
                         // We only do this for Phase0 because we don't count Phase1 durable enlistments.
-                        oletxTransaction.RealOletxTransaction.DecrementUndecidedEnlistments();
+                        oletxTransaction!.RealOletxTransaction.DecrementUndecidedEnlistments();
                     }
                     finishEnlistment = false;
                 }
@@ -783,7 +781,7 @@ namespace System.Transactions.Oletx
                     localPhase0Shim = Phase0EnlistmentShim;
                     // We are a Phase0 enlistment and we have a vote - decrement the undecided enlistment count.
                     // We only do this for Phase0 because we don't count Phase1 durable enlistments.
-                    oletxTransaction.RealOletxTransaction.DecrementUndecidedEnlistments();
+                    oletxTransaction!.RealOletxTransaction.DecrementUndecidedEnlistments();
 
                     // If we would have fabricated a rollback then we have already received an abort request
                     // from proxy and will not receive any more notifications.  Otherwise more notifications
@@ -915,8 +913,8 @@ namespace System.Transactions.Oletx
         public void Prepared()
         {
             int hrResult = NativeMethods.S_OK;
-            IEnlistmentShim localEnlistmentShim = null;
-            IPhase0EnlistmentShim localPhase0Shim = null;
+            IEnlistmentShim? localEnlistmentShim = null;
+            IPhase0EnlistmentShim? localPhase0Shim = null;
             bool localFabricateRollback = false;
 
             if (DiagnosticTrace.Verbose)
@@ -941,7 +939,7 @@ namespace System.Transactions.Oletx
                     // release the WrappedTransactionPhase0EnlistmentAsync and remember that
                     // we have a pending rollback.
                     localPhase0Shim = Phase0EnlistmentShim;
-                    if (oletxTransaction.RealOletxTransaction.Doomed || _fabricateRollback)
+                    if (oletxTransaction!.RealOletxTransaction.Doomed || _fabricateRollback)
                     {
                         // Set fabricateRollback in case we got here because the transaction is doomed.
                         _fabricateRollback = true;
@@ -967,7 +965,7 @@ namespace System.Transactions.Oletx
                     // We have a vote - decrement the undecided enlistment count.  We do
                     // this after checking Doomed because ForceRollback will decrement also.
                     // We also do this only for Phase0 enlistments.
-                    oletxTransaction.RealOletxTransaction.DecrementUndecidedEnlistments();
+                    oletxTransaction!.RealOletxTransaction.DecrementUndecidedEnlistments();
 
                     localPhase0Shim.Phase0Done(!localFabricateRollback);
                 }
@@ -1026,10 +1024,10 @@ namespace System.Transactions.Oletx
         public void ForceRollback()
             => ForceRollback(null);
 
-        public void ForceRollback(Exception e)
+        public void ForceRollback(Exception? e)
         {
-            IEnlistmentShim localEnlistmentShim = null;
-            IPhase0EnlistmentShim localPhase0Shim = null;
+            IEnlistmentShim? localEnlistmentShim = null;
+            IPhase0EnlistmentShim? localPhase0Shim = null;
 
             if (DiagnosticTrace.Verbose)
             {
@@ -1057,7 +1055,7 @@ namespace System.Transactions.Oletx
                     {
                         // We have a vote - decrement the undecided enlistment count.  We only do this
                         // if we are Phase0 enlistment.
-                        oletxTransaction.RealOletxTransaction.DecrementUndecidedEnlistments();
+                        oletxTransaction!.RealOletxTransaction.DecrementUndecidedEnlistments();
                     }
                 }
                 else
@@ -1068,7 +1066,7 @@ namespace System.Transactions.Oletx
                 State = OletxEnlistmentState.Aborted;
             }
 
-            Interlocked.CompareExchange(ref oletxTransaction.RealOletxTransaction.InnerException, e, null);
+            Interlocked.CompareExchange(ref oletxTransaction!.RealOletxTransaction.InnerException, e, null);
 
             try
             {
@@ -1122,7 +1120,7 @@ namespace System.Transactions.Oletx
 
         public void Committed()
         {
-            IEnlistmentShim localEnlistmentShim = null;
+            IEnlistmentShim? localEnlistmentShim = null;
             if (DiagnosticTrace.Verbose)
             {
                 MethodEnteredTraceRecord.Trace(SR.TraceSourceOletx, "OletxSinglePhaseEnlistment.Committed");
@@ -1181,9 +1179,9 @@ namespace System.Transactions.Oletx
         public void Aborted()
             => Aborted(null);
 
-        public void Aborted(Exception e)
+        public void Aborted(Exception? e)
         {
-            IEnlistmentShim localEnlistmentShim = null;
+            IEnlistmentShim? localEnlistmentShim = null;
             if (DiagnosticTrace.Verbose)
             {
                 MethodEnteredTraceRecord.Trace(SR.TraceSourceOletx, "OletxSinglePhaseEnlistment.Aborted");
@@ -1208,7 +1206,7 @@ namespace System.Transactions.Oletx
                 localEnlistmentShim = EnlistmentShim;
             }
 
-            Interlocked.CompareExchange(ref oletxTransaction.RealOletxTransaction.InnerException, e, null);
+            Interlocked.CompareExchange(ref oletxTransaction!.RealOletxTransaction.InnerException, e, null);
 
             try
             {
@@ -1247,9 +1245,9 @@ namespace System.Transactions.Oletx
         public void InDoubt()
             => InDoubt(null);
 
-        public void InDoubt(Exception e)
+        public void InDoubt(Exception? e)
         {
-            IEnlistmentShim localEnlistmentShim = null;
+            IEnlistmentShim? localEnlistmentShim = null;
             if (DiagnosticTrace.Verbose)
             {
                 MethodEnteredTraceRecord.Trace(SR.TraceSourceOletx, "OletxSinglePhaseEnlistment.InDoubt");
@@ -1273,7 +1271,7 @@ namespace System.Transactions.Oletx
                 localEnlistmentShim = EnlistmentShim;
             }
 
-            lock (oletxTransaction.RealOletxTransaction)
+            lock (oletxTransaction!.RealOletxTransaction)
             {
                 oletxTransaction.RealOletxTransaction.InnerException ??= e;
             }
@@ -1323,7 +1321,7 @@ namespace System.Transactions.Oletx
             return _prepareInfoByteArray;
         }
 
-        InternalEnlistment IPromotedEnlistment.InternalEnlistment
+        InternalEnlistment? IPromotedEnlistment.InternalEnlistment
         {
             get => base.InternalEnlistment;
             set => base.InternalEnlistment = value;
