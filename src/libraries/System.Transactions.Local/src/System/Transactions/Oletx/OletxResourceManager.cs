@@ -271,8 +271,6 @@ namespace System.Transactions.Oletx
             IEnlistmentShim enlistmentShim;
             IPhase0EnlistmentShim phase0Shim;
             Guid txUow = Guid.Empty;
-            IntPtr handlePhase0 = IntPtr.Zero;
-            bool phase0EnlistSucceeded = false;
             bool undecidedEnlistmentsIncremented = false;
 
             // Create our enlistment object.
@@ -309,23 +307,11 @@ namespace System.Transactions.Oletx
 
                         if ((enlistmentOptions & EnlistmentOptions.EnlistDuringPrepareRequired) != 0)
                         {
-                            // We need to create an EnlistmentNotifyShim if native threads are not allowed to enter managed code.
-                            handlePhase0 = HandleTable.AllocHandle( enlistment );
-
-                            oletxTransaction.RealTransaction.TransactionShim.Phase0Enlist(
-                                handlePhase0,
-                                out phase0Shim );
-                            phase0EnlistSucceeded = true;
+                            oletxTransaction.RealTransaction.TransactionShim.Phase0Enlist(enlistment, out phase0Shim);
                             enlistment.Phase0EnlistmentShim = phase0Shim;
                         }
 
-                        // TODO: Figure out the lifecycle of _phase1Handle here
-                        enlistment._phase1Handle = HandleTable.AllocHandle(enlistment);
-                        localResourceManagerShim.Enlist(
-                            oletxTransaction.RealTransaction.TransactionShim,
-                            //enlistment._phase1Handle,
-                            enlistment,
-                            out enlistmentShim);
+                        localResourceManagerShim.Enlist(oletxTransaction.RealTransaction.TransactionShim, enlistment, out enlistmentShim);
 
                         enlistment.EnlistmentShim = enlistmentShim;
                     }
@@ -343,29 +329,6 @@ namespace System.Transactions.Oletx
                         OletxTransactionManager.ProxyException(comException);
 
                         throw;
-                    }
-                    finally
-                    {
-                        if (enlistment.EnlistmentShim == null)
-                        {
-                            // If the enlistment shim was never assigned then something blew up.
-                            // Perform some cleanup.
-                            if (handlePhase0 != IntPtr.Zero && !phase0EnlistSucceeded)
-                            {
-                                // Only clean up the phase0 handle if the phase 0 enlistment did not succeed.
-                                // This is because the notification processing code expects it to exist.
-                                HandleTable.FreeHandle(handlePhase0);
-                            }
-
-                            if (enlistment._phase1Handle != IntPtr.Zero)
-                            {
-                                HandleTable.FreeHandle(enlistment._phase1Handle);
-                            }
-
-                            // Note this code used to call unenlist however this allows race conditions where
-                            // it is unclear if the handlePhase0 should be freed or not.  The notification
-                            // thread should get a phase0Request and it will free the Handle at that point.
-                        }
                     }
                 }
 

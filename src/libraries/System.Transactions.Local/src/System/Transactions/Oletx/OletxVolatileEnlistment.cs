@@ -557,8 +557,6 @@ namespace System.Transactions.Oletx
     {
         private IVoterBallotShim? _voterBallotShim;
 
-        internal IntPtr VoterHandle = IntPtr.Zero;
-
         internal OletxPhase1VolatileEnlistmentContainer(RealOletxTransaction realOletxTransaction)
             : base(realOletxTransaction)
         {
@@ -696,14 +694,6 @@ namespace System.Transactions.Oletx
                         throw;
                     }
                 }
-                finally
-                {
-                    // At this point it is unclear if we will get a notification from DTC or not
-                    // it depends on whether or not the transaction was in the process of aborting
-                    // already.  The only safe thing to do is to ensure that the Handle for the
-                    // voter is released at this point.
-                    HandleTable.FreeHandle(VoterHandle);
-                }
             }
 
             if (etwLog.IsEnabled())
@@ -774,23 +764,12 @@ namespace System.Transactions.Oletx
                     }
                     else  // we need to vote no.
                     {
-                        try
-                        {
-                            localVoterShim?.Vote(false);
+                        localVoterShim?.Vote(false);
 
-                            // We are not going to hear anymore from the proxy if we voted no, so we need to tell the
-                            // enlistments to rollback.  The state of the OletxVolatileEnlistment will determine whether or
-                            // not the notification actually goes out to the app.
-                            Aborted();
-                        }
-                        finally
-                        {
-                            // At this point it is unclear if we will get a notification from DTC or not
-                            // it depends on whether or not the transaction was in the process of aborting
-                            // already.  The only safe thing to do is to ensure that the Handle for the
-                            // voter is released at this point.
-                            HandleTable.FreeHandle(VoterHandle);
-                        }
+                        // We are not going to hear anymore from the proxy if we voted no, so we need to tell the
+                        // enlistments to rollback.  The state of the OletxVolatileEnlistment will determine whether or
+                        // not the notification actually goes out to the app.
+                        Aborted();
                     }
                 }
             }

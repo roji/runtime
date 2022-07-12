@@ -34,11 +34,6 @@ namespace System.Transactions.Oletx
         private bool _isSinglePhase;
         private Guid _transactionGuid = Guid.Empty;
 
-        // We need to keep track of the handle for the phase 1 notifications
-        // so that if the enlistment terminates the conversation due for instance
-        // to a force rollback the handle can be cleaned up.
-        internal IntPtr _phase1Handle = IntPtr.Zero;
-
         // Set to true if we receive an AbortRequest while we still have
         // another notification, like prepare, outstanding.  It indicates that
         // we need to fabricate a rollback to the app after it responds to Prepare.
@@ -805,14 +800,7 @@ namespace System.Transactions.Oletx
                 {
                     if (OletxEnlistmentState.Preparing == localState)
                     {
-                        try
-                        {
-                            localEnlistmentShim.PrepareRequestDone(OletxPrepareVoteType.ReadOnly);
-                        }
-                        finally
-                        {
-                            HandleTable.FreeHandle(_phase1Handle);
-                        }
+                        localEnlistmentShim.PrepareRequestDone(OletxPrepareVoteType.ReadOnly);
                     }
                     else if (OletxEnlistmentState.Committing == localState)
                     {
@@ -1063,24 +1051,8 @@ namespace System.Transactions.Oletx
             {
                 if (localEnlistmentShim != null)
                 {
-                    try
-                    {
-                        localEnlistmentShim.PrepareRequestDone(OletxPrepareVoteType.Failed);
-                    }
-                    finally
-                    {
-                        HandleTable.FreeHandle(_phase1Handle);
-                    }
+                    localEnlistmentShim.PrepareRequestDone(OletxPrepareVoteType.Failed);
                 }
-
-                if (localPhase0Shim != null)
-                {
-                    localPhase0Shim.Phase0Done(false);
-                }
-//                else
-                    // The TM must have gone down, thus causing our interface pointer to be
-                    // invalidated.  The App doesn't expect any more notifications, so we can
-                    // just finish the enlistment.
             }
             catch (COMException ex)
             {
