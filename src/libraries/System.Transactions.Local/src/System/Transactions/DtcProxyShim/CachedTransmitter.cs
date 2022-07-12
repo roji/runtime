@@ -6,7 +6,7 @@ using System.Transactions.DtcProxyShim.DTCInterfaces;
 
 namespace System.Transactions.DtcProxyShim;
 
-internal class CachedTransmitter : CachedInterfaceBase
+internal sealed class CachedTransmitter : CachedInterfaceBase
 {
     public ITransactionTransmitter TxTransmitter { get; private set; }
 

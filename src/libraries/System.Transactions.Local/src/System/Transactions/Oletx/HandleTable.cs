@@ -9,7 +9,7 @@ using System.Transactions.Diagnostics;
 
 namespace System.Transactions.Oletx
 {
-    static class HandleTable
+    internal static class HandleTable
     {
         private static Dictionary<int, object> handleTable = new Dictionary<int, object>(256);
         private static object syncRoot = new();

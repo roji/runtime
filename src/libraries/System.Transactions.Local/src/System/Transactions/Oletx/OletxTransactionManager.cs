@@ -1,13 +1,7 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System;
 using System.Collections;
-// using System.Collections.Specialized;
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Transactions.Diagnostics;
@@ -15,13 +9,13 @@ using System.Transactions.DtcProxyShim;
 
 namespace System.Transactions.Oletx
 {
-    internal class OletxTransactionManager
+    internal sealed class OletxTransactionManager
     {
         private IsolationLevel _isolationLevelProperty;
 
         private TimeSpan _timeoutProperty;
 
-        private TransactionOptions _configuredTransactionOptions = new TransactionOptions();
+        private TransactionOptions _configuredTransactionOptions = default;
 
         // Object for synchronizing access to the entire class( avoiding lock( typeof( ... )) )
         private static object? _classSyncObject;
@@ -516,19 +510,19 @@ namespace System.Transactions.Oletx
         {
             if (recoveryInformation == null)
             {
-                throw new ArgumentNullException("recoveryInformation");
+                throw new ArgumentNullException(nameof(recoveryInformation));
             }
 
             if (enlistmentNotification == null)
             {
-                throw new ArgumentNullException("enlistmentNotification");
+                throw new ArgumentNullException(nameof(enlistmentNotification));
             }
 
             // Now go find the resource manager in the collection.
             OletxResourceManager oletxResourceManager = RegisterResourceManager(resourceManagerIdentifier);
             if (oletxResourceManager == null)
             {
-                throw new ArgumentException(SR.InvalidArgument, "resourceManagerIdentifier");
+                throw new ArgumentException(SR.InvalidArgument, nameof(resourceManagerIdentifier));
             }
 
             if (oletxResourceManager.RecoveryCompleteCalledByApplication)
@@ -588,7 +582,7 @@ namespace System.Transactions.Oletx
         {
             if (resourceManagerIdentifier == Guid.Empty)
             {
-                throw new ArgumentException(SR.BadResourceManagerId, "resourceManagerIdentifier");
+                throw new ArgumentException(SR.BadResourceManagerId, nameof(resourceManagerIdentifier));
             }
 
             OletxResourceManager? oletxResourceManager;
@@ -719,7 +713,7 @@ namespace System.Transactions.Oletx
         }
     }
 
-    internal class OletxInternalResourceManager
+    internal sealed class OletxInternalResourceManager
     {
         private OletxTransactionManager _oletxTm;
 

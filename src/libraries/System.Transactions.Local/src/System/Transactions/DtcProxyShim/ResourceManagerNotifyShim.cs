@@ -7,7 +7,7 @@ using System.Transactions.DtcProxyShim.DTCInterfaces;
 
 namespace System.Transactions.DtcProxyShim;
 
-internal class ResourceManagerNotifyShim : NotificationShimBase, IResourceManagerSink
+internal sealed class ResourceManagerNotifyShim : NotificationShimBase, IResourceManagerSink
 {
     internal ResourceManagerNotifyShim(
         NotificationShimFactory shimFactory,

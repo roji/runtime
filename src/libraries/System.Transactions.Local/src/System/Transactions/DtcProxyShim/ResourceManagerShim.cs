@@ -11,7 +11,7 @@ namespace System.Transactions.DtcProxyShim;
 #pragma warning disable CS0169
 #pragma warning disable CS0414
 
-internal class ResourceManagerShim : IResourceManagerShim
+internal sealed class ResourceManagerShim : IResourceManagerShim
 {
     private NotificationShimFactory _shimFactory;
     private ResourceManagerNotifyShim _pResourceManagerNotifyShim;

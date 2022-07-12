@@ -393,7 +393,7 @@ namespace System.Transactions.Oletx
 
             if (prepareInfo == null)
             {
-                throw new ArgumentException(SR.InvalidArgument, "prepareInfo");
+                throw new ArgumentException(SR.InvalidArgument, nameof(prepareInfo));
             }
 
             // Verify that the resource manager guid in the recovery info matches that of the calling resource manager.
@@ -859,7 +859,7 @@ namespace System.Transactions.Oletx
 
     // This is the base class for all enlistment objects.  The enlistment objects provide the callback
     // that is made from the application and pass it through to the proxy.
-    abstract class OletxBaseEnlistment
+    internal abstract class OletxBaseEnlistment
     {
         protected Guid EnlistmentGuid;
         protected OletxResourceManager OletxResourceManager;

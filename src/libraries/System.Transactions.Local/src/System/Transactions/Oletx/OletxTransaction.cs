@@ -129,7 +129,7 @@ namespace System.Transactions.Oletx
         {
             if (serializationInfo == null)
             {
-                throw new ArgumentNullException("serializationInfo");
+                throw new ArgumentNullException(nameof(serializationInfo));
             }
 
             // Simply store the propagation token from the serialization info.  GetRealObject will
@@ -138,7 +138,7 @@ namespace System.Transactions.Oletx
 
             if (_propagationTokenForDeserialize.Length < 24)
             {
-                throw new ArgumentException(SR.InvalidArgument, "serializationInfo");
+                throw new ArgumentException(SR.InvalidArgument, nameof(serializationInfo));
             }
 
             RealOletxTransaction = null!;
@@ -444,7 +444,7 @@ namespace System.Transactions.Oletx
         {
             if (serializationInfo == null)
             {
-                throw new ArgumentNullException( "serializationInfo");
+                throw new ArgumentNullException(nameof(serializationInfo));
             }
 
             byte[] propagationToken;
@@ -478,7 +478,7 @@ namespace System.Transactions.Oletx
     }
 
     // Internal class used by OletxTransaction class which is public
-    internal class RealOletxTransaction
+    internal sealed class RealOletxTransaction
     {
         // Transaction manager
         internal OletxTransactionManager OletxTransactionManagerInstance { get; }
@@ -871,7 +871,7 @@ namespace System.Transactions.Oletx
             return returnValue;
         }
 
-        void ReleaseContainerLock(OletxPhase0VolatileEnlistmentContainer localPhase0VolatileContainer, ref bool phase0ContainerLockAcquired)
+        private static void ReleaseContainerLock(OletxPhase0VolatileEnlistmentContainer localPhase0VolatileContainer, ref bool phase0ContainerLockAcquired)
         {
             if (phase0ContainerLockAcquired)
             {
@@ -880,7 +880,7 @@ namespace System.Transactions.Oletx
             }
         }
 
-        void TakeContainerLock(OletxPhase0VolatileEnlistmentContainer localPhase0VolatileContainer, ref bool phase0ContainerLockAcquired)
+        private static void TakeContainerLock(OletxPhase0VolatileEnlistmentContainer localPhase0VolatileContainer, ref bool phase0ContainerLockAcquired)
         {
             if (!phase0ContainerLockAcquired)
             {
@@ -1392,7 +1392,7 @@ namespace System.Transactions.Oletx
         // can happen for a number of reasons.  For instance we have responded prepared
         // to all of our enlistments or we have no enlistments.
         //
-        internal bool TransactionIsInDoubt(RealOletxTransaction realTx)
+        internal static bool TransactionIsInDoubt(RealOletxTransaction realTx)
         {
             if (realTx.CommittableTransaction is { CommitCalled: false } )
             {

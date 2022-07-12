@@ -7,14 +7,14 @@ using System;
 
 namespace System.Transactions.Diagnostics
 {
-    internal class Activity : IDisposable
+    internal sealed class Activity : IDisposable
     {
-        Guid oldGuid;
-        Guid newGuid;
-        bool emitTransfer = false;
-        bool mustDispose = false;
+        private Guid oldGuid;
+        private Guid newGuid;
+        private bool emitTransfer = false;
+        private bool mustDispose = false;
 
-        Activity(ref Guid newGuid, bool emitTransfer)
+        private Activity(ref Guid newGuid, bool emitTransfer)
         {
             this.emitTransfer = emitTransfer;
             if (DiagnosticTrace.ShouldCorrelate && newGuid != Guid.Empty)

@@ -5,10 +5,10 @@
 
 namespace System.Transactions.Diagnostics
 {
-    static internal class TransactionsTraceCode
+    internal static class TransactionsTraceCode
            {
-               const string Prefix = "http://msdn.microsoft.com/2004/06/System/";
-               const string TransactionsFeature = "Transactions/";
+               private const string Prefix = "http://msdn.microsoft.com/2004/06/System/";
+               private const string TransactionsFeature = "Transactions/";
 
                public const string CheckMemoryGatePassed    = Prefix + TransactionsFeature + "CheckMemoryGate/Passed";
                public const string TransactionCreated                  = Prefix + TransactionsFeature + "TransactionCreated";
