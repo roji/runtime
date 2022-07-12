@@ -366,7 +366,7 @@ namespace System.Transactions
         // we be read back by the static Reenlist method to create the necessary transaction
         // manager object with the right parameters in order to do a ReenlistTransaction call.
         internal static byte[] GetRecoveryInformation(
-            string startupInfo,
+            string? startupInfo,
             byte[] resourceManagerRecoveryInformation
         )
         {

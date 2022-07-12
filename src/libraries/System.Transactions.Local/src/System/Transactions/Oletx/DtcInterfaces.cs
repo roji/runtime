@@ -7,8 +7,6 @@ using System.Runtime.CompilerServices;
 using System.Reflection;
 using System.Threading;
 
-#nullable disable
-
 namespace System.Transactions.Oletx
 {
     [Security.SuppressUnmanagedCodeSecurity]
@@ -261,7 +259,7 @@ namespace System.Transactions.Oletx
     internal interface IDtcProxyShimFactory
     {
         void ConnectToProxy(
-            [MarshalAs(UnmanagedType.LPWStr)] string nodeName,
+            [MarshalAs(UnmanagedType.LPWStr)] string? nodeName,
             Guid resourceManagerIdentifier,
             IntPtr managedIdentifier,
             [MarshalAs(UnmanagedType.Bool)] out bool nodeNameMatches,

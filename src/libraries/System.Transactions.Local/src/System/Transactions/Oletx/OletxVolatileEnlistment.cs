@@ -13,14 +13,19 @@ using System.Threading;
 using System.Transactions;
 using System.Transactions.Diagnostics;
 
-#nullable disable
-
 namespace System.Transactions.Oletx
 {
     internal abstract class OletxVolatileEnlistmentContainer
     {
+        protected OletxVolatileEnlistmentContainer(RealOletxTransaction realOletxTransaction)
+        {
+            Debug.Assert(realOletxTransaction != null, "Argument is null");
+
+            RealOletxTransaction = realOletxTransaction;
+        }
+
         protected RealOletxTransaction RealOletxTransaction;
-        protected ArrayList EnlistmentList;
+        protected ArrayList EnlistmentList = new();
         protected int Phase;
         protected int OutstandingNotifications;
         protected bool CollectedVoteYes;
@@ -49,18 +54,16 @@ namespace System.Transactions.Oletx
 
     internal class OletxPhase0VolatileEnlistmentContainer : OletxVolatileEnlistmentContainer
     {
-        private IPhase0EnlistmentShim _phase0EnlistmentShim;
+        private IPhase0EnlistmentShim? _phase0EnlistmentShim;
         private bool _aborting;
         private bool _tmWentDown;
 
         internal OletxPhase0VolatileEnlistmentContainer(RealOletxTransaction realOletxTransaction)
+            : base(realOletxTransaction)
         {
-            Debug.Assert(realOletxTransaction != null, "Argument is null" );
-
             // This will be set later, after the caller creates the enlistment with the proxy.
             _phase0EnlistmentShim = null;
 
-            RealOletxTransaction = realOletxTransaction;
             Phase = -1;
             _aborting = false;
             _tmWentDown = false;
@@ -69,7 +72,6 @@ namespace System.Transactions.Oletx
             AlreadyVoted = false;
             // If anybody votes false, this will get set to false.
             CollectedVoteYes = true;
-            EnlistmentList = new ArrayList();
 
             // This is a new undecided enlistment on the transaction.  Do this last since it has side affects.
             realOletxTransaction.IncrementUndecidedEnlistments();
@@ -189,7 +191,7 @@ namespace System.Transactions.Oletx
         }
 
 
-        internal IPhase0EnlistmentShim Phase0EnlistmentShim
+        internal IPhase0EnlistmentShim? Phase0EnlistmentShim
         {
             get
             {
@@ -207,7 +209,7 @@ namespace System.Transactions.Oletx
                     // enlistment is made, but before we are given the shim.
                     if (_aborting || _tmWentDown)
                     {
-                        value.Phase0Done(false);
+                        value!.Phase0Done(false);
                     }
                     _phase0EnlistmentShim = value;
                 }
@@ -217,7 +219,7 @@ namespace System.Transactions.Oletx
         internal override void DecrementOutstandingNotifications(bool voteYes)
         {
             bool respondToProxy = false;
-            IPhase0EnlistmentShim localPhase0Shim = null;
+            IPhase0EnlistmentShim? localPhase0Shim = null;
 
             lock (this)
             {
@@ -314,7 +316,7 @@ namespace System.Transactions.Oletx
 
         internal override void Committed()
         {
-            OletxVolatileEnlistment enlistment;
+            OletxVolatileEnlistment? enlistment;
             int localCount;
 
             lock (this)
@@ -344,7 +346,7 @@ namespace System.Transactions.Oletx
 
         internal override void Aborted()
         {
-            OletxVolatileEnlistment enlistment;
+            OletxVolatileEnlistment? enlistment;
             int localCount;
 
             lock (this)
@@ -375,7 +377,7 @@ namespace System.Transactions.Oletx
 
         internal override void InDoubt()
         {
-            OletxVolatileEnlistment enlistment;
+            OletxVolatileEnlistment? enlistment;
             int localCount;
 
             lock (this)
@@ -406,9 +408,9 @@ namespace System.Transactions.Oletx
 
         internal void Phase0Request(bool abortHint)
         {
-            OletxVolatileEnlistment enlistment;
+            OletxVolatileEnlistment? enlistment;
             int localCount;
-            OletxCommittableTransaction committableTx;
+            OletxCommittableTransaction? committableTx;
             bool commitNotYetCalled = false;
 
             lock (this)
@@ -539,18 +541,16 @@ namespace System.Transactions.Oletx
 
     internal class OletxPhase1VolatileEnlistmentContainer : OletxVolatileEnlistmentContainer
     {
-        private IVoterBallotShim _voterBallotShim;
+        private IVoterBallotShim? _voterBallotShim;
 
         internal IntPtr VoterHandle = IntPtr.Zero;
 
         internal OletxPhase1VolatileEnlistmentContainer(RealOletxTransaction realOletxTransaction)
+            : base(realOletxTransaction)
         {
-            Debug.Assert(realOletxTransaction != null, "Argument is null");
-
             // This will be set later, after the caller creates the enlistment with the proxy.
             _voterBallotShim = null;
 
-            RealOletxTransaction = realOletxTransaction;
             Phase = -1;
             OutstandingNotifications = 0;
             IncompleteDependentClones = 0;
@@ -558,8 +558,6 @@ namespace System.Transactions.Oletx
 
             // If anybody votes false, this will get set to false.
             CollectedVoteYes = true;
-
-            EnlistmentList = new ArrayList();
 
             // This is a new undecided enlistment on the transaction.  Do this last since it has side affects.
             realOletxTransaction.IncrementUndecidedEnlistments();
@@ -627,7 +625,7 @@ namespace System.Transactions.Oletx
         internal override void RollbackFromTransaction()
         {
             bool voteNo = false;
-            IVoterBallotShim localVoterShim = null;
+            IVoterBallotShim? localVoterShim = null;
 
             lock (this)
             {
@@ -698,7 +696,7 @@ namespace System.Transactions.Oletx
             }
         }
 
-        internal IVoterBallotShim VoterBallotShim
+        internal IVoterBallotShim? VoterBallotShim
         {
             get
             {
@@ -719,7 +717,7 @@ namespace System.Transactions.Oletx
         internal override void DecrementOutstandingNotifications(bool voteYes)
         {
             bool respondToProxy = false;
-            IVoterBallotShim localVoterShim = null;
+            IVoterBallotShim? localVoterShim = null;
 
             lock (this)
             {
@@ -853,7 +851,7 @@ namespace System.Transactions.Oletx
 
         internal override void Committed()
         {
-            OletxVolatileEnlistment enlistment;
+            OletxVolatileEnlistment? enlistment;
             int localPhase1Count;
 
             lock (this)
@@ -882,7 +880,7 @@ namespace System.Transactions.Oletx
 
         internal override void Aborted()
         {
-            OletxVolatileEnlistment enlistment;
+            OletxVolatileEnlistment? enlistment;
             int localPhase1Count;
 
             lock (this)
@@ -911,7 +909,7 @@ namespace System.Transactions.Oletx
 
         internal override void InDoubt()
         {
-            OletxVolatileEnlistment enlistment;
+            OletxVolatileEnlistment? enlistment;
             int localPhase1Count;
 
             lock (this)
@@ -940,7 +938,7 @@ namespace System.Transactions.Oletx
 
         internal void VoteRequest()
         {
-            OletxVolatileEnlistment enlistment;
+            OletxVolatileEnlistment? enlistment;
             int localPhase1Count = 0;
             bool voteNo = false;
 
@@ -1028,7 +1026,7 @@ namespace System.Transactions.Oletx
 
         private IEnlistmentNotificationInternal _iEnlistmentNotification;
         private OletxVolatileEnlistmentState _state = OletxVolatileEnlistmentState.Active;
-        private OletxVolatileEnlistmentContainer _container;
+        private OletxVolatileEnlistmentContainer? _container;
         internal bool EnlistDuringPrepareRequired;
 
         // This is used if the transaction outcome is received while a prepare request
@@ -1042,7 +1040,7 @@ namespace System.Transactions.Oletx
             IEnlistmentNotificationInternal enlistmentNotification,
             EnlistmentOptions enlistmentOptions,
             OletxTransaction oletxTransaction)
-            : base(null, oletxTransaction)
+            : base(null!, oletxTransaction)
         {
             _iEnlistmentNotification = enlistmentNotification;
             EnlistDuringPrepareRequired = (enlistmentOptions & EnlistmentOptions.EnlistDuringPrepareRequired) != 0;
@@ -1148,7 +1146,7 @@ namespace System.Transactions.Oletx
         internal void Commit()
         {
             OletxVolatileEnlistmentState localState = OletxVolatileEnlistmentState.Active;
-            IEnlistmentNotificationInternal localEnlistmentNotification = null;
+            IEnlistmentNotificationInternal? localEnlistmentNotification = null;
 
             lock (this)
             {
@@ -1210,7 +1208,7 @@ namespace System.Transactions.Oletx
         internal void Rollback()
         {
             OletxVolatileEnlistmentState localState = OletxVolatileEnlistmentState.Active;
-            IEnlistmentNotificationInternal localEnlistmentNotification = null;
+            IEnlistmentNotificationInternal? localEnlistmentNotification = null;
 
             lock (this)
             {
@@ -1280,7 +1278,7 @@ namespace System.Transactions.Oletx
         internal void InDoubt()
         {
             OletxVolatileEnlistmentState localState = OletxVolatileEnlistmentState.Active;
-            IEnlistmentNotificationInternal localEnlistmentNotification = null;
+            IEnlistmentNotificationInternal? localEnlistmentNotification = null;
 
             lock (this)
             {
@@ -1358,7 +1356,7 @@ namespace System.Transactions.Oletx
             }
 
             OletxVolatileEnlistmentState localState = OletxVolatileEnlistmentState.Active;
-            OletxVolatileEnlistmentContainer localContainer;
+            OletxVolatileEnlistmentContainer? localContainer;
 
             lock (this)
             {
@@ -1480,7 +1478,7 @@ namespace System.Transactions.Oletx
         void IPromotedEnlistment.ForceRollback()
             => ((IPromotedEnlistment)this).ForceRollback(null);
 
-        void IPromotedEnlistment.ForceRollback(Exception e)
+        void IPromotedEnlistment.ForceRollback(Exception? e)
         {
             if (DiagnosticTrace.Verbose)
             {
@@ -1521,7 +1519,7 @@ namespace System.Transactions.Oletx
                 localContainer = _container;
             }
 
-            Interlocked.CompareExchange(ref oletxTransaction.RealOletxTransaction.InnerException, e, null);
+            Interlocked.CompareExchange(ref oletxTransaction!.RealOletxTransaction.InnerException, e, null);
 
             // Vote no.
             localContainer.DecrementOutstandingNotifications(false);
@@ -1534,9 +1532,9 @@ namespace System.Transactions.Oletx
 
         void IPromotedEnlistment.Committed() => throw new InvalidOperationException();
         void IPromotedEnlistment.Aborted() => throw new InvalidOperationException();
-        void IPromotedEnlistment.Aborted(Exception e) => throw new InvalidOperationException();
+        void IPromotedEnlistment.Aborted(Exception? e) => throw new InvalidOperationException();
         void IPromotedEnlistment.InDoubt() => throw new InvalidOperationException();
-        void IPromotedEnlistment.InDoubt(Exception e) => throw new InvalidOperationException();
+        void IPromotedEnlistment.InDoubt(Exception? e) => throw new InvalidOperationException();
 
         byte[] IPromotedEnlistment.GetRecoveryInformation()
             => throw TransactionException.CreateInvalidOperationException(
@@ -1545,7 +1543,7 @@ namespace System.Transactions.Oletx
                 null,
                 DistributedTxId);
 
-        InternalEnlistment IPromotedEnlistment.InternalEnlistment
+        InternalEnlistment? IPromotedEnlistment.InternalEnlistment
         {
             get => InternalEnlistment;
             set => InternalEnlistment = value;

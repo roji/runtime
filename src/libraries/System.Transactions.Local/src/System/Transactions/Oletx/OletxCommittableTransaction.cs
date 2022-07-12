@@ -11,8 +11,6 @@ using System.Security.Permissions;
 using System.Threading;
 using System.Transactions.Diagnostics;
 
-#nullable disable
-
 namespace System.Transactions.Oletx
 {
     /// <summary>

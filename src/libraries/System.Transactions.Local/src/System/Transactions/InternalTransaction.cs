@@ -122,7 +122,7 @@ namespace System.Transactions
         private DistributedTransaction? _promotedTransaction;
         internal DistributedTransaction? PromotedTransaction
         {
-            get { return _promotedTransaction; }
+            get => _promotedTransaction;
             set
             {
                 Debug.Assert(_promotedTransaction == null, "A transaction can only be promoted once!");

@@ -7,8 +7,6 @@ using System.Diagnostics;
 using System.Threading;
 using System.Transactions.Diagnostics;
 
-#nullable disable
-
 namespace System.Transactions.Oletx
 {
     static class HandleTable
@@ -38,7 +36,7 @@ namespace System.Transactions.Oletx
             }
         }
 
-        public static object FindHandle(IntPtr handle)
+        public static object? FindHandle(IntPtr handle)
         {
             Debug.Assert(handle != IntPtr.Zero, "handle is invalid");
 
