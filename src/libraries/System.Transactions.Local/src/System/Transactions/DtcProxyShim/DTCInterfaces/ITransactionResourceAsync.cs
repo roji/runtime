@@ -26,7 +26,11 @@ internal interface ITransactionResourceAsync
     /// <param name="grfRM">Values from <see cref="OletxXactRm" />.</param>
     /// <param name="fWantMoniker">Always false.</param> // TODO
     /// <param name="fSinglePhase">If true, it indicates that the RM is the only resource manager enlisted on the transaction.</param>
-    void PrepareRequest(bool fRetaining, OletxXactRm grfRM, bool fWantMoniker, bool fSinglePhase);
+    void PrepareRequest(
+        [MarshalAs(UnmanagedType.Bool)] bool fRetaining,
+        OletxXactRm grfRM,
+        [MarshalAs(UnmanagedType.Bool)] bool fWantMoniker,
+        [MarshalAs(UnmanagedType.Bool)] bool fSinglePhase);
 
     /// <summary>
     /// The DTC proxy calls this method to commit a transaction (phase two of the two-phase commit protocol).
@@ -41,7 +45,7 @@ internal interface ITransactionResourceAsync
     /// <param name="pboidReason">Unspecified and should be ignored.</param>
     /// <param name="fRetaining">Always will be false.</param>
     /// <param name="pNewUOW">Always will be null.</param>
-    void AbortRequest(IntPtr pboidReason, bool fRetaining, Guid pNewUOW);
+    void AbortRequest(IntPtr pboidReason, [MarshalAs(UnmanagedType.Bool)] bool fRetaining, Guid pNewUOW);
 
     /// <summary>
     /// The DTC Proxy calls on this method if the connection to the transaction manager goes down and the resource manager's transaction object is prepared

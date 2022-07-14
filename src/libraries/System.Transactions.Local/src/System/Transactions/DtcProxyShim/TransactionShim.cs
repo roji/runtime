@@ -40,13 +40,13 @@ internal sealed class TransactionShim : ITransactionShim
     {
         _shimFactory.ExportFactory.Create((ulong)whereabouts.Length, whereabouts, out var export);
 
-        ulong cookieSizeULong = 0;
+        uint cookieSizeULong = 0;
 
         NativeMethods.Retry(() => export.Export(Transaction!, out cookieSizeULong));
 
         var cookieSize = (uint)cookieSizeULong;
         var buffer = new byte[cookieSize];
-        ulong bytesUsed = 0;
+        uint bytesUsed = 0;
 
         NativeMethods.Retry(() => export.GetTransactionCookie(Transaction!, cookieSize, buffer, out bytesUsed));
 
@@ -64,7 +64,7 @@ internal sealed class TransactionShim : ITransactionShim
         var propagationTokenSize = (int)propagationTokenSizeULong;
         var propagationToken = new byte[propagationTokenSize];
 
-        cachedTransmitter.TxTransmitter.MarshalPropagationToken((ulong)propagationTokenSize, propagationToken, out var propagationTokenSizeUsed);
+        cachedTransmitter.TxTransmitter.MarshalPropagationToken((uint)propagationTokenSize, propagationToken, out var propagationTokenSizeUsed);
 
         return propagationToken;
     }

@@ -21,7 +21,7 @@ internal interface IPrepareInfo
     /// <param name="pcbPrepInfo">
     /// A pointer to the size in bytes of the prepare information. The actual prepare information is available by a call to <see cref="GetPrepareInfo" />.
     /// </param>
-    void GetPrepareInfoSize(out ulong pcbPrepInfo);
+    void GetPrepareInfoSize(out uint pcbPrepInfo);
 
     /// <summary>
     /// The GetPrepareInfo method is called by the resource manager to get the transaction prepare information.
@@ -29,5 +29,5 @@ internal interface IPrepareInfo
     /// <param name="pPrepInfo">
     /// Pointer to the caller allocated buffer to receive the prepare information. The size of pPrepInfo is determined by calling <see cref="GetPrepareInfoSize" />.
     /// </param>
-    void GetPrepareInfo([MarshalAs(UnmanagedType.LPArray)] byte[] pPrepInfo);
+    void GetPrepareInfo([MarshalAs(UnmanagedType.LPArray), Out] byte[] pPrepInfo);
 }

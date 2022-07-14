@@ -23,7 +23,7 @@ internal interface ITransactionOutcomeEvents
     /// <param name="fRetaining">Indicates whether retaining Commit was specified. Will be false.</param>
     /// <param name="pNewUOW">Always null.</param>
     /// <param name="hresult">Always S_OK.</param>
-    void Committed(bool fRetaining, Guid pNewUOW /* always null? */, uint hresult);
+    void Committed([MarshalAs(UnmanagedType.Bool)] bool fRetaining, Guid pNewUOW /* always null? */, uint hresult);
 
     /// <summary>
     /// This event is raised when the transaction aborted, either as a result of a call to Abort or an unsuccessful call to Commit*.*.
@@ -32,7 +32,7 @@ internal interface ITransactionOutcomeEvents
     /// <param name="fRetaining">Indicates whether retaining Commit was specified. Will be false.</param>
     /// <param name="pNewUOW">Always null.</param>
     /// <param name="hresult">Alawys S_OK.</param>
-    void Aborted(IntPtr pboidReason, bool fRetaining, Guid pNewUOW, uint hresult);
+    void Aborted(IntPtr pboidReason, [MarshalAs(UnmanagedType.Bool)] bool fRetaining, Guid pNewUOW, uint hresult);
 
     /// <summary>
     /// This event is raised when one of the participants in the transaction chooses to heuristically decide the outcome of the transaction.

@@ -50,7 +50,7 @@ internal interface IResourceManager
     /// </param>
     internal void Reenlist(
         [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] byte[] pPrepInfo,
-        ulong cbPrepInfom,
+        uint cbPrepInfom,
         int lTimeout,
         [MarshalAs(UnmanagedType.I4)] out OletxXactStat pXactStat);
 
@@ -61,5 +61,5 @@ internal interface IResourceManager
 
     void GetDistributedTransactionManager(
         in Guid riid,
-        out IntPtr ppvObject);
+        [MarshalAs(UnmanagedType.Interface)] out object ppvObject);
 }
