@@ -21,23 +21,23 @@ internal sealed class NotificationShimFactory : IDtcProxyShimFactory
     private static volatile object _proxyInitLock = new();
 
     // Lock to protect access to listOfNotifications.
-    private object _notificationLock = new();
+    private readonly object _notificationLock = new();
 
     // This is the list of queued NotificationShimBase objects.
-    private Queue<NotificationShimBase> _listOfNotifications = new();
+    private readonly Queue<NotificationShimBase> _listOfNotifications = new();
 
     // This is the list of cached ITransactionOptions interfaces.
-    private List<CachedInterfaceBase> _listOfOptions = new();
+    private readonly List<CachedInterfaceBase> _listOfOptions = new();
 
     // This is the list of cached ITransactionTransmitter interfaces.
     // Lock to protect access to listOfTransmitters.
-    private object _transmitterLock = new();
-    private List<CachedInterfaceBase> _listOfTransmitters = new();
+    private readonly object _transmitterLock = new();
+    private readonly List<CachedInterfaceBase> _listOfTransmitters = new();
 
     // This is the list of cached ITransactionReceiver interfaces.
     // Lock to protect access to listOfReceivers.
-    private object _receiverLock = new();
-    private List<CachedInterfaceBase> _listOfReceivers = new();
+    private readonly object _receiverLock = new();
+    private readonly List<CachedInterfaceBase> _listOfReceivers = new();
 
     private readonly EventWaitHandle _eventHandle;
 
@@ -72,7 +72,9 @@ internal sealed class NotificationShimFactory : IDtcProxyShimFactory
                 throw new NotImplementedException();
             }
             else
+            {
                 nodeNameMatches = true;
+            }
 
             var pImportWhereabouts = (ITransactionImportWhereabouts)localDispenser;
 

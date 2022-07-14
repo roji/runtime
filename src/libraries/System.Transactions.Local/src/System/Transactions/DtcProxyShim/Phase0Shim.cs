@@ -25,10 +25,7 @@ internal sealed class Phase0Shim : IPhase0EnlistmentShim
     {
         // VSWhidbey 405624 - There is a race between the enlistment and abort of a transaction
         // that could cause out proxy interface to already be released when Unenlist is called.
-        if (Phase0EnlistmentAsync is not null)
-        {
-            Phase0EnlistmentAsync.Unenlist();
-        }
+        Phase0EnlistmentAsync?.Unenlist();
     }
 
     public void Phase0Done(bool voteYes)

@@ -13,8 +13,8 @@ namespace System.Transactions.DtcProxyShim;
 
 internal sealed class ResourceManagerShim : IResourceManagerShim
 {
-    private NotificationShimFactory _shimFactory;
-    private ResourceManagerNotifyShim _pResourceManagerNotifyShim;
+    private readonly NotificationShimFactory _shimFactory;
+    private readonly ResourceManagerNotifyShim _pResourceManagerNotifyShim;
 
     internal ResourceManagerShim(NotificationShimFactory shimFactory, ResourceManagerNotifyShim pNotifyShim)
     {

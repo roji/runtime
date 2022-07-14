@@ -8,7 +8,7 @@ namespace System.Transactions.DtcProxyShim;
 
 internal sealed class CachedTransmitter : CachedInterfaceBase
 {
-    public ITransactionTransmitter TxTransmitter { get; private set; }
+    public ITransactionTransmitter TxTransmitter { get; }
 
     internal CachedTransmitter(NotificationShimFactory shimFactory, ITransactionTransmitter transmitter)
         : base(shimFactory)
