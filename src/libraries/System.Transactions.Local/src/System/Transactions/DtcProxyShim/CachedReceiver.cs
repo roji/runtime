@@ -9,7 +9,7 @@ namespace System.Transactions.DtcProxyShim;
 
 internal sealed class CachedReceiver : CachedInterfaceBase
 {
-    public ITransactionReceiver TxReceiver { get; private set; }
+    public ITransactionReceiver TxReceiver { get; }
 
     internal CachedReceiver(NotificationShimFactory shimFactory, ITransactionReceiver receiver)
         : base(shimFactory)

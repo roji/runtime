@@ -13,9 +13,9 @@ namespace System.Transactions.Oletx
 {
     internal sealed class DtcTransactionManager
     {
-        private string? _nodeName;
-        private OletxTransactionManager _oletxTm;
-        private IDtcProxyShimFactory _proxyShimFactory;
+        private readonly string? _nodeName;
+        private readonly OletxTransactionManager _oletxTm;
+        private readonly IDtcProxyShimFactory _proxyShimFactory;
         private byte[] _whereabouts = null!; // Late-initialized
         private bool _initialized;
 
