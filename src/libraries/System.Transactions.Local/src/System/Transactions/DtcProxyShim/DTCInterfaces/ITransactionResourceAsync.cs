@@ -37,7 +37,7 @@ internal interface ITransactionResourceAsync
     /// </summary>
     /// <param name="grfRM">Values from <see cref="OletxXactRm" />.</param>
     /// <param name="pNewUOW">Always null.</param>
-    void CommitRequest(OletxXactRm grfRM, Guid pNewUOW);
+    void CommitRequest(OletxXactRm grfRM, IntPtr pNewUOW);
 
     /// <summary>
     /// The DTC proxy calls this method to abort a transaction.
@@ -45,7 +45,7 @@ internal interface ITransactionResourceAsync
     /// <param name="pboidReason">Unspecified and should be ignored.</param>
     /// <param name="fRetaining">Always will be false.</param>
     /// <param name="pNewUOW">Always will be null.</param>
-    void AbortRequest(IntPtr pboidReason, [MarshalAs(UnmanagedType.Bool)] bool fRetaining, Guid pNewUOW);
+    void AbortRequest(IntPtr pboidReason, [MarshalAs(UnmanagedType.Bool)] bool fRetaining, IntPtr pNewUOW);
 
     /// <summary>
     /// The DTC Proxy calls on this method if the connection to the transaction manager goes down and the resource manager's transaction object is prepared

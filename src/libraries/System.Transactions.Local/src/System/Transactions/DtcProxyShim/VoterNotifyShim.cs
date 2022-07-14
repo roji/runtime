@@ -21,9 +21,9 @@ internal sealed class VoterNotifyShim : NotificationShimBase, ITransactionVoterN
     }
 
     // TODO
-    public void Committed([MarshalAs(UnmanagedType.Bool)] bool fRetaining, Guid pNewUOW, uint hresult)
+    public void Committed([MarshalAs(UnmanagedType.Bool)] bool fRetaining, IntPtr pNewUOW, uint hresult)
         => throw new NotImplementedException();
-    public void Aborted(IntPtr pboidReason, [MarshalAs(UnmanagedType.Bool)] bool fRetaining, Guid pNewUOW, uint hresult)
+    public void Aborted(IntPtr pboidReason, [MarshalAs(UnmanagedType.Bool)] bool fRetaining, IntPtr pNewUOW, uint hresult)
         => throw new NotImplementedException();
     public void HeuristicDecision([MarshalAs(UnmanagedType.U4)] OletxTransactionHeuristic dwDecision, IntPtr pboidReason, uint hresult)
         => throw new NotImplementedException();

@@ -14,19 +14,19 @@ internal sealed class TransactionNotifyShim : NotificationShimBase, ITransaction
     {
     }
 
-    public void Committed(bool fRetaining, Guid pNewUOW /* always null? */, uint hresult)
+    public void Committed(bool fRetaining, IntPtr pNewUOW /* always null? */, int hresult)
     {
         NotificationType = ShimNotificationType.CommittedNotify;
         ShimFactory.NewNotification(this);
     }
 
-    public void Aborted(IntPtr pboidReason, bool fRetaining, Guid pNewUOW, uint hresult)
+    public void Aborted(IntPtr pboidReason, bool fRetaining, IntPtr pNewUOW, int hresult)
     {
         NotificationType = ShimNotificationType.AbortedNotify;
         ShimFactory.NewNotification(this);
     }
 
-    public void HeuristicDecision(OletxTransactionHeuristic dwDecision, IntPtr pboidReason, uint hresult)
+    public void HeuristicDecision(OletxTransactionHeuristic dwDecision, IntPtr pboidReason, int hresult)
     {
         NotificationType = dwDecision switch
         {

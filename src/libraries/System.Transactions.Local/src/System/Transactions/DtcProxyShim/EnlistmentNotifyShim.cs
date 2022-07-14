@@ -51,13 +51,13 @@ internal sealed class EnlistmentNotifyShim : NotificationShimBase, ITransactionR
         ShimFactory.NewNotification(this);
     }
 
-    public void CommitRequest(OletxXactRm grfRM, Guid pNewUOW)
+    public void CommitRequest(OletxXactRm grfRM, IntPtr pNewUOW)
     {
         NotificationType = ShimNotificationType.CommitRequestNotify;
         ShimFactory.NewNotification(this);
     }
 
-    public void AbortRequest(IntPtr pboidReason, bool fRetaining, Guid pNewUOW)
+    public void AbortRequest(IntPtr pboidReason, bool fRetaining, IntPtr pNewUOW)
     {
         if (!_ignoreSpuriousProxyNotifications)
         {

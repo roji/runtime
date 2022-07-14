@@ -51,7 +51,7 @@ internal interface IResourceManager
     internal void Reenlist(
         [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] byte[] pPrepInfo,
         uint cbPrepInfom,
-        int lTimeout,
+        uint lTimeout,
         [MarshalAs(UnmanagedType.I4)] out OletxXactStat pXactStat);
 
     /// <summary>

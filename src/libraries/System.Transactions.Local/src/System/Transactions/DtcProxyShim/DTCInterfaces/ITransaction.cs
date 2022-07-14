@@ -22,7 +22,7 @@ internal interface ITransaction
     /// <param name="fRetainingt">Must be FALSE.</param>
     /// <param name="grfTC">Values taken from the <see cref="OletxXacttc" /> enumeration</param>
     /// <param name="grfRM">Must be zero.</param>
-    void Commit(bool fRetainingt, [MarshalAs(UnmanagedType.U4)] OletxXacttc grfTC, uint grfRM);
+    void Commit([MarshalAs(UnmanagedType.Bool)] bool fRetainingt, [MarshalAs(UnmanagedType.U4)] OletxXacttc grfTC, uint grfRM);
 
     /// <summary>
     /// This method aborts the transaction.
@@ -34,7 +34,7 @@ internal interface ITransaction
     /// <param name="async">
     /// When fAsync is true, an asynchronous abort is performed and the caller must use ITransactionOutcomeEvents to learn the outcome of the transaction.
     /// </param>
-    void Abort(IntPtr reason, int retaining, int async);
+    void Abort(IntPtr reason, [MarshalAs(UnmanagedType.Bool)] bool retaining, [MarshalAs(UnmanagedType.Bool)] bool async);
 
     /// <summary>
     /// This method returns information regarding a transaction object.
