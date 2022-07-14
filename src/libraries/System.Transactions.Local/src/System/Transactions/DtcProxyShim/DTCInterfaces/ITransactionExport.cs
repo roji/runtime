@@ -23,7 +23,7 @@ internal interface ITransactionExport
     /// </summary>
     /// <param name="punkTransaction">Pointer to the IUnknown interface on the transaction object to be exported.</param>
     /// <param name="pcbTransactionCookie">Pointer to the size in bytes of the transaction cookie.</param>
-    void Export([MarshalAs(UnmanagedType.Interface)] ITransaction punkTransaction, out ulong pcbTransactionCookie);
+    void Export([MarshalAs(UnmanagedType.Interface)] ITransaction punkTransaction, out uint pcbTransactionCookie);
 
     /// <summary>
     /// This method transforms a transaction object into a transaction cookie.
@@ -37,7 +37,7 @@ internal interface ITransactionExport
     /// <param name="pcbUsed">Pointer to the size in bytes of the address returned in <paramref name="rgbTransactionCookie" />.</param>
     void GetTransactionCookie(
         [MarshalAs(UnmanagedType.Interface)] ITransaction pITransaction,
-        ulong cbTransactionCookie,
-        [MarshalAs(UnmanagedType.LPArray)] byte[] rgbTransactionCookie,
-        out ulong pcbUsed);
+        uint cbTransactionCookie,
+        [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1), Out] byte[] rgbTransactionCookie,
+        out uint pcbUsed);
 }

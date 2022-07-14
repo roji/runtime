@@ -48,7 +48,7 @@ internal sealed class ResourceManagerShim : IResourceManagerShim
         // ReenlistThread.
         try
         {
-            ResourceManager!.Reenlist(prepareInfo, (ulong)prepareInfo.Length, 5, out var xactStatus);
+            ResourceManager!.Reenlist(prepareInfo, (uint)prepareInfo.Length, 5, out var xactStatus);
             outcome = xactStatus switch
             {
                 OletxXactStat.XACTSTAT_ABORTED => OletxTransactionOutcome.Aborted,

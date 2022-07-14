@@ -27,7 +27,7 @@ internal interface ITransactionTransmitter
     /// The GetPropagationTokenSize method obtains the size of the propagation token.
     /// </summary>
     /// <param name="pcbToken">The size of the propagation token.</param>
-    void GetPropagationTokenSize(out ulong pcbToken);
+    void GetPropagationTokenSize(out uint pcbToken);
 
     /// <summary>
     /// The MarshalPropagationToken method marshals a propagation token.
@@ -36,9 +36,9 @@ internal interface ITransactionTransmitter
     /// <param name="rgbToken">The marshaled token.</param>
     /// <param name="pcbUsed">The token size used.</param>
     void MarshalPropagationToken(
-        ulong cbToken,
-        [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)] byte[] rgbToken,
-        out ulong pcbUsed);
+        uint cbToken,
+        [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0), Out] byte[] rgbToken,
+        out uint pcbUsed);
 
     /// <summary>
     /// The UnmarshalReturnToken method unmarshals the return token.
@@ -46,7 +46,7 @@ internal interface ITransactionTransmitter
     /// <param name="cbReturnToken">The return token to be unmarshaled.</param>
     /// <param name="rgbToken">The marshaled return token.</param>
     void UnmarshalReturnToken(
-        ulong cbReturnToken,
+        uint cbReturnToken,
         [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)] byte[] rgbToken);
 
     /// <summary>

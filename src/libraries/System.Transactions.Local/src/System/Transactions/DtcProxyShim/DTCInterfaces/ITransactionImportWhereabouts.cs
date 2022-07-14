@@ -18,7 +18,7 @@ internal interface ITransactionImportWhereabouts
     /// This method returns the size in bytes of the whereabouts, (location) of the local transaction manager.
     /// </summary>
     /// <param name="pcbSize">Pointer to the size, in bytes, of the location.</param>
-    internal void GetWhereaboutsSize(out ulong pcbSize);
+    internal void GetWhereaboutsSize(out uint pcbSize);
 
     /// <summary>
     /// This method returns the whereabouts, (location), of the local transaction manager.
@@ -27,7 +27,7 @@ internal interface ITransactionImportWhereabouts
     /// <param name="rgbWhereabouts">Pointer to the caller allocated buffer in which the location is returned.</param>
     /// <param name="pcbUsed">Pointer to the size in bytes of the address returned in <paramref name="rgbWhereabouts"/>.</param>
     internal void GetWhereabouts(
-        ulong cbWhereabouts,
-        [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)] byte[] rgbWhereabouts,
-        out ulong pcbUsed);
+        uint cbWhereabouts,
+        [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0), Out] byte[] rgbWhereabouts,
+        out uint pcbUsed);
 }

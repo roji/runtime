@@ -26,7 +26,7 @@ internal interface ITransactionPhase0NotifyAsync
     /// <param name="fAbortHint">
     /// A value of true provides the phase0 participant with an indication that further work on this transaction is not worth pursuing, since another participant has already aborted the transaction.
     /// </param>
-    void Phase0Request(bool fAbortHint);
+    void Phase0Request([MarshalAs(UnmanagedType.Bool)] bool fAbortHint);
 
     /// <summary>
     /// The DTC Proxy calls this method to notify a Phase0 participant that the process of enlisting with the TM is complete.

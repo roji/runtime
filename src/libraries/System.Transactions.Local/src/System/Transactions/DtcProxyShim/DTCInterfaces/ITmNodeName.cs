@@ -21,7 +21,7 @@ internal interface ITmNodeName
     /// <param name="pcbNodeNameSize">
     /// The length, in bytes, of the node name that will be returned by GetNodeName.
     /// </param>
-    internal void GetNodeNameSize(out ulong pcbNodeNameSize);
+    internal void GetNodeNameSize(out uint pcbNodeNameSize);
 
     //    /// <summary>
     //    /// Gets the node name that specifies the location of the transaction manager used by the DTC proxy.

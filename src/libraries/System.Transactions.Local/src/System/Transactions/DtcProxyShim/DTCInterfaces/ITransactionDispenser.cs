@@ -41,8 +41,8 @@ internal interface ITransactionDispenser
     /// <param name="ppTransaction">Pointer to the pointer to the ITransaction interface on the new transaction object.</param>
     void BeginTransaction(
         IntPtr punkOuter,
-        [MarshalAs(UnmanagedType.I8)] OletxTransactionIsolationLevel isoLevel, // TODO
-        [MarshalAs(UnmanagedType.U8)] OletxTransactionIsoFlags isoFlags,
+        [MarshalAs(UnmanagedType.I4)] OletxTransactionIsolationLevel isoLevel, // TODO
+        [MarshalAs(UnmanagedType.U4)] OletxTransactionIsoFlags isoFlags,
         [MarshalAs(UnmanagedType.Interface)] ITransactionOptions pOptions,
         [MarshalAs(UnmanagedType.Interface)] out ITransaction ppTransaction);
 }

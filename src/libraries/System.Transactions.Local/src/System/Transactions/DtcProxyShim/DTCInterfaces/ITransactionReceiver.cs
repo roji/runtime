@@ -22,7 +22,7 @@ internal interface ITransactionReceiver
     /// <param name="rgbToken">The marshaled propagation token.</param>
     /// <param name="ppTransaction">The ITransaction interface of the transaction.</param>
     void UnmarshalPropagationToken(
-        ulong cbToken,
+        uint cbToken,
         [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)] byte[] rgbToken,
         [MarshalAs(UnmanagedType.Interface)] out ITransaction ppTransaction);
 
@@ -30,7 +30,7 @@ internal interface ITransactionReceiver
     /// The GetReturnTokenSize method obtains the size of the return token.
     /// </summary>
     /// <param name="pcbReturnToken">The size of the return token.</param>
-    void GetReturnTokenSize(out ulong pcbReturnToken);
+    void GetReturnTokenSize(out uint pcbReturnToken);
 
     /// <summary>
     /// The MarshalReturnToken method marshals a return token.
@@ -39,9 +39,9 @@ internal interface ITransactionReceiver
     /// <param name="rgbReturnToken">The marshaled return token.</param>
     /// <param name="pcbUsed">The token size used.</param>
     void MarshalReturnToken(
-        ulong cbReturnToken,
-        [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)] out byte[] rgbReturnToken,
-        out ulong pcbUsed);
+        uint cbReturnToken,
+        [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0), Out] out byte[] rgbReturnToken,
+        out uint pcbUsed);
 
     /// <summary>
     /// The Reset method resets the transaction receiver.

@@ -80,7 +80,7 @@ internal sealed class NotificationShimFactory : IDtcProxyShimFactory
 
             // Adding retry logic as a work around for MSDTC's GetWhereAbouts/GetWhereAboutsSize API
             // which is single threaded and will return XACT_E_ALREADYINPROGRESS if another thread invokes the API.
-            ulong whereaboutsSize = 0;
+            uint whereaboutsSize = 0;
             NativeMethods.Retry(() => pImportWhereabouts.GetWhereaboutsSize(out whereaboutsSize));
 
             // TODO: GetWhereaboutsSize returns ulong
