@@ -121,7 +121,6 @@ namespace System.Transactions
             {
                 etwLog.MethodExit(TraceSourceType.TraceSourceLtm, this);
             }
-
         }
 
         internal override void InternalDispose()

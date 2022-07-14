@@ -10,9 +10,7 @@ namespace System.Transactions.DtcProxyShim;
 
 internal sealed class EnlistmentNotifyShim : NotificationShimBase, ITransactionResourceAsync
 {
-    private ITransactionEnlistmentAsync? _enlistmentAsync;
-
-    internal ITransactionEnlistmentAsync? EnlistmentAsync { get; set; }
+    internal ITransactionEnlistmentAsync? EnlistmentAsync;
 
     // MSDTCPRX behaves unpredictably in that if the TM is down when we vote
     // no it will send an AbortRequest.  However if the TM does not go down
@@ -35,7 +33,7 @@ internal sealed class EnlistmentNotifyShim : NotificationShimBase, ITransactionR
 
     public void PrepareRequest(bool fRetaining, OletxXactRm grfRM, bool fWantMoniker, bool fSinglePhase)
     {
-        var pEnlistmentAsync = Interlocked.Exchange(ref _enlistmentAsync, null);
+        var pEnlistmentAsync = Interlocked.Exchange(ref EnlistmentAsync, null);
 
         if (pEnlistmentAsync is null)
         {

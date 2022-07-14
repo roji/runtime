@@ -96,7 +96,7 @@ namespace System.Transactions.Oletx
         Aborted = 2
     }
 
-    internal enum OletxTransactionIsolationLevel : long
+    internal enum OletxTransactionIsolationLevel
     {
         ISOLATIONLEVEL_UNSPECIFIED = -1,
         ISOLATIONLEVEL_CHAOS = 0x10,
@@ -110,7 +110,7 @@ namespace System.Transactions.Oletx
     }
 
     [Flags]
-    internal enum OletxTransactionIsoFlags : ulong
+    internal enum OletxTransactionIsoFlags : uint
     {
         ISOFLAG_NONE = 0,
         ISOFLAG_RETAIN_COMMIT_DC = 1,

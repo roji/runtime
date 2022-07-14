@@ -1,6 +1,7 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -25,14 +26,16 @@ internal sealed class NotificationShimFactory : IDtcProxyShimFactory
     private readonly object _notificationLock = new();
 
     // This is the list of queued NotificationShimBase objects.
-    private readonly Queue<NotificationShimBase> _listOfNotifications = new();
+    private readonly BlockingCollection<NotificationShimBase> _listOfNotifications = new();
 
     // This is the list of cached ITransactionOptions interfaces.
+    // TODO: Thread safety
     private readonly List<CachedInterfaceBase> _listOfOptions = new();
 
     // This is the list of cached ITransactionTransmitter interfaces.
     // Lock to protect access to listOfTransmitters.
     private readonly object _transmitterLock = new();
+    // TODO: Thread safety
     private readonly List<CachedInterfaceBase> _listOfTransmitters = new();
 
     // This is the list of cached ITransactionReceiver interfaces.
@@ -125,7 +128,7 @@ internal sealed class NotificationShimFactory : IDtcProxyShimFactory
     {
         lock (_notificationLock)
         {
-            _listOfNotifications.Enqueue(notification);
+            _listOfNotifications.Add(notification);
         }
 
         _eventHandle.Set();
@@ -143,10 +146,10 @@ internal sealed class NotificationShimFactory : IDtcProxyShimFactory
     {
         var pCachedOptions = GetCachedOptions();
 
-        var xactopt = new Xactopt(timeout, string.Empty);
+        var xactopt = new Xactopt(timeout, "System.Transactions");
         pCachedOptions.PTxOptions.SetOptions(xactopt);
 
-        _transactionDispenser.BeginTransaction(IntPtr.Zero, isolationLevel, 0, pCachedOptions.PTxOptions, out ITransaction? pTx);
+        _transactionDispenser.BeginTransaction(IntPtr.Zero, isolationLevel, OletxTransactionIsoFlags.ISOFLAG_NONE, pCachedOptions.PTxOptions, out ITransaction? pTx);
 
         SetupTransaction(pTx, managedIdentifier, out transactionIdentifier, out OletxTransactionIsolationLevel localIsoLevel, out transactionShim);
     }
@@ -245,7 +248,7 @@ internal sealed class NotificationShimFactory : IDtcProxyShimFactory
 
         Monitor.Enter(_notificationLock);
 
-        var entryRemoved = _listOfNotifications.TryDequeue(out NotificationShimBase? notification);
+        var entryRemoved = _listOfNotifications.TryTake(out NotificationShimBase? notification);
         if (entryRemoved)
         {
             managedIdentifier = notification!.EnlistmentIdentifier;
@@ -333,6 +336,8 @@ internal sealed class NotificationShimFactory : IDtcProxyShimFactory
                 localCachedTransmitter = new CachedTransmitter(this, transmitter);
             }
         }
+
+        localCachedTransmitter.TxTransmitter.Set(transaction);
 
         return localCachedTransmitter;
     }

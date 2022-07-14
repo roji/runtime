@@ -242,7 +242,7 @@ namespace System.Transactions.Oletx
             while (enlistEnum.MoveNext())
             {
                 enlistment = enlistEnum.Value as OletxEnlistment;
-                enlistment?.TMDownFromInternalRM( oletxTM );
+                enlistment?.TMDownFromInternalRM(oletxTM);
             }
         }
 
@@ -280,7 +280,7 @@ namespace System.Transactions.Oletx
                 oletxTransaction.RealTransaction.TxGuid,
                 enlistmentOptions,
                 this,
-                oletxTransaction                );
+                oletxTransaction);
 
             bool enlistmentSucceeded = false;
 

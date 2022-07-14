@@ -32,8 +32,8 @@ internal sealed class ResourceManagerShim : IResourceManagerShim
         var pEnlistmentNotifyShim = new EnlistmentNotifyShim(_shimFactory, managedIdentifier);
         var pEnlistmentShim = new EnlistmentShim(_shimFactory, pEnlistmentNotifyShim);
 
-        transactionShim.GetTransaction(out ITransaction pTransaction);
-        ResourceManager!.Enlist(pTransaction, pEnlistmentNotifyShim, out Guid txUow, out OletxTransactionIsolationLevel isoLevel, out ITransactionEnlistmentAsync pEnlistmentAsync);
+        transactionShim.GetTransaction(out ITransaction transaction);
+        ResourceManager!.Enlist(transaction, pEnlistmentNotifyShim, out Guid txUow, out OletxTransactionIsolationLevel isoLevel, out ITransactionEnlistmentAsync pEnlistmentAsync);
 
         pEnlistmentNotifyShim.EnlistmentAsync = pEnlistmentAsync;
         pEnlistmentShim.EnlistmentAsync = pEnlistmentAsync;
