@@ -23,7 +23,7 @@ internal interface ITransactionOutcomeEvents
     /// <param name="fRetaining">Indicates whether retaining Commit was specified. Will be false.</param>
     /// <param name="pNewUOW">Always null.</param>
     /// <param name="hresult">Always S_OK.</param>
-    void Committed([MarshalAs(UnmanagedType.Bool)] bool fRetaining, Guid pNewUOW /* always null? */, uint hresult);
+    void Committed([MarshalAs(UnmanagedType.Bool)] bool fRetaining, IntPtr pNewUOW /* always null? */, int hresult);
 
     /// <summary>
     /// This event is raised when the transaction aborted, either as a result of a call to Abort or an unsuccessful call to Commit*.*.
@@ -32,7 +32,7 @@ internal interface ITransactionOutcomeEvents
     /// <param name="fRetaining">Indicates whether retaining Commit was specified. Will be false.</param>
     /// <param name="pNewUOW">Always null.</param>
     /// <param name="hresult">Alawys S_OK.</param>
-    void Aborted(IntPtr pboidReason, [MarshalAs(UnmanagedType.Bool)] bool fRetaining, Guid pNewUOW, uint hresult);
+    void Aborted(IntPtr pboidReason, [MarshalAs(UnmanagedType.Bool)] bool fRetaining, IntPtr pNewUOW, int hresult);
 
     /// <summary>
     /// This event is raised when one of the participants in the transaction chooses to heuristically decide the outcome of the transaction.
@@ -40,7 +40,7 @@ internal interface ITransactionOutcomeEvents
     /// <param name="dwDecision">Values from the enumeration <see cref="OletxTransactionHeuristic" />.</param>
     /// <param name="pboidReason">A BOID indicating why the transaction was heuristically decided. This value is provided by the party making the heuristic decision.</param>
     /// <param name="hresult">Always S_OK.</param>
-    void HeuristicDecision([MarshalAs(UnmanagedType.U4)] OletxTransactionHeuristic dwDecision, IntPtr pboidReason, uint hresult);
+    void HeuristicDecision([MarshalAs(UnmanagedType.U4)] OletxTransactionHeuristic dwDecision, IntPtr pboidReason, int hresult);
 
     /// <summary>
     /// This event is raised when the outcome of the transaction is in-doubt.

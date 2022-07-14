@@ -38,7 +38,7 @@ internal sealed class TransactionShim : ITransactionShim
 
     public void Export(byte[] whereabouts, out byte[] cookieBuffer)
     {
-        _shimFactory.ExportFactory.Create((ulong)whereabouts.Length, whereabouts, out ITransactionExport export);
+        _shimFactory.ExportFactory.Create((uint)whereabouts.Length, whereabouts, out ITransactionExport export);
 
         uint cookieSizeULong = 0;
 

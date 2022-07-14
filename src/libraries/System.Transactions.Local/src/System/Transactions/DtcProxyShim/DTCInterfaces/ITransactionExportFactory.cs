@@ -36,7 +36,7 @@ internal interface ITransactionExportFactory
     /// The caller uses the export object returned by this method to marshal a transaction object for export to the destination process.
     /// </param>
     void Create(
-        ulong cbWhereabouts,
+        uint cbWhereabouts,
         [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)] byte[] rgbWhereabouts,
         [MarshalAs(UnmanagedType.Interface)] out ITransactionExport ppExport);
 }

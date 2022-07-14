@@ -26,7 +26,7 @@ internal interface ITransactionImport
     /// <param name="piid">The interface ID desired on the resulting transaction object.</param>
     /// <param name="ppvTransaction">Reference to the interface on the imported transaction object, requested by the <paramref name="piid" /> parameter.</param>
     void Import(
-        ulong cbTransactionCookie,
+        uint cbTransactionCookie,
         [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)] byte[] rgbTransactionCookie,
         Guid piid,
         [MarshalAs(UnmanagedType.Interface)] out object ppvTransaction);
