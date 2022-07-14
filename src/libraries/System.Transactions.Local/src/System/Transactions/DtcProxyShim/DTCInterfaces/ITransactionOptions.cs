@@ -15,8 +15,7 @@ namespace System.Transactions.DtcProxyShim.DTCInterfaces;
 [ComImport, Guid("3A6AD9E0-23B9-11cf-AD60-00AA00A74CCD"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 internal interface ITransactionOptions
 {
-    void SetOptions(in Xactopt pOptions);
+    void SetOptions(Xactopt pOptions);
 
-    // HRESULT GetOptions(   XACTOPT * pOptions);
     void GetOptions();
 }

@@ -7,6 +7,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
+#nullable enable
+
 namespace System.Transactions.Tests
 {
     public enum Phase1Vote { Prepared, ForceRollback, Done };
@@ -95,18 +97,20 @@ namespace System.Transactions.Tests
         EnlistmentOutcome _expectedOutcome;
         bool _volatileEnlistDuringPrepare;
         bool _expectEnlistToSucceed;
-        AutoResetEvent _outcomeReceived;
+        AutoResetEvent? _outcomeReceived;
         Transaction _txToEnlist;
 
-        public TestEnlistment(Phase1Vote phase1Vote, EnlistmentOutcome expectedOutcome, bool volatileEnlistDuringPrepare = false, bool expectEnlistToSucceed = true, AutoResetEvent outcomeReceived = null)
+        public TestEnlistment(Phase1Vote phase1Vote, EnlistmentOutcome expectedOutcome, bool volatileEnlistDuringPrepare = false, bool expectEnlistToSucceed = true, AutoResetEvent? outcomeReceived = null)
         {
             _phase1Vote = phase1Vote;
             _expectedOutcome = expectedOutcome;
             _volatileEnlistDuringPrepare = volatileEnlistDuringPrepare;
             _expectEnlistToSucceed = expectEnlistToSucceed;
             _outcomeReceived = outcomeReceived;
-            _txToEnlist = Transaction.Current;
+            _txToEnlist = Transaction.Current!;
         }
+
+        //static volatile int _hackCount;
 
         public void Prepare(PreparingEnlistment preparingEnlistment)
         {
@@ -114,6 +118,11 @@ namespace System.Transactions.Tests
             {
                 case Phase1Vote.Prepared:
                     {
+                        //if (Interlocked.Increment(ref _hackCount) == 1)
+                        //{
+                        //    Thread.Sleep(int.MaxValue);
+                        //}
+
                         if (_volatileEnlistDuringPrepare)
                         {
                             TestEnlistment newVol = new TestEnlistment(_phase1Vote, _expectedOutcome);
@@ -132,19 +141,13 @@ namespace System.Transactions.Tests
                     }
                 case Phase1Vote.ForceRollback:
                     {
-                        if (_outcomeReceived != null)
-                        {
-                            _outcomeReceived.Set();
-                        }
+                        _outcomeReceived?.Set();
                         preparingEnlistment.ForceRollback();
                         break;
                     }
                 case Phase1Vote.Done:
                     {
-                        if (_outcomeReceived != null)
-                        {
-                            _outcomeReceived.Set();
-                        }
+                        _outcomeReceived?.Set();
                         preparingEnlistment.Done();
                         break;
                     }
@@ -154,31 +157,72 @@ namespace System.Transactions.Tests
         public void Commit(Enlistment enlistment)
         {
             Assert.Equal(EnlistmentOutcome.Committed, _expectedOutcome);
-            if (_outcomeReceived != null)
-            {
-                _outcomeReceived.Set();
-            }
+            _outcomeReceived?.Set();
             enlistment.Done();
         }
 
         public void Rollback(Enlistment enlistment)
         {
             Assert.Equal(EnlistmentOutcome.Aborted, _expectedOutcome);
-            if (_outcomeReceived != null)
-            {
-                _outcomeReceived.Set();
-            }
+            _outcomeReceived?.Set();
             enlistment.Done();
         }
 
         public void InDoubt(Enlistment enlistment)
         {
             Assert.Equal(EnlistmentOutcome.InDoubt, _expectedOutcome);
-            if (_outcomeReceived != null)
-            {
-                _outcomeReceived.Set();
-            }
+            _outcomeReceived?.Set();
             enlistment.Done();
+        }
+    }
+
+    public class TestPromotableSinglePhaseEnlistment : IPromotableSinglePhaseNotification
+    {
+        private readonly Func<byte[]>? _promoteDelegate;
+        private EnlistmentOutcome _expectedOutcome;
+        private AutoResetEvent? _outcomeReceived;
+
+        public bool InitializedCalled { get; private set; }
+        public bool PromoteCalled { get; private set; }
+
+        public TestPromotableSinglePhaseEnlistment(Func<byte[]>? promoteDelegate, EnlistmentOutcome expectedOutcome, AutoResetEvent? outcomeReceived = null)
+        {
+            _promoteDelegate = promoteDelegate;
+           _expectedOutcome = expectedOutcome;
+           _outcomeReceived = outcomeReceived;
+        }
+
+        public void Initialize()
+            => InitializedCalled = true;
+
+        public byte[]? Promote()
+        {
+            PromoteCalled = true;
+
+            if (_promoteDelegate is null)
+            {
+                Assert.Fail("Promote called but no promotion delegate was provided");
+            }
+
+            return _promoteDelegate();
+        }
+
+        public void SinglePhaseCommit(SinglePhaseEnlistment singlePhaseEnlistment)
+        {
+            Assert.Equal(EnlistmentOutcome.Committed, _expectedOutcome);
+
+            _outcomeReceived?.Set();
+
+            singlePhaseEnlistment.Done();
+        }
+
+        public void Rollback(SinglePhaseEnlistment singlePhaseEnlistment)
+        {
+            Assert.Equal(EnlistmentOutcome.Aborted, _expectedOutcome);
+
+            _outcomeReceived?.Set();
+
+            singlePhaseEnlistment.Done();
         }
     }
 }

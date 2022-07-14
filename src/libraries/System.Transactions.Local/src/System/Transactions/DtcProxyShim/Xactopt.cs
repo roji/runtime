@@ -12,9 +12,10 @@ namespace System.Transactions.DtcProxyShim;
 /// <remarks>
 /// See https://docs.microsoft.com/en-us/previous-versions/windows/desktop/ms679195(v=vs.85).
 /// </remarks>
+[StructLayout(LayoutKind.Sequential)]
 internal struct Xactopt
 {
-    internal Xactopt(ulong ulTimeout, string szDescription)
+    internal Xactopt(uint ulTimeout, string szDescription)
         => (UlTimeout, SzDescription) = (ulTimeout, szDescription);
 
     /// <summary>
@@ -22,10 +23,8 @@ internal struct Xactopt
     /// If the time-out period expires before the transaction commits, the DTC automatically aborts the transaction.
     /// The time-out is specified in milliseconds. A time-out value of zero indicates no time-out.
     /// </summary>
-    public ulong UlTimeout;
+    public uint UlTimeout;
 
-    // TODO: Marshaling...
-    // TODO: Enforce the max length 40?
-    [MarshalAs(UnmanagedType.LPStr)]
+    [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 40)]
     public string SzDescription;
 }

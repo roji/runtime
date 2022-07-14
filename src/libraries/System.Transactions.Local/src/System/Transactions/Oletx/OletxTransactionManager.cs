@@ -354,11 +354,11 @@ namespace System.Transactions.Oletx
                         }
                     }
                 }
-                while (ShimNotificationType.None != shimNotificationType);
+                while (shimNotificationType != ShimNotificationType.None);
             }
             finally
             {
-                if ( holdingNotificationLock )
+                if (holdingNotificationLock)
                 {
                     holdingNotificationLock = false;
                     ProcessingTmDown = false;

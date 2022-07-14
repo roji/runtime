@@ -8,6 +8,7 @@
     <Compile Include="AsyncTransactionScopeTests.cs" />
     <Compile Include="IntResourceManager.cs" />
     <Compile Include="TransactionManagerTest.cs" />
+    <Compile Include="OleTxTests.cs" />
     <Compile Include="TransactionScopeTest.cs" />
     <Compile Include="AsyncTest.cs" />
     <Compile Include="EnlistTest.cs" />
