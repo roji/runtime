@@ -3,7 +3,7 @@
 
 using System.Runtime.InteropServices;
 
-namespace System.Transactions.DtcProxyShim.DTCInterfaces;
+namespace System.Transactions.DtcProxyShim.DtcInterfaces;
 
 /// <summary>
 /// The interface contains a single method that creates a new phase0 enlistment object.

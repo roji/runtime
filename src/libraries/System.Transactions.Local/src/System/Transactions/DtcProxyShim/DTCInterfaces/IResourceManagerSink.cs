@@ -3,7 +3,7 @@
 
 using System.Runtime.InteropServices;
 
-namespace System.Transactions.DtcProxyShim.DTCInterfaces;
+namespace System.Transactions.DtcProxyShim.DtcInterfaces;
 
 /// <summary>
 /// This is a callback interface implemented by the resource manager.

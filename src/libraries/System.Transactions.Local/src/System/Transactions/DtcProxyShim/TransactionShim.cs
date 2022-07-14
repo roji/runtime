@@ -1,37 +1,36 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System;
-using System.Transactions.DtcProxyShim.DTCInterfaces;
+using System.Transactions.DtcProxyShim.DtcInterfaces;
 using System.Transactions.Oletx;
 
 namespace System.Transactions.DtcProxyShim;
 
-internal sealed class TransactionShim : ITransactionShim
+internal sealed class TransactionShim
 {
-    private NotificationShimFactory _shimFactory;
+    private DtcProxyShimFactory _shimFactory;
     private TransactionNotifyShim _transactionNotifyShim;
 
-    internal ITransaction? Transaction { get; set; }
+    internal ITransaction Transaction { get; set; }
 
-    internal TransactionShim(NotificationShimFactory shimFactory, TransactionNotifyShim notifyShim)
+    internal TransactionShim(DtcProxyShimFactory shimFactory, TransactionNotifyShim notifyShim, ITransaction transaction)
     {
         _shimFactory = shimFactory;
         _transactionNotifyShim = notifyShim;
+        Transaction = transaction;
     }
 
     public void Commit()
-    {
-        Transaction!.Commit(false, OletxXacttc.XACTTC_ASYNC, 0);
-    }
+        => Transaction.Commit(false, OletxXacttc.XACTTC_ASYNC, 0);
 
-    public void Abort() => throw new NotImplementedException();
+    public void Abort()
+        => Transaction.Abort(IntPtr.Zero, false, false);
 
-    public void CreateVoter(OletxPhase1VolatileEnlistmentContainer managedIdentifier, out IVoterBallotShim voterBallotShim)
+    public void CreateVoter(OletxPhase1VolatileEnlistmentContainer managedIdentifier, out VoterBallotShim voterBallotShim)
     {
         var voterNotifyShim = new VoterNotifyShim(_shimFactory, managedIdentifier);
-        var voterShim = new VoterShim(_shimFactory, voterNotifyShim);
-        _shimFactory.VoterFactory.Create(Transaction!, voterNotifyShim, out ITransactionVoterBallotAsync2 voterBallot);
+        var voterShim = new VoterBallotShim(_shimFactory, voterNotifyShim);
+        _shimFactory.VoterFactory.Create(Transaction, voterNotifyShim, out ITransactionVoterBallotAsync2 voterBallot);
         voterShim.VoterBallotAsync2 = voterBallot;
         voterBallotShim = voterShim;
     }
@@ -42,38 +41,51 @@ internal sealed class TransactionShim : ITransactionShim
 
         uint cookieSizeULong = 0;
 
-        NativeMethods.Retry(() => export.Export(Transaction!, out cookieSizeULong));
+        OletxHelper.Retry(() => export.Export(Transaction, out cookieSizeULong));
 
         var cookieSize = (uint)cookieSizeULong;
         var buffer = new byte[cookieSize];
         uint bytesUsed = 0;
 
-        NativeMethods.Retry(() => export.GetTransactionCookie(Transaction!, cookieSize, buffer, out bytesUsed));
+        OletxHelper.Retry(() => export.GetTransactionCookie(Transaction, cookieSize, buffer, out bytesUsed));
 
         cookieBuffer = buffer;
     }
 
     public void GetITransactionNative(out IDtcTransaction transactionNative)
-        => throw new NotImplementedException();
+    {
+        var cloner = (ITransactionCloner)Transaction;
+        cloner.CloneWithCommitDisabled(out ITransaction returnTransaction);
+
+        transactionNative = (IDtcTransaction)returnTransaction;
+    }
 
     public unsafe byte[] GetPropagationToken()
     {
-        var cachedTransmitter = _shimFactory.GetCachedTransmitter(Transaction!);
-        cachedTransmitter.TxTransmitter.GetPropagationTokenSize(out uint propagationTokenSizeULong);
+        var transmitter = _shimFactory.GetCachedTransmitter(Transaction);
 
-        var propagationTokenSize = (int)propagationTokenSizeULong;
-        var propagationToken = new byte[propagationTokenSize];
+        try
+        {
+            transmitter.GetPropagationTokenSize(out uint propagationTokenSizeULong);
 
-        cachedTransmitter.TxTransmitter.MarshalPropagationToken((uint)propagationTokenSize, propagationToken, out uint propagationTokenSizeUsed);
+            var propagationTokenSize = (int)propagationTokenSizeULong;
+            var propagationToken = new byte[propagationTokenSize];
 
-        return propagationToken;
+            transmitter.MarshalPropagationToken((uint)propagationTokenSize, propagationToken, out uint propagationTokenSizeUsed);
+
+            return propagationToken;
+        }
+        finally
+        {
+            _shimFactory.ReturnCachedTransmitter(transmitter);
+        }
     }
 
-    public void Phase0Enlist(object managedIdentifier, out IPhase0EnlistmentShim phase0EnlistmentShim)
+    public void Phase0Enlist(object managedIdentifier, out Phase0EnlistmentShim phase0EnlistmentShim)
     {
-        var phase0Factory = (ITransactionPhase0Factory)Transaction!;
+        var phase0Factory = (ITransactionPhase0Factory)Transaction;
         var phase0NotifyShim = new Phase0NotifyShim(_shimFactory, managedIdentifier);
-        var phase0Shim = new Phase0Shim(_shimFactory, phase0NotifyShim);
+        var phase0Shim = new Phase0EnlistmentShim(phase0NotifyShim);
 
         phase0Factory.Create(phase0NotifyShim, out ITransactionPhase0EnlistmentAsync phase0Async);
         phase0Shim.Phase0EnlistmentAsync = phase0Async;
@@ -83,7 +95,4 @@ internal sealed class TransactionShim : ITransactionShim
 
         phase0EnlistmentShim = phase0Shim;
     }
-
-    public void GetTransaction(out ITransaction transaction)
-        => transaction = Transaction!;
 }

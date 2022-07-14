@@ -4,7 +4,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace System.Transactions.DtcProxyShim.DTCInterfaces;
+namespace System.Transactions.DtcProxyShim.DtcInterfaces;
 
 /// <summary>
 /// The resource manager uses this interface to notify the transaction manager that it has completed the prepare,

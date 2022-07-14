@@ -5,7 +5,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Transactions.Oletx;
 
-namespace System.Transactions.DtcProxyShim.DTCInterfaces;
+namespace System.Transactions.DtcProxyShim.DtcInterfaces;
 
 /// <summary>
 /// The ITransaction interface is used to commit and abort transactions and to obtain status information about transactions.

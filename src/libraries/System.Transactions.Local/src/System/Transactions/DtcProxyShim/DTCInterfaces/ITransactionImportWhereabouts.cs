@@ -3,7 +3,7 @@
 
 using System.Runtime.InteropServices;
 
-namespace System.Transactions.DtcProxyShim.DTCInterfaces;
+namespace System.Transactions.DtcProxyShim.DtcInterfaces;
 
 /// <summary>
 /// ITransactionImportWhereabouts interface is used when propagating transactions from one process to another or one system

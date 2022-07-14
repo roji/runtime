@@ -4,7 +4,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace System.Transactions.DtcProxyShim.DTCInterfaces;
+namespace System.Transactions.DtcProxyShim.DtcInterfaces;
 
 /// <summary>
 /// This interface contains methods that control the attributes of new transactions such as their time-out periods and descriptions.

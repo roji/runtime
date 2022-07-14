@@ -3,7 +3,7 @@
 
 using System;
 using System.Threading;
-using System.Transactions.DtcProxyShim.DTCInterfaces;
+using System.Transactions.DtcProxyShim.DtcInterfaces;
 using System.Transactions.Oletx;
 
 namespace System.Transactions.DtcProxyShim;
@@ -22,7 +22,7 @@ internal sealed class EnlistmentNotifyShim : NotificationShimBase, ITransactionR
     // single phase commit request.
     private bool _ignoreSpuriousProxyNotifications;
 
-    internal EnlistmentNotifyShim(NotificationShimFactory shimFactory, OletxEnlistment enlistmentIdentifier)
+    internal EnlistmentNotifyShim(DtcProxyShimFactory shimFactory, OletxEnlistment enlistmentIdentifier)
         : base(shimFactory, enlistmentIdentifier)
     {
         _ignoreSpuriousProxyNotifications = false;

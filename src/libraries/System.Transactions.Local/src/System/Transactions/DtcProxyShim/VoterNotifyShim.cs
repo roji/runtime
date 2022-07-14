@@ -2,14 +2,14 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System.Runtime.InteropServices;
-using System.Transactions.DtcProxyShim.DTCInterfaces;
+using System.Transactions.DtcProxyShim.DtcInterfaces;
 using System.Transactions.Oletx;
 
 namespace System.Transactions.DtcProxyShim;
 
 internal sealed class VoterNotifyShim : NotificationShimBase, ITransactionVoterNotifyAsync2
 {
-    internal VoterNotifyShim(NotificationShimFactory shimFactory, object enlistmentIdentifier)
+    internal VoterNotifyShim(DtcProxyShimFactory shimFactory, object enlistmentIdentifier)
         : base(shimFactory, enlistmentIdentifier)
     {
     }
@@ -20,13 +20,32 @@ internal sealed class VoterNotifyShim : NotificationShimBase, ITransactionVoterN
         ShimFactory.NewNotification(this);
     }
 
-    // TODO
     public void Committed([MarshalAs(UnmanagedType.Bool)] bool fRetaining, IntPtr pNewUOW, uint hresult)
-        => throw new NotImplementedException();
+    {
+        NotificationType = ShimNotificationType.CommittedNotify;
+        ShimFactory.NewNotification(this);
+    }
+
     public void Aborted(IntPtr pboidReason, [MarshalAs(UnmanagedType.Bool)] bool fRetaining, IntPtr pNewUOW, uint hresult)
-        => throw new NotImplementedException();
+    {
+        NotificationType = ShimNotificationType.AbortedNotify;
+        ShimFactory.NewNotification(this);
+    }
+
     public void HeuristicDecision([MarshalAs(UnmanagedType.U4)] OletxTransactionHeuristic dwDecision, IntPtr pboidReason, uint hresult)
-        => throw new NotImplementedException();
+    {
+        NotificationType = dwDecision switch {
+            OletxTransactionHeuristic.XACTHEURISTIC_ABORT => ShimNotificationType.AbortedNotify,
+            OletxTransactionHeuristic.XACTHEURISTIC_COMMIT => ShimNotificationType.CommittedNotify,
+            _ => ShimNotificationType.InDoubtNotify
+        };
+
+        ShimFactory.NewNotification(this);
+    }
+
     public void Indoubt()
-        => throw new NotImplementedException();
+    {
+        NotificationType = ShimNotificationType.InDoubtNotify;
+        ShimFactory.NewNotification(this);
+    }
 }

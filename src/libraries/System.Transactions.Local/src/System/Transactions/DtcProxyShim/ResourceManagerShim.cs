@@ -4,35 +4,28 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Transactions.Oletx;
-using System.Transactions.DtcProxyShim.DTCInterfaces;
+using System.Transactions.DtcProxyShim.DtcInterfaces;
 
 namespace System.Transactions.DtcProxyShim;
 
-#pragma warning disable CS0169
-#pragma warning disable CS0414
-
-internal sealed class ResourceManagerShim : IResourceManagerShim
+internal sealed class ResourceManagerShim
 {
-    private readonly NotificationShimFactory _shimFactory;
-    private readonly ResourceManagerNotifyShim _pResourceManagerNotifyShim;
+    private readonly DtcProxyShimFactory _shimFactory;
 
-    internal ResourceManagerShim(NotificationShimFactory shimFactory, ResourceManagerNotifyShim pNotifyShim)
-    {
-        _shimFactory = shimFactory;
-        _pResourceManagerNotifyShim = pNotifyShim;
-    }
+    internal ResourceManagerShim(DtcProxyShimFactory shimFactory)
+        => _shimFactory = shimFactory;
 
     public IResourceManager? ResourceManager { get; set; }
 
     public void Enlist(
-        ITransactionShim transactionShim,
+        TransactionShim transactionShim,
         OletxEnlistment managedIdentifier,
-        out IEnlistmentShim enlistmentShim)
+        out EnlistmentShim enlistmentShim)
     {
         var pEnlistmentNotifyShim = new EnlistmentNotifyShim(_shimFactory, managedIdentifier);
-        var pEnlistmentShim = new EnlistmentShim(_shimFactory, pEnlistmentNotifyShim);
+        var pEnlistmentShim = new EnlistmentShim(pEnlistmentNotifyShim);
 
-        transactionShim.GetTransaction(out ITransaction transaction);
+        var transaction = transactionShim.Transaction;
         ResourceManager!.Enlist(transaction, pEnlistmentNotifyShim, out Guid txUow, out OletxTransactionIsolationLevel isoLevel, out ITransactionEnlistmentAsync pEnlistmentAsync);
 
         pEnlistmentNotifyShim.EnlistmentAsync = pEnlistmentAsync;
@@ -56,7 +49,7 @@ internal sealed class ResourceManagerShim : IResourceManagerShim
                 _ => OletxTransactionOutcome.Aborted
             };
         }
-        catch (COMException e) when (e.ErrorCode == NativeMethods.XACT_E_REENLISTTIMEOUT)
+        catch (COMException e) when (e.ErrorCode == OletxHelper.XACT_E_REENLISTTIMEOUT)
         {
             outcome = OletxTransactionOutcome.NotKnownYet;
             return;

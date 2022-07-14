@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 using System.Transactions.DtcProxyShim;
 using System.Transactions.Oletx;
 
-namespace System.Transactions.DtcProxyShim.DTCInterfaces;
+namespace System.Transactions.DtcProxyShim.DtcInterfaces;
 
 /// <summary>
 /// This interface contains two methods.
@@ -41,8 +41,8 @@ internal interface ITransactionDispenser
     /// <param name="ppTransaction">Pointer to the pointer to the ITransaction interface on the new transaction object.</param>
     void BeginTransaction(
         IntPtr punkOuter,
-        [MarshalAs(UnmanagedType.I4)] OletxTransactionIsolationLevel isoLevel, // TODO
-        [MarshalAs(UnmanagedType.U4)] OletxTransactionIsoFlags isoFlags,
+        [MarshalAs(UnmanagedType.I4)] OletxTransactionIsolationLevel isoLevel,
+        [MarshalAs(UnmanagedType.I4)] OletxTransactionIsoFlags isoFlags,
         [MarshalAs(UnmanagedType.Interface)] ITransactionOptions pOptions,
         [MarshalAs(UnmanagedType.Interface)] out ITransaction ppTransaction);
 }

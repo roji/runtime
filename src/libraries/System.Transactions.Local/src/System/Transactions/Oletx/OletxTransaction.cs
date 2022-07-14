@@ -1,17 +1,14 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System;
 using System.Collections;
-using System.Configuration;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-// using System.Runtime.Remoting.Messaging;
 using System.Runtime.Serialization;
 using System.Security.Permissions;
 using System.Threading;
 using System.Transactions.Diagnostics;
+using System.Transactions.DtcProxyShim;
 
 namespace System.Transactions.Oletx
 {
@@ -437,7 +434,6 @@ namespace System.Transactions.Oletx
             }
         }
 
-        [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.SerializationFormatter)]
         public void GetObjectData(SerializationInfo serializationInfo, StreamingContext context)
         {
             if (serializationInfo == null)
@@ -481,7 +477,7 @@ namespace System.Transactions.Oletx
         // Transaction manager
         internal OletxTransactionManager OletxTransactionManagerInstance { get; }
 
-        private ITransactionShim _transactionShim;
+        private TransactionShim? _transactionShim;
 
         // guid related to transaction
         internal Guid TxGuid { get; private set; }
@@ -562,7 +558,7 @@ namespace System.Transactions.Oletx
                 // The txGuid will be empty if the oletx transaction was already committed or aborted when we
                 // tried to create the RealOletxTransaction.  We still allow creation of the RealOletxTransaction
                 // for COM+ interop purposes, but we can't get the guid or the status of the transaction.
-                if (TxGuid.Equals( Guid.Empty))
+                if (TxGuid.Equals(Guid.Empty))
                 {
                     throw TransactionException.Create(SR.GetResourceString(SR.CannotGetTransactionIdentifier), null);
                 }
@@ -611,11 +607,11 @@ namespace System.Transactions.Oletx
         internal int UndecidedEnlistments
             => _undecidedEnlistmentCount;
 
-        internal ITransactionShim TransactionShim
+        internal TransactionShim TransactionShim
         {
             get
             {
-                ITransactionShim shim = _transactionShim;
+                TransactionShim? shim = _transactionShim;
                 if (shim == null)
                 {
                     throw TransactionInDoubtException.Create(SR.TransactionIndoubt, null, DistributedTxId);
@@ -627,9 +623,10 @@ namespace System.Transactions.Oletx
 
         // Common constructor used by all types of constructors
         // Create a clean and fresh transaction.
-        internal RealOletxTransaction(OletxTransactionManager transactionManager,
-            ITransactionShim transactionShim,
-            OutcomeEnlistment outcomeEnlistment,
+        internal RealOletxTransaction(
+            OletxTransactionManager transactionManager,
+            TransactionShim? transactionShim,
+            OutcomeEnlistment? outcomeEnlistment,
             Guid identifier,
             OletxTransactionIsolationLevel oletxIsoLevel,
             bool isRoot)
@@ -690,8 +687,8 @@ namespace System.Transactions.Oletx
 
         internal OletxVolatileEnlistmentContainer AddDependentClone(bool delayCommit)
         {
-            IPhase0EnlistmentShim? phase0Shim = null;
-            IVoterBallotShim? voterShim = null;
+            Phase0EnlistmentShim? phase0Shim = null;
+            VoterBallotShim? voterShim = null;
             bool needVoterEnlistment = false;
             bool needPhase0Enlistment = false;
             OletxVolatileEnlistmentContainer? returnValue = null;
@@ -772,7 +769,7 @@ namespace System.Transactions.Oletx
                         // If enlistDuringPrepareRequired is true, we need to ask the proxy to create a Phase0 enlistment.
                         if (needPhase0Enlistment)
                         {
-                            _transactionShim.Phase0Enlist(localPhase0VolatileContainer!, out phase0Shim);
+                            _transactionShim!.Phase0Enlist(localPhase0VolatileContainer!, out phase0Shim);
                             localPhase0VolatileContainer!.Phase0EnlistmentShim = phase0Shim;
                         }
 
@@ -782,7 +779,7 @@ namespace System.Transactions.Oletx
                             OletxTransactionManagerInstance.DtcTransactionManagerLock.AcquireReaderLock(-1);
                             try
                             {
-                                _transactionShim.CreateVoter(localPhase1VolatileContainer!, out voterShim);
+                                _transactionShim!.CreateVoter(localPhase1VolatileContainer!, out voterShim);
                             }
                             finally
                             {
@@ -868,8 +865,8 @@ namespace System.Transactions.Oletx
             bool needPhase0Enlistment = false;
             OletxPhase0VolatileEnlistmentContainer? localPhase0VolatileContainer = null;
             OletxPhase1VolatileEnlistmentContainer? localPhase1VolatileContainer = null;
-            IVoterBallotShim? voterShim = null;
-            IPhase0EnlistmentShim? phase0Shim = null;
+            VoterBallotShim? voterShim = null;
+            Phase0EnlistmentShim? phase0Shim = null;
 
             // Yes, we are talking to the proxy while holding the lock on the RealOletxTransaction.
             // If we don't then things get real sticky with other threads allocating containers.
@@ -926,7 +923,6 @@ namespace System.Transactions.Oletx
                     }
                 }
 
-
                 try
                 {
                     // If enlistDuringPrepareRequired is true, we need to ask the proxy to create a Phase0 enlistment.
@@ -934,7 +930,7 @@ namespace System.Transactions.Oletx
                     {
                         lock (localPhase0VolatileContainer!)
                         {
-                            _transactionShim.Phase0Enlist(localPhase0VolatileContainer, out phase0Shim);
+                            _transactionShim!.Phase0Enlist(localPhase0VolatileContainer, out phase0Shim);
 
                             localPhase0VolatileContainer.Phase0EnlistmentShim = phase0Shim;
                         }
@@ -942,7 +938,7 @@ namespace System.Transactions.Oletx
 
                     if (needVoterEnlistment)
                     {
-                        _transactionShim.CreateVoter(localPhase1VolatileContainer!, out voterShim);
+                        _transactionShim!.CreateVoter(localPhase1VolatileContainer!, out voterShim);
 
                         localPhase1VolatileContainer!.VoterBallotShim = voterShim;
                     }
@@ -999,12 +995,12 @@ namespace System.Transactions.Oletx
         {
             try
             {
-                _transactionShim.Commit();
+                _transactionShim!.Commit();
             }
             catch (COMException comException)
             {
-                if (comException.ErrorCode == NativeMethods.XACT_E_ABORTED ||
-                    comException.ErrorCode == NativeMethods.XACT_E_INDOUBT)
+                if (comException.ErrorCode == OletxHelper.XACT_E_ABORTED ||
+                    comException.ErrorCode == OletxHelper.XACT_E_INDOUBT)
                 {
                     Interlocked.CompareExchange(ref InnerException, comException, null);
 
@@ -1014,7 +1010,7 @@ namespace System.Transactions.Oletx
                         etwLog.ExceptionConsumed(TraceSourceType.TraceSourceOleTx, comException);
                     }
                 }
-                else if (comException.ErrorCode == NativeMethods.XACT_E_ALREADYINPROGRESS)
+                else if (comException.ErrorCode == OletxHelper.XACT_E_ALREADYINPROGRESS)
                 {
                     throw TransactionException.Create(SR.TransactionAlreadyOver, comException);
                 }
@@ -1077,7 +1073,7 @@ namespace System.Transactions.Oletx
 
             try
             {
-                _transactionShim.Abort();
+                _transactionShim!.Abort();
             }
             catch (COMException comException)
             {
@@ -1085,7 +1081,7 @@ namespace System.Transactions.Oletx
                 // the root transaction and we have already called Commit - ignore the exception.  The
                 // Rollback is allowed and one of the enlistments that hasn't voted yet will make sure it is
                 // aborted.
-                if (comException.ErrorCode == NativeMethods.XACT_E_ALREADYINPROGRESS)
+                if (comException.ErrorCode == OletxHelper.XACT_E_ALREADYINPROGRESS)
                 {
                     if (Doomed)
                     {

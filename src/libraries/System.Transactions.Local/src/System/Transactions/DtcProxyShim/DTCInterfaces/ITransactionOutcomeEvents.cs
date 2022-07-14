@@ -4,7 +4,7 @@
 using System.Runtime.InteropServices;
 using System.Transactions.Oletx;
 
-namespace System.Transactions.DtcProxyShim.DTCInterfaces;
+namespace System.Transactions.DtcProxyShim.DtcInterfaces;
 
 /// <summary>
 /// This interface is used by application programs that require asynchronous notification about transaction outcomes.

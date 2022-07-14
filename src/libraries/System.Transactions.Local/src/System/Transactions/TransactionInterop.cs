@@ -2,9 +2,9 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Transactions.Diagnostics;
+using System.Transactions.DtcProxyShim;
+using System.Transactions.DtcProxyShim.DtcInterfaces;
 using System.Transactions.Oletx;
 
 namespace System.Transactions
@@ -23,7 +23,7 @@ namespace System.Transactions
             }
 
             OletxTransaction? oletxTx = transaction.Promote();
-            Debug.Assert( oletxTx != null, "transaction.Promote returned null instead of throwing." );
+            Debug.Assert(oletxTx != null, "transaction.Promote returned null instead of throwing.");
 
             return oletxTx;
         }
@@ -83,13 +83,6 @@ namespace System.Transactions
                 throw new Exception("TODO");
                 // throw TransactionManagerCommunicationException.Create(SR.GetString(SR.TraceSourceOletx), comException);
             }
-            //finally
-            //{
-            //    if (cookieBuffer != null)
-            //    {
-            //        cookieBuffer.Close();
-            //    }
-            //}
 
             if (etwLog.IsEnabled())
             {
@@ -119,7 +112,7 @@ namespace System.Transactions
             cookie = cookieCopy;
 
             Transaction? transaction;
-            ITransactionShim? transactionShim = null;
+            TransactionShim? transactionShim = null;
             Guid txIdentifier = Guid.Empty;
             OletxTransactionIsolationLevel oletxIsoLevel = OletxTransactionIsolationLevel.ISOLATIONLEVEL_SERIALIZABLE;
             OutcomeEnlistment? outcomeEnlistment;
@@ -314,7 +307,122 @@ namespace System.Transactions
 
         public static Transaction GetTransactionFromDtcTransaction(IDtcTransaction transactionNative)
         {
-            throw new NotImplementedException("Needs to be copied over");
+            ArgumentNullException.ThrowIfNull(transactionNative, nameof(transactionNative));
+
+            TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+            if (etwLog.IsEnabled())
+            {
+                etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, $"{nameof(TransactionInterop)}.{nameof(GetTransactionFromDtcTransaction)}");
+            }
+
+            Transaction? transaction = null;
+            bool tooLate = false;
+            TransactionShim? transactionShim = null;
+            Guid txIdentifier = Guid.Empty;
+            OletxTransactionIsolationLevel oletxIsoLevel = OletxTransactionIsolationLevel.ISOLATIONLEVEL_SERIALIZABLE;
+            OutcomeEnlistment? outcomeEnlistment = null;
+            RealOletxTransaction? realTx = null;
+            OletxTransaction? oleTx = null;
+
+            // Let's get the guid of the transaction from the proxy to see if we already have an object.
+            if (transactionNative is not ITransaction myTransactionNative)
+            {
+                throw new ArgumentException(SR.InvalidArgument, nameof(transactionNative));
+            }
+
+            OletxXactTransInfo xactInfo;
+            try
+            {
+                myTransactionNative.GetTransactionInfo(out xactInfo);
+            }
+            catch (COMException ex) when (ex.ErrorCode == OletxHelper.XACT_E_NOTRANSACTION)
+            {
+                // If we get here, the transaction has appraently already been committed or aborted.  Allow creation of the
+                // OletxTransaction, but it will be marked with a status of InDoubt and attempts to get its Identifier
+                // property will result in a TransactionException.
+                tooLate = true;
+                xactInfo.Uow = Guid.Empty;
+            }
+
+            OletxTransactionManager oletxTm = TransactionManager.DistributedTransactionManager;
+            if (!tooLate)
+            {
+                // First check to see if there is a promoted LTM transaction with the same ID.  If there
+                // is, just return that.
+                transaction = TransactionManager.FindPromotedTransaction(xactInfo.Uow);
+                if (transaction != null)
+                {
+                    if (etwLog.IsEnabled())
+                    {
+                        etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, $"{nameof(TransactionInterop)}.{nameof(GetTransactionFromDtcTransaction)}");
+                    }
+
+                    return transaction;
+                }
+
+                // We need to create a new RealOletxTransaction...
+                oletxTm.DtcTransactionManagerLock.AcquireReaderLock(-1);
+                try
+                {
+                    outcomeEnlistment = new OutcomeEnlistment();
+                    oletxTm.DtcTransactionManager.ProxyShimFactory.CreateTransactionShim(
+                        transactionNative,
+                        outcomeEnlistment,
+                        out txIdentifier,
+                        out oletxIsoLevel,
+                        out transactionShim);
+                }
+                catch (COMException comException)
+                {
+                    OletxTransactionManager.ProxyException(comException);
+                    throw;
+                }
+                finally
+                {
+                    oletxTm.DtcTransactionManagerLock.ReleaseReaderLock();
+                }
+
+                // We need to create a new RealOletxTransaction.
+                realTx = new RealOletxTransaction(
+                    oletxTm,
+                    transactionShim,
+                    outcomeEnlistment,
+                    txIdentifier,
+                    oletxIsoLevel,
+                    false);
+
+                oleTx = new OletxTransaction(realTx);
+
+                // If a transaction is found then FindOrCreate will Dispose the oletx
+                // created.
+                transaction = TransactionManager.FindOrCreatePromotedTransaction(xactInfo.Uow, oleTx);
+            }
+            else
+            {
+                // It was too late to do a clone of the provided ITransactionNative, so we are just going to
+                // create a RealOletxTransaction without a transaction shim or outcome enlistment.
+                realTx = new RealOletxTransaction(
+                    oletxTm,
+                    null,
+                    null,
+                    txIdentifier,
+                    OletxTransactionIsolationLevel.ISOLATIONLEVEL_SERIALIZABLE,
+                    false);
+
+                oleTx = new OletxTransaction(realTx);
+                transaction = new Transaction(oleTx);
+                TransactionManager.FireDistributedTransactionStarted(transaction);
+                oleTx.SavedLtmPromotedTransaction = transaction;
+
+                InternalTransaction.DistributedTransactionOutcome(transaction._internalTransaction, TransactionStatus.InDoubt);
+            }
+
+            if (etwLog.IsEnabled())
+            {
+                etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, $"{nameof(TransactionInterop)}.{nameof(GetTransactionFromDtcTransaction)}");
+            }
+
+            return transaction;
         }
 
         public static byte[] GetWhereabouts()
@@ -363,7 +471,7 @@ namespace System.Transactions
             Guid identifier;
             OletxTransactionIsolationLevel oletxIsoLevel;
             OutcomeEnlistment outcomeEnlistment;
-            ITransactionShim? transactionShim = null;
+            TransactionShim? transactionShim = null;
 
             byte[] propagationTokenCopy = new byte[propagationToken.Length];
             Array.Copy(propagationToken, propagationTokenCopy, propagationToken.Length);

@@ -4,7 +4,7 @@
 using System.Runtime.InteropServices;
 using System.Transactions.Oletx;
 
-namespace System.Transactions.DtcProxyShim.DTCInterfaces;
+namespace System.Transactions.DtcProxyShim.DtcInterfaces;
 
 /// <summary>
 /// The ITransactionVoterNotifyAsync2 interface notifies a transaction voter of a vote request during the first phase of the two-phase commit protocol.

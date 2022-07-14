@@ -6,63 +6,62 @@ using System.Diagnostics;
 using System.Threading;
 using System.Transactions.Diagnostics;
 
-namespace System.Transactions.Oletx
+namespace System.Transactions.Oletx;
+
+[Serializable]
+internal sealed class OletxDependentTransaction : OletxTransaction
 {
-    [Serializable]
-    internal sealed class OletxDependentTransaction : OletxTransaction
+    private OletxVolatileEnlistmentContainer _volatileEnlistmentContainer;
+
+    private int _completed;
+
+    internal OletxDependentTransaction(RealOletxTransaction realTransaction, bool delayCommit)
+        : base(realTransaction)
     {
-        private OletxVolatileEnlistmentContainer _volatileEnlistmentContainer;
-
-        private int _completed;
-
-        internal OletxDependentTransaction(RealOletxTransaction realTransaction, bool delayCommit)
-            : base(realTransaction)
+        if (realTransaction == null)
         {
-            if (realTransaction == null)
-            {
-                throw new ArgumentNullException(nameof(realTransaction));
-            }
-
-            _volatileEnlistmentContainer = RealOletxTransaction.AddDependentClone(delayCommit);
-
-            if (DiagnosticTrace.Information)
-            {
-                DependentCloneCreatedTraceRecord.Trace(
-                    SR.TraceSourceOletx,
-                    TransactionTraceId,
-                    delayCommit
-                        ? DependentCloneOption.BlockCommitUntilComplete
-                        : DependentCloneOption.RollbackIfNotComplete);
-            }
+            throw new ArgumentNullException(nameof(realTransaction));
         }
 
-        public void Complete()
+        _volatileEnlistmentContainer = RealOletxTransaction.AddDependentClone(delayCommit);
+
+        if (DiagnosticTrace.Information)
         {
-            TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
-            if (etwLog.IsEnabled())
-            {
-                etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this, $"{nameof(DependentTransaction)}.{nameof(Complete)}");
-            }
+            DependentCloneCreatedTraceRecord.Trace(
+                SR.TraceSourceOletx,
+                TransactionTraceId,
+                delayCommit
+                    ? DependentCloneOption.BlockCommitUntilComplete
+                    : DependentCloneOption.RollbackIfNotComplete);
+        }
+    }
 
-            Debug.Assert(Disposed == 0, "OletxTransction object is disposed");
+    public void Complete()
+    {
+        TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+        if (etwLog.IsEnabled())
+        {
+            etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this, $"{nameof(DependentTransaction)}.{nameof(Complete)}");
+        }
 
-            int localCompleted = Interlocked.CompareExchange(ref _completed, 1, 0);
-            if (localCompleted == 1)
-            {
-                throw TransactionException.CreateTransactionCompletedException(DistributedTxId);
-            }
+        Debug.Assert(Disposed == 0, "OletxTransction object is disposed");
 
-            if (DiagnosticTrace.Information)
-            {
-                DependentCloneCompleteTraceRecord.Trace(SR.TraceSourceOletx, TransactionTraceId);
-            }
+        int localCompleted = Interlocked.CompareExchange(ref _completed, 1, 0);
+        if (localCompleted == 1)
+        {
+            throw TransactionException.CreateTransactionCompletedException(DistributedTxId);
+        }
 
-            _volatileEnlistmentContainer.DependentCloneCompleted();
+        if (DiagnosticTrace.Information)
+        {
+            DependentCloneCompleteTraceRecord.Trace(SR.TraceSourceOletx, TransactionTraceId);
+        }
 
-            if (etwLog.IsEnabled())
-            {
-                etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this, $"{nameof(DependentTransaction)}.{nameof(Complete)}");
-            }
+        _volatileEnlistmentContainer.DependentCloneCompleted();
+
+        if (etwLog.IsEnabled())
+        {
+            etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this, $"{nameof(DependentTransaction)}.{nameof(Complete)}");
         }
     }
 }

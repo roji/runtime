@@ -76,59 +76,6 @@ namespace System.Transactions.Tests
         }
 
         [Theory]
-        // This test needs to change once we have promotion support.
-        // Right now any attempt to create a two phase durable enlistment will attempt to promote and will fail because promotion is not supported. This results in the transaction being
-        // aborted.
-        [InlineData(0, EnlistmentOptions.None, EnlistmentOptions.None, Phase1Vote.Prepared, true, EnlistmentOutcome.Aborted, EnlistmentOutcome.Aborted, TransactionStatus.Aborted)]
-        [InlineData(1, EnlistmentOptions.None, EnlistmentOptions.None, Phase1Vote.Prepared, true, EnlistmentOutcome.Aborted, EnlistmentOutcome.Aborted, TransactionStatus.Aborted)]
-        [InlineData(2, EnlistmentOptions.None, EnlistmentOptions.None, Phase1Vote.Prepared, true, EnlistmentOutcome.Aborted, EnlistmentOutcome.Aborted, TransactionStatus.Aborted)]
-        public void TwoPhaseDurable(int volatileCount, EnlistmentOptions volatileEnlistmentOption, EnlistmentOptions durableEnlistmentOption, Phase1Vote volatilePhase1Vote, bool commit, EnlistmentOutcome expectedVolatileOutcome, EnlistmentOutcome expectedDurableOutcome, TransactionStatus expectedTxStatus)
-        {
-            Transaction tx = null;
-            try
-            {
-                using (TransactionScope ts = new TransactionScope())
-                {
-                    tx = Transaction.Current.Clone();
-
-                    if (volatileCount > 0)
-                    {
-                        TestEnlistment[] volatiles = new TestEnlistment[volatileCount];
-                        for (int i = 0; i < volatileCount; i++)
-                        {
-                            // It doesn't matter what we specify for SinglePhaseVote.
-                            volatiles[i] = new TestEnlistment(volatilePhase1Vote, expectedVolatileOutcome);
-                            tx.EnlistVolatile(volatiles[i], volatileEnlistmentOption);
-                        }
-                    }
-
-                    TestEnlistment durable = new TestEnlistment(Phase1Vote.Prepared, expectedDurableOutcome);
-                    // This needs to change once we have promotion support.
-                    Assert.Throws<PlatformNotSupportedException>(() => // Creation of two phase durable enlistment attempts to promote to MSDTC
-                    {
-                        tx.EnlistDurable(Guid.NewGuid(), durable, durableEnlistmentOption);
-                    });
-
-                    if (commit)
-                    {
-                        ts.Complete();
-                    }
-                }
-            }
-            catch (TransactionInDoubtException)
-            {
-                Assert.Equal(TransactionStatus.InDoubt, expectedTxStatus);
-            }
-            catch (TransactionAbortedException)
-            {
-                Assert.Equal(TransactionStatus.Aborted, expectedTxStatus);
-            }
-
-            Assert.NotNull(tx);
-            Assert.Equal(expectedTxStatus, tx.TransactionInformation.Status);
-        }
-
-        [Theory]
         [InlineData(EnlistmentOptions.EnlistDuringPrepareRequired, Phase1Vote.Prepared, true, true, EnlistmentOutcome.Committed, TransactionStatus.Committed)]
         [InlineData(EnlistmentOptions.None, Phase1Vote.Prepared, false, true, EnlistmentOutcome.Committed, TransactionStatus.Committed)]
         public void EnlistDuringPhase0(EnlistmentOptions enlistmentOption, Phase1Vote phase1Vote, bool expectPhase0EnlistSuccess, bool commit, EnlistmentOutcome expectedOutcome, TransactionStatus expectedTxStatus)

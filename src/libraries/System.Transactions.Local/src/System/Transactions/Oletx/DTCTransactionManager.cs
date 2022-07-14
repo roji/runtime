@@ -1,133 +1,132 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Globalization;
 using System.Transactions.Diagnostics;
+using System.Transactions.DtcProxyShim;
 
-namespace System.Transactions.Oletx
+namespace System.Transactions.Oletx;
+
+internal sealed class DtcTransactionManager
 {
-    internal sealed class DtcTransactionManager
+    private readonly string? _nodeName;
+    private readonly OletxTransactionManager _oletxTm;
+    private readonly DtcProxyShimFactory _proxyShimFactory;
+    private byte[]? _whereabouts;
+
+    internal DtcTransactionManager(string? nodeName, OletxTransactionManager oletxTm)
     {
-        private readonly string? _nodeName;
-        private readonly OletxTransactionManager _oletxTm;
-        private readonly IDtcProxyShimFactory _proxyShimFactory;
-        private byte[]? _whereabouts;
+        _nodeName = nodeName;
+        _oletxTm = oletxTm;
+        _proxyShimFactory = OletxTransactionManager.ProxyShimFactory;
+    }
 
-        internal DtcTransactionManager(string? nodeName, OletxTransactionManager oletxTm)
+    [MemberNotNull(nameof(_whereabouts))]
+    private void Initialize()
+    {
+        if (_whereabouts is not null)
         {
-            _nodeName = nodeName;
-            _oletxTm = oletxTm;
-            _proxyShimFactory = OletxTransactionManager.ProxyShimFactory;
+            return;
         }
 
-        [MemberNotNull(nameof(_whereabouts))]
-        private void Initialize()
+        OletxInternalResourceManager internalRM = _oletxTm.InternalResourceManager;
+        bool nodeNameMatches;
+
+        try
         {
-            if (_whereabouts is not null)
+            _proxyShimFactory.ConnectToProxy(
+                _nodeName,
+                internalRM.Identifier,
+                internalRM,
+                out nodeNameMatches,
+                out _whereabouts,
+                out ResourceManagerShim resourceManagerShim);
+
+            // If the node name does not match, throw.
+            if (!nodeNameMatches)
             {
-                return;
+                throw new NotSupportedException(SR.ProxyCannotSupportMultipleNodeNames);
             }
 
-            OletxInternalResourceManager internalRM = _oletxTm.InternalResourceManager;
-            bool nodeNameMatches;
-
-            try
+            // Give the IResourceManagerShim to the internalRM and tell it to call ReenlistComplete.
+            internalRM.ResourceManagerShim = resourceManagerShim;
+            internalRM.CallReenlistComplete();
+        }
+        catch (COMException ex)
+        {
+            if (ex.ErrorCode == OletxHelper.XACT_E_NOTSUPPORTED)
             {
-                _proxyShimFactory.ConnectToProxy(
-                    _nodeName,
-                    internalRM.Identifier,
-                    internalRM,
-                    out nodeNameMatches,
-                    out _whereabouts,
-                    out IResourceManagerShim resourceManagerShim);
+                throw new NotSupportedException(SR.CannotSupportNodeNameSpecification);
+            }
 
-                // If the node name does not match, throw.
-                if (!nodeNameMatches)
+            OletxTransactionManager.ProxyException(ex);
+
+            // Unfortunately MSDTCPRX may return unknown error codes when attempting to connect to MSDTC
+            // that error should be propagated back as a TransactionManagerCommunicationException.
+            throw TransactionManagerCommunicationException.Create(SR.TransactionManagerCommunicationException, ex);
+        }
+    }
+
+    internal DtcProxyShimFactory ProxyShimFactory
+    {
+        get
+        {
+            if (_whereabouts is null)
+            {
+                lock (this)
                 {
-                    throw new NotSupportedException(SR.ProxyCannotSupportMultipleNodeNames);
+                    Initialize();
                 }
-
-                // Give the IResourceManagerShim to the internalRM and tell it to call ReenlistComplete.
-                internalRM.ResourceManagerShim = resourceManagerShim;
-                internalRM.CallReenlistComplete();
             }
-            catch (COMException ex)
-            {
-                if (ex.ErrorCode == NativeMethods.XACT_E_NOTSUPPORTED)
-                {
-                    throw new NotSupportedException( SR.CannotSupportNodeNameSpecification);
-                }
 
-                OletxTransactionManager.ProxyException(ex);
-
-                // Unfortunately MSDTCPRX may return unknown error codes when attempting to connect to MSDTC
-                // that error should be propagated back as a TransactionManagerCommunicationException.
-                throw TransactionManagerCommunicationException.Create(SR.TransactionManagerCommunicationException, ex);
-            }
+            return _proxyShimFactory;
         }
+    }
 
-        internal IDtcProxyShimFactory ProxyShimFactory
+    internal void ReleaseProxy()
+    {
+        lock (this)
         {
-            get
-            {
-                if (_whereabouts is null)
-                {
-                    lock (this)
-                    {
-                        Initialize();
-                    }
-                }
-
-                return _proxyShimFactory;
-            }
+            _whereabouts = null;
         }
+    }
 
-        internal void ReleaseProxy()
+    internal byte[] Whereabouts
+    {
+        get
         {
-            lock (this)
+            if (_whereabouts is null)
             {
-                _whereabouts = null;
-            }
-        }
-
-        internal byte[] Whereabouts
-        {
-            get
-            {
-                if (_whereabouts is null)
+                lock (this)
                 {
-                    lock (this)
-                    {
-                        Initialize();
-                    }
+                    Initialize();
                 }
-
-                return _whereabouts;
             }
-        }
 
-        internal static uint AdjustTimeout(TimeSpan timeout)
+            return _whereabouts;
+        }
+    }
+
+    internal static uint AdjustTimeout(TimeSpan timeout)
+    {
+        uint returnTimeout = 0;
+
+        try
         {
-            uint returnTimeout = 0;
-
-            try
-            {
-                returnTimeout = Convert.ToUInt32(timeout.TotalMilliseconds, CultureInfo.CurrentCulture);
-            }
-                // timeout.TotalMilliseconds might be negative, so let's catch overflow exceptions, just in case.
-            catch (OverflowException caughtEx)
-            {
-                if (DiagnosticTrace.Verbose)
-                {
-                    ExceptionConsumedTraceRecord.Trace(SR.TraceSourceOletx, caughtEx);
-                }
-
-                returnTimeout = uint.MaxValue;
-            }
-            return returnTimeout;
+            returnTimeout = Convert.ToUInt32(timeout.TotalMilliseconds, CultureInfo.CurrentCulture);
         }
+        catch (OverflowException caughtEx)
+        {
+            // timeout.TotalMilliseconds might be negative, so let's catch overflow exceptions, just in case.
+            if (DiagnosticTrace.Verbose)
+            {
+                ExceptionConsumedTraceRecord.Trace(SR.TraceSourceOletx, caughtEx);
+            }
+
+            returnTimeout = uint.MaxValue;
+        }
+        return returnTimeout;
     }
 }

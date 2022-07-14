@@ -3,7 +3,7 @@
 
 using System.Runtime.InteropServices;
 
-namespace System.Transactions.DtcProxyShim.DTCInterfaces;
+namespace System.Transactions.DtcProxyShim.DtcInterfaces;
 
 /// <summary>
 /// The interface contains a single method that is used to create a new transaction voter object.

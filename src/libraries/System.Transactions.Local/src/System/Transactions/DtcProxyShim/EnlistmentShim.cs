@@ -2,24 +2,22 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System;
-using System.Transactions.DtcProxyShim.DTCInterfaces;
-using System.Transactions.Oletx;
+using System.Transactions.DtcProxyShim.DtcInterfaces;
 
 namespace System.Transactions.DtcProxyShim;
 
-internal sealed class EnlistmentShim : IEnlistmentShim
+internal sealed class EnlistmentShim
 {
-    private readonly NotificationShimFactory _shimFactory;
     private readonly EnlistmentNotifyShim _enlistmentNotifyShim;
 
     internal ITransactionEnlistmentAsync? EnlistmentAsync { get; set; }
 
-    internal EnlistmentShim(NotificationShimFactory shimFactory, EnlistmentNotifyShim notifyShim)
-        => (_shimFactory, _enlistmentNotifyShim) = (shimFactory, notifyShim);
+    internal EnlistmentShim(EnlistmentNotifyShim notifyShim)
+        => _enlistmentNotifyShim = notifyShim;
 
     public void PrepareRequestDone(OletxPrepareVoteType voteType)
     {
-        var voteHr = NativeMethods.S_OK;
+        var voteHr = OletxHelper.S_OK;
         var releaseEnlistment = false;
 
         switch (voteType)
@@ -28,7 +26,7 @@ internal sealed class EnlistmentShim : IEnlistmentShim
                 {
                     // On W2k Proxy may send a spurious aborted notification if the TM goes down.
                     _enlistmentNotifyShim.SetIgnoreSpuriousProxyNotifications();
-                    voteHr = NativeMethods.XACT_S_READONLY;
+                    voteHr = OletxHelper.XACT_S_READONLY;
                     break;
                 }
 
@@ -36,13 +34,13 @@ internal sealed class EnlistmentShim : IEnlistmentShim
                 {
                     // On W2k Proxy may send a spurious aborted notification if the TM goes down.
                     _enlistmentNotifyShim.SetIgnoreSpuriousProxyNotifications();
-                    voteHr = NativeMethods.XACT_S_SINGLEPHASE;
+                    voteHr = OletxHelper.XACT_S_SINGLEPHASE;
                     break;
                 }
 
             case OletxPrepareVoteType.Prepared:
                 {
-                    voteHr = NativeMethods.S_OK;
+                    voteHr = OletxHelper.S_OK;
                     break;
                 }
 
@@ -50,8 +48,7 @@ internal sealed class EnlistmentShim : IEnlistmentShim
                 {
                     // Proxy may send a spurious aborted notification if the TM goes down.
                     _enlistmentNotifyShim.SetIgnoreSpuriousProxyNotifications();
-                    voteHr = NativeMethods.E_FAIL;
-                    //pBoid = &dummyBoid;
+                    voteHr = OletxHelper.E_FAIL;
                     break;
                 }
 
@@ -63,8 +60,7 @@ internal sealed class EnlistmentShim : IEnlistmentShim
 
             default:  // unexpected, vote no.
                 {
-                    voteHr = NativeMethods.E_FAIL;
-                    //pBoid = &dummyBoid;
+                    voteHr = OletxHelper.E_FAIL;
                     break;
                 }
         }
@@ -79,8 +75,8 @@ internal sealed class EnlistmentShim : IEnlistmentShim
     }
 
     public void CommitRequestDone()
-        => EnlistmentAsync!.CommitRequestDone(NativeMethods.S_OK);
+        => EnlistmentAsync!.CommitRequestDone(OletxHelper.S_OK);
 
     public void AbortRequestDone()
-        => EnlistmentAsync!.AbortRequestDone(NativeMethods.S_OK);
+        => EnlistmentAsync!.AbortRequestDone(OletxHelper.S_OK);
 }

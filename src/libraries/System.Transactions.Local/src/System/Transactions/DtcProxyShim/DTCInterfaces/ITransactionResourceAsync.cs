@@ -5,7 +5,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Transactions.Oletx;
 
-namespace System.Transactions.DtcProxyShim.DTCInterfaces;
+namespace System.Transactions.DtcProxyShim.DtcInterfaces;
 
 /// <summary>
 /// This is a callback interface implemented by the resource manager.

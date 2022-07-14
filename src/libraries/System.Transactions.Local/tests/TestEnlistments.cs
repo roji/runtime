@@ -110,19 +110,16 @@ namespace System.Transactions.Tests
             _txToEnlist = Transaction.Current!;
         }
 
-        //static volatile int _hackCount;
+        public bool WasPreparedCalled { get; private set; }
 
         public void Prepare(PreparingEnlistment preparingEnlistment)
         {
+            WasPreparedCalled = true;
+
             switch (_phase1Vote)
             {
                 case Phase1Vote.Prepared:
                     {
-                        //if (Interlocked.Increment(ref _hackCount) == 1)
-                        //{
-                        //    Thread.Sleep(int.MaxValue);
-                        //}
-
                         if (_volatileEnlistDuringPrepare)
                         {
                             TestEnlistment newVol = new TestEnlistment(_phase1Vote, _expectedOutcome);

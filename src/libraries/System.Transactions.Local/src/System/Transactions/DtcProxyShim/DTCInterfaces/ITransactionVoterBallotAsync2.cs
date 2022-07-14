@@ -3,7 +3,7 @@
 
 using System.Runtime.InteropServices;
 
-namespace System.Transactions.DtcProxyShim.DTCInterfaces;
+namespace System.Transactions.DtcProxyShim.DtcInterfaces;
 
 /// <summary>
 /// ITransactionVoterBallotAsync2 is the interface transaction voters use to either approve or veto a transaction during the prepare phase of the two-phase commit protocol.

@@ -4,7 +4,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace System.Transactions.DtcProxyShim.DTCInterfaces;
+namespace System.Transactions.DtcProxyShim.DtcInterfaces;
 
 /// <summary>
 /// The ITransactionTransmitter interface is used to marshal transaction tokens.

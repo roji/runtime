@@ -4,7 +4,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace System.Transactions.DtcProxyShim.DTCInterfaces;
+namespace System.Transactions.DtcProxyShim.DtcInterfaces;
 
 /// <summary>
 /// A process that wishes to export a transaction calls this interface and passes a transaction object.

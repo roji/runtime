@@ -3,7 +3,7 @@
 
 using System.Runtime.InteropServices;
 
-namespace System.Transactions.DtcProxyShim.DTCInterfaces;
+namespace System.Transactions.DtcProxyShim.DtcInterfaces;
 
 /// <summary>
 /// The ITmNodeName interface is used to get the node name that specifies the location of the transaction manager
@@ -23,15 +23,8 @@ internal interface ITmNodeName
     /// </param>
     internal void GetNodeNameSize(out uint pcbNodeNameSize);
 
-    //    /// <summary>
-    //    /// Gets the node name that specifies the location of the transaction manager used by the DTC proxy.
-    //    /// </summary>
-    //    internal void GetNodeName(ulong cbNodeNameBufferSize, out IntPtr pcbNodeSize);
-    //
-    //    virtual HRESULT STDMETHODCALLTYPE GetNodeNameSize(
-    //    /* [out] */ __RPC__out ULONG *pcbNodeNameSize) = 0;
-    //
-    //        virtual HRESULT STDMETHODCALLTYPE GetNodeName(
-    //            /* [in] */ ULONG cbNodeNameBufferSize,
-    //            /* [out][in] */ __RPC__inout LPWSTR pNodeNameBuffer) = 0;
+    /// <summary>
+    /// Gets the node name that specifies the location of the transaction manager used by the DTC proxy.
+    /// </summary>
+    internal void GetNodeName(uint cbNodeNameBufferSize, [MarshalAs(UnmanagedType.LPWStr)] out string pcbNodeSize);
 }

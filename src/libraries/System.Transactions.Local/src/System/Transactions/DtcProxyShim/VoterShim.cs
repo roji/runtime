@@ -1,36 +1,28 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System.Transactions.DtcProxyShim.DTCInterfaces;
-using System.Transactions.Oletx;
+using System.Transactions.DtcProxyShim.DtcInterfaces;
 
 namespace System.Transactions.DtcProxyShim;
 
-internal sealed class VoterShim : IVoterBallotShim
+internal sealed class VoterBallotShim
 {
-    private NotificationShimFactory _shimFactory;
     private VoterNotifyShim _voterNotifyShim;
 
     internal ITransactionVoterBallotAsync2? VoterBallotAsync2 { get; set; }
 
-    internal VoterShim(NotificationShimFactory shimFactory, VoterNotifyShim notifyShim)
-    {
-        _shimFactory = shimFactory;
-        _voterNotifyShim = notifyShim;
-    }
+    internal VoterBallotShim(DtcProxyShimFactory shimFactory, VoterNotifyShim notifyShim)
+        => _voterNotifyShim = notifyShim;
 
     public void Vote(bool voteYes)
     {
-        var voteHr = NativeMethods.S_OK;
-        var boid = IntPtr.Zero;
+        var voteHr = OletxHelper.S_OK;
 
         if (!voteYes)
         {
-            voteHr = NativeMethods.E_FAIL;
-            // TODO
-            // pBoid = &dummyBoid;
+            voteHr = OletxHelper.E_FAIL;
         }
 
-        VoterBallotAsync2!.VoteRequestDone(voteHr, boid);
+        VoterBallotAsync2!.VoteRequestDone(voteHr, IntPtr.Zero);
     }
 }

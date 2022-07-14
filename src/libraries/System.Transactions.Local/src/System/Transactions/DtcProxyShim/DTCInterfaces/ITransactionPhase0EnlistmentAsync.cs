@@ -3,7 +3,7 @@
 
 using System.Runtime.InteropServices;
 
-namespace System.Transactions.DtcProxyShim.DTCInterfaces;
+namespace System.Transactions.DtcProxyShim.DtcInterfaces;
 
 /// <summary>
 /// ITransactionPhase0EnlistmentAsync is the interface a Phase0 participant uses to indicate that it is ready to receive phase0 notification,

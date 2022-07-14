@@ -3,7 +3,7 @@
 
 using System.Runtime.InteropServices;
 
-namespace System.Transactions.DtcProxyShim.DTCInterfaces;
+namespace System.Transactions.DtcProxyShim.DtcInterfaces;
 
 /// <summary>
 /// The DTC Proxy calls the methods of this interface to deliver phase zero notification to a Phase0 participant, and to notify the participant that the asynchronous enlistment has completed.
