@@ -3258,7 +3258,7 @@ namespace System.Transactions
                     TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
                     if (etwLog.IsEnabled())
                     {
-                        etwLog.EnlistmentStatus(tx._durableEnlistment, NotificationCall.Promote);
+                        etwLog.EnlistmentStatus(TraceSourceType.TraceSourceLtm, tx._durableEnlistment.EnlistmentTraceId, NotificationCall.Promote);
                     }
                 }
 
@@ -3836,7 +3836,7 @@ namespace System.Transactions
             TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
             if (etwLog.IsEnabled())
             {
-                etwLog.EnlistmentStatus(tx._durableEnlistment, NotificationCall.SinglePhaseCommit);
+                etwLog.EnlistmentStatus(TraceSourceType.TraceSourceLtm, tx._durableEnlistment.EnlistmentTraceId, NotificationCall.SinglePhaseCommit);
             }
 
             // We are about to tell the PSPE to do the SinglePhaseCommit. It is too late for us to timeout the transaction.
@@ -4244,7 +4244,7 @@ namespace System.Transactions
                     TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
                     if (etwLog.IsEnabled())
                     {
-                        etwLog.EnlistmentStatus(tx._durableEnlistment, NotificationCall.Promote);
+                        etwLog.EnlistmentStatus(TraceSourceType.TraceSourceLtm, tx._durableEnlistment.EnlistmentTraceId, NotificationCall.Promote);
                     }
                 }
 
@@ -4605,13 +4605,12 @@ namespace System.Transactions
             TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
             if (etwLog.IsEnabled())
             {
-                etwLog.EnlistmentStatus(tx._durableEnlistment, NotificationCall.SinglePhaseCommit);
+                etwLog.EnlistmentStatus(TraceSourceType.TraceSourceLtm, tx._durableEnlistment.EnlistmentTraceId, NotificationCall.SinglePhaseCommit);
             }
 
             try
             {
-                tx._durableEnlistment.PromotableSinglePhaseNotification.SinglePhaseCommit(
-                    tx._durableEnlistment.SinglePhaseEnlistment);
+                tx._durableEnlistment.PromotableSinglePhaseNotification.SinglePhaseCommit(tx._durableEnlistment.SinglePhaseEnlistment);
             }
             finally
             {
@@ -4642,7 +4641,7 @@ namespace System.Transactions
                 TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
                 if (etwLog.IsEnabled())
                 {
-                    etwLog.EnlistmentStatus(tx._durableEnlistment, NotificationCall.Rollback);
+                    etwLog.EnlistmentStatus(TraceSourceType.TraceSourceLtm, tx._durableEnlistment.EnlistmentTraceId, NotificationCall.Rollback);
                 }
 
                 tx._durableEnlistment.PromotableSinglePhaseNotification.Rollback(

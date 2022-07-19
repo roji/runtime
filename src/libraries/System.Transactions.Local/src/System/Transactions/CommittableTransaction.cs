@@ -39,7 +39,7 @@ namespace System.Transactions
             TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
             if (etwLog.IsEnabled())
             {
-                etwLog.TransactionCreated(this, "CommittableTransaction");
+                etwLog.TransactionCreated(TraceSourceType.TraceSourceLtm, TransactionTraceId, "CommittableTransaction");
             }
         }
 

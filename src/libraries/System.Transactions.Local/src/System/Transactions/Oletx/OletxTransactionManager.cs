@@ -4,7 +4,6 @@
 using System.Collections;
 using System.Runtime.InteropServices;
 using System.Threading;
-using System.Transactions.Diagnostics;
 using System.Transactions.DtcProxyShim;
 
 namespace System.Transactions.Oletx;
@@ -143,7 +142,6 @@ internal sealed class OletxTransactionManager
                                 {
                                     if (enlistment2 is OletxPhase0VolatileEnlistmentContainer ph0VolEnlistContainer)
                                     {
-                                        DiagnosticTrace.SetActivityId(ph0VolEnlistContainer.TransactionIdentifier);
                                         //CSDMain 91509 - We now synchronize this call with the AddDependentClone call in RealOleTxTransaction
                                         ph0VolEnlistContainer.Phase0Request(abortingHint);
                                     }
@@ -151,7 +149,6 @@ internal sealed class OletxTransactionManager
                                     {
                                         if (enlistment2 is OletxEnlistment oletxEnlistment)
                                         {
-                                            DiagnosticTrace.SetActivityId(oletxEnlistment.TransactionIdentifier);
                                             oletxEnlistment.Phase0Request(abortingHint);
                                         }
                                         else
@@ -167,7 +164,6 @@ internal sealed class OletxTransactionManager
                                 {
                                     if (enlistment2 is OletxPhase1VolatileEnlistmentContainer ph1VolEnlistContainer)
                                     {
-                                        DiagnosticTrace.SetActivityId(ph1VolEnlistContainer.TransactionIdentifier);
                                         ph1VolEnlistContainer.VoteRequest();
                                     }
                                     else
@@ -182,14 +178,12 @@ internal sealed class OletxTransactionManager
                                 {
                                     if (enlistment2 is OutcomeEnlistment outcomeEnlistment)
                                     {
-                                        DiagnosticTrace.SetActivityId(outcomeEnlistment.TransactionIdentifier);
                                         outcomeEnlistment.Committed();
                                     }
                                     else
                                     {
                                         if (enlistment2 is OletxPhase1VolatileEnlistmentContainer ph1VolEnlistContainer)
                                         {
-                                            DiagnosticTrace.SetActivityId(ph1VolEnlistContainer.TransactionIdentifier);
                                             ph1VolEnlistContainer.Committed();
                                         }
                                         else
@@ -205,14 +199,12 @@ internal sealed class OletxTransactionManager
                                 {
                                     if (enlistment2 is OutcomeEnlistment outcomeEnlistment)
                                     {
-                                        DiagnosticTrace.SetActivityId(outcomeEnlistment.TransactionIdentifier);
                                         outcomeEnlistment.Aborted();
                                     }
                                     else
                                     {
                                         if (enlistment2 is OletxPhase1VolatileEnlistmentContainer ph1VolEnlistContainer)
                                         {
-                                            DiagnosticTrace.SetActivityId(ph1VolEnlistContainer.TransactionIdentifier);
                                             ph1VolEnlistContainer.Aborted();
                                         }
                                         // else
@@ -236,14 +228,12 @@ internal sealed class OletxTransactionManager
                                 {
                                     if (enlistment2 is OutcomeEnlistment outcomeEnlistment)
                                     {
-                                        DiagnosticTrace.SetActivityId(outcomeEnlistment.TransactionIdentifier);
                                         outcomeEnlistment.InDoubt();
                                     }
                                     else
                                     {
                                         if (enlistment2 is OletxPhase1VolatileEnlistmentContainer ph1VolEnlistContainer)
                                         {
-                                            DiagnosticTrace.SetActivityId(ph1VolEnlistContainer.TransactionIdentifier);
                                             ph1VolEnlistContainer.InDoubt();
                                         }
                                         else
@@ -261,7 +251,6 @@ internal sealed class OletxTransactionManager
 
                                     if (enlistment2 is OletxEnlistment enlistment)
                                     {
-                                        DiagnosticTrace.SetActivityId(enlistment.TransactionIdentifier);
                                         enlistmentDone = enlistment.PrepareRequest(isSinglePhase, prepareInfoBuffer!);
                                     }
                                     else
@@ -276,7 +265,6 @@ internal sealed class OletxTransactionManager
                                 {
                                     if (enlistment2 is OletxEnlistment enlistment)
                                     {
-                                        DiagnosticTrace.SetActivityId(enlistment.TransactionIdentifier);
                                         enlistment.CommitRequest();
                                     }
                                     else
@@ -291,7 +279,6 @@ internal sealed class OletxTransactionManager
                                 {
                                     if (enlistment2 is OletxEnlistment enlistment)
                                     {
-                                        DiagnosticTrace.SetActivityId(enlistment.TransactionIdentifier);
                                         enlistment.AbortRequest();
                                     }
                                     else
@@ -306,7 +293,6 @@ internal sealed class OletxTransactionManager
                                 {
                                     if (enlistment2 is OletxEnlistment enlistment)
                                     {
-                                        DiagnosticTrace.SetActivityId(enlistment.TransactionIdentifier);
                                         enlistment.TMDown();
                                     }
                                     else
@@ -407,9 +393,10 @@ internal sealed class OletxTransactionManager
             _nodeNameField = null;
         }
 
-        if (DiagnosticTrace.Verbose)
+        TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+        if (etwLog.IsEnabled())
         {
-            DistributedTransactionManagerCreatedTraceRecord.Trace(SR.TraceSourceOletx, GetType(), _nodeNameField);
+            etwLog.OleTxTransactionManagerCreate(GetType(), _nodeNameField);
         }
 
         // Initialize the properties from config.
@@ -484,9 +471,11 @@ internal sealed class OletxTransactionManager
                 oletxIsoLevel,
                 true);
             tx = new OletxCommittableTransaction(realTransaction);
-            if (DiagnosticTrace.Information)
+
+            TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+            if (etwLog.IsEnabled())
             {
-                TransactionCreatedTraceRecord.Trace(SR.TraceSourceOletx, tx.TransactionTraceId);
+                etwLog.TransactionCreated(TraceSourceType.TraceSourceOleTx, tx.TransactionTraceId, "OletxTransaction");
             }
         }
         finally

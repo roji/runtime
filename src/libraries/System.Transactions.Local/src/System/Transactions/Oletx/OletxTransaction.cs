@@ -7,7 +7,6 @@ using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Security.Permissions;
 using System.Threading;
-using System.Transactions.Diagnostics;
 using System.Transactions.DtcProxyShim;
 
 namespace System.Transactions.Oletx
@@ -151,9 +150,9 @@ namespace System.Transactions.Oletx
 
             if (_propagationTokenForDeserialize == null)
             {
-                if (DiagnosticTrace.Critical)
+                if (etwLog.IsEnabled())
                 {
-                    InternalErrorTraceRecord.Trace(SR.TraceSourceOletx, SR.UnableToDeserializeTransaction);
+                    etwLog.InternalError(SR.UnableToDeserializeTransaction);
                 }
 
                 throw TransactionException.Create(SR.UnableToDeserializeTransactionInternalError, null);
@@ -175,11 +174,9 @@ namespace System.Transactions.Oletx
 
             SavedLtmPromotedTransaction = returnValue;
 
-            if (DiagnosticTrace.Verbose)
+            if (etwLog.IsEnabled())
             {
-                TransactionDeserializedTraceRecord.Trace(
-                    SR.TraceSourceOletx,
-                    returnValue._internalTransaction.PromotedTransaction!.TransactionTraceId);
+                etwLog.TransactionDeserialized(returnValue._internalTransaction.PromotedTransaction!.TransactionTraceId);
             }
 
             if (etwLog.IsEnabled())
@@ -456,13 +453,9 @@ namespace System.Transactions.Oletx
             serializationInfo.SetType(typeof(OletxTransaction));
             serializationInfo.AddValue(PropagationTokenString, propagationToken);
 
-            if (DiagnosticTrace.Information)
-            {
-                TransactionSerializedTraceRecord.Trace(SR.TraceSourceOletx, TransactionTraceId);
-            }
-
             if (etwLog.IsEnabled())
             {
+                etwLog.TransactionSerialized(TransactionTraceId);
                 etwLog.MethodExit(TraceSourceType.TraceSourceOleTx, this, $"{nameof(OletxTransaction)}.{nameof(GetObjectData)}");
             }
         }
@@ -663,11 +656,6 @@ namespace System.Transactions.Oletx
                 else
                 {
                     Status = TransactionStatus.InDoubt;
-                }
-
-                if (DiagnosticTrace.HaveListeners)
-                {
-                    DiagnosticTrace.TraceTransfer(TxGuid);
                 }
 
                 successful = true;

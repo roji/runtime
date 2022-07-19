@@ -5,7 +5,6 @@ using System.Collections;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
-using System.Transactions.Diagnostics;
 using System.Transactions.DtcProxyShim;
 
 namespace System.Transactions.Oletx;
@@ -97,9 +96,11 @@ internal sealed class OletxResourceManager
                             {
                                 // Just to make sure...
                                 localResourceManagerShim = null;
-                                if (DiagnosticTrace.Verbose)
+
+                                TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+                                if (etwLog.IsEnabled())
                                 {
-                                    ExceptionConsumedTraceRecord.Trace(SR.TraceSourceOletx, ex);
+                                    etwLog.ExceptionConsumed(TraceSourceType.TraceSourceOleTx, ex);
                                 }
                             }
                             else
@@ -117,9 +118,11 @@ internal sealed class OletxResourceManager
                                 {
                                     // Just to make sure...
                                     localResourceManagerShim = null;
-                                    if (DiagnosticTrace.Verbose)
+
+                                    TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+                                    if (etwLog.IsEnabled())
                                     {
-                                        ExceptionConsumedTraceRecord.Trace(SR.TraceSourceOletx, ex);
+                                        etwLog.ExceptionConsumed(TraceSourceType.TraceSourceOleTx, ex);
                                     }
                                 }
                                 else
@@ -175,9 +178,11 @@ internal sealed class OletxResourceManager
                     ex.ErrorCode == OletxHelper.XACT_E_TMNOTAVAILABLE)
                 {
                     success = false;
-                    if (DiagnosticTrace.Verbose)
+
+                    TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+                    if (etwLog.IsEnabled())
                     {
-                        ExceptionConsumedTraceRecord.Trace(SR.TraceSourceOletx, ex);
+                        etwLog.ExceptionConsumed(TraceSourceType.TraceSourceOleTx, ex);
                     }
                 }
 
@@ -396,9 +401,11 @@ internal sealed class OletxResourceManager
             xactStatus = OletxTransactionStatus.OLETX_TRANSACTION_STATUS_PREPARED;
             ResourceManagerShim = null;
             StartReenlistThread();
-            if (DiagnosticTrace.Verbose)
+
+            TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+            if (etwLog.IsEnabled())
             {
-                ExceptionConsumedTraceRecord.Trace(SR.TraceSourceOletx, ex);
+                etwLog.ExceptionConsumed(TraceSourceType.TraceSourceOleTx, ex);
             }
         }
         finally
@@ -565,9 +572,9 @@ internal sealed class OletxResourceManager
                             if (localEnlistment == null)
                             {
                                 //TODO need resource string for this exception.
-                                if (DiagnosticTrace.Critical)
+                                if (etwLog.IsEnabled())
                                 {
-                                    InternalErrorTraceRecord.Trace(SR.TraceSourceOletx, "");
+                                    etwLog.InternalError();
                                 }
 
                                 throw TransactionException.Create(SR.InternalError, null);
@@ -607,9 +614,9 @@ internal sealed class OletxResourceManager
                             if (localEnlistment.ProxyPrepareInfoByteArray == null)
                             {
                                 Debug.Assert(false, string.Format(null, "this.prepareInfoByteArray == null in RecoveryInformation()"));
-                                if (DiagnosticTrace.Critical)
+                                if (etwLog.IsEnabled())
                                 {
-                                    InternalErrorTraceRecord.Trace(SR.TraceSourceOletx, "");
+                                    etwLog.InternalError();
                                 }
 
                                 throw TransactionException.Create(SR.InternalError, null);
@@ -642,9 +649,9 @@ internal sealed class OletxResourceManager
                         }
                         catch (COMException ex) when (ex.ErrorCode == OletxHelper.XACT_E_CONNECTION_DOWN)
                         {
-                            if (DiagnosticTrace.Verbose)
+                            if (etwLog.IsEnabled())
                             {
-                                ExceptionConsumedTraceRecord.Trace(SR.TraceSourceOletx, ex);
+                                etwLog.ExceptionConsumed(TraceSourceType.TraceSourceOleTx, ex);
                             }
 
                             // Release the resource manager so we can create a new one.
@@ -679,37 +686,33 @@ internal sealed class OletxResourceManager
                                         resourceManager.ReenlistPendingList.Add(localEnlistment);
                                     }
 
-                                    if (OletxTransactionOutcome.Committed == localOutcome)
+                                    if (localOutcome == OletxTransactionOutcome.Committed)
                                     {
                                         localEnlistment.State = OletxEnlistment.OletxEnlistmentState.Committing;
-                                        if (DiagnosticTrace.Verbose)
+
+                                        if (etwLog.IsEnabled())
                                         {
-                                            EnlistmentNotificationCallTraceRecord.Trace(
-                                                 SR.TraceSourceOletx,
-                                                localEnlistment.EnlistmentTraceId,
-                                                NotificationCall.Commit);
+                                            etwLog.EnlistmentStatus(TraceSourceType.TraceSourceOleTx, localEnlistment.EnlistmentTraceId, NotificationCall.Commit);
                                         }
 
                                         localEnlistment.EnlistmentNotification!.Commit(localEnlistment);
                                     }
-                                    else if (OletxTransactionOutcome.Aborted == localOutcome)
+                                    else if (localOutcome == OletxTransactionOutcome.Aborted)
                                     {
                                         localEnlistment.State = OletxEnlistment.OletxEnlistmentState.Aborting;
-                                        if (DiagnosticTrace.Verbose)
+
+                                        if (etwLog.IsEnabled())
                                         {
-                                            EnlistmentNotificationCallTraceRecord.Trace(
-                                                SR.TraceSourceOletx,
-                                                localEnlistment.EnlistmentTraceId,
-                                                NotificationCall.Rollback);
+                                            etwLog.EnlistmentStatus(TraceSourceType.TraceSourceOleTx, localEnlistment.EnlistmentTraceId, NotificationCall.Rollback);
                                         }
 
                                         localEnlistment.EnlistmentNotification!.Rollback(localEnlistment);
                                     }
                                     else
                                     {
-                                        if (DiagnosticTrace.Critical)
+                                        if (etwLog.IsEnabled())
                                         {
-                                            InternalErrorTraceRecord.Trace(SR.TraceSourceOletx, "");
+                                            etwLog.InternalError();
                                         }
 
                                         throw TransactionException.Create(SR.InternalError, null);

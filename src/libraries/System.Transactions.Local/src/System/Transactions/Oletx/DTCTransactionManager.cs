@@ -4,7 +4,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Globalization;
-using System.Transactions.Diagnostics;
 using System.Transactions.DtcProxyShim;
 
 namespace System.Transactions.Oletx;
@@ -120,9 +119,10 @@ internal sealed class DtcTransactionManager
         catch (OverflowException caughtEx)
         {
             // timeout.TotalMilliseconds might be negative, so let's catch overflow exceptions, just in case.
-            if (DiagnosticTrace.Verbose)
+            TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+            if (etwLog.IsEnabled())
             {
-                ExceptionConsumedTraceRecord.Trace(SR.TraceSourceOletx, caughtEx);
+                etwLog.ExceptionConsumed(TraceSourceType.TraceSourceOleTx, caughtEx);
             }
 
             returnTimeout = uint.MaxValue;

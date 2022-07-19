@@ -3,11 +3,9 @@
 
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using System.IO;
 using System.Threading;
 using System.Transactions.Configuration;
-using System.Transactions.Diagnostics;
 using System.Transactions.Oletx;
 
 namespace System.Transactions

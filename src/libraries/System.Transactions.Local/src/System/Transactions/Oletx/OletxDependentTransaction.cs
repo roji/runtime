@@ -4,7 +4,6 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
-using System.Transactions.Diagnostics;
 
 namespace System.Transactions.Oletx;
 
@@ -25,14 +24,12 @@ internal sealed class OletxDependentTransaction : OletxTransaction
 
         _volatileEnlistmentContainer = RealOletxTransaction.AddDependentClone(delayCommit);
 
-        if (DiagnosticTrace.Information)
+        TransactionsEtwProvider etwLog = TransactionsEtwProvider.Log;
+        if (etwLog.IsEnabled())
         {
-            DependentCloneCreatedTraceRecord.Trace(
-                SR.TraceSourceOletx,
-                TransactionTraceId,
-                delayCommit
-                    ? DependentCloneOption.BlockCommitUntilComplete
-                    : DependentCloneOption.RollbackIfNotComplete);
+            etwLog.TransactionDependentCloneCreate(TraceSourceType.TraceSourceOleTx, TransactionTraceId, delayCommit
+                ? DependentCloneOption.BlockCommitUntilComplete
+                : DependentCloneOption.RollbackIfNotComplete);
         }
     }
 
@@ -52,9 +49,9 @@ internal sealed class OletxDependentTransaction : OletxTransaction
             throw TransactionException.CreateTransactionCompletedException(DistributedTxId);
         }
 
-        if (DiagnosticTrace.Information)
+        if (etwLog.IsEnabled())
         {
-            DependentCloneCompleteTraceRecord.Trace(SR.TraceSourceOletx, TransactionTraceId);
+            etwLog.TransactionDependentCloneComplete(TraceSourceType.TraceSourceOleTx, TransactionTraceId, "DependentTransaction");
         }
 
         _volatileEnlistmentContainer.DependentCloneCompleted();
