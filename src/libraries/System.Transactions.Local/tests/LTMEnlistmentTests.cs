@@ -36,29 +36,28 @@ namespace System.Transactions.Tests
             Transaction tx = null;
             try
             {
-                using (TransactionScope ts = new TransactionScope())
+                using var ts = new TransactionScope();
+
+                tx = Transaction.Current!.Clone();
+
+                if (volatileCount > 0)
                 {
-                    tx = Transaction.Current.Clone();
-
-                    if (volatileCount > 0)
+                    TestSinglePhaseEnlistment[] volatiles = new TestSinglePhaseEnlistment[volatileCount];
+                    for (int i = 0; i < volatileCount; i++)
                     {
-                        TestSinglePhaseEnlistment[] volatiles = new TestSinglePhaseEnlistment[volatileCount];
-                        for (int i = 0; i < volatileCount; i++)
-                        {
-                            // It doesn't matter what we specify for SinglePhaseVote.
-                            volatiles[i] = new TestSinglePhaseEnlistment(volatilePhase1Vote, SinglePhaseVote.InDoubt, expectedVolatileOutcome);
-                            tx.EnlistVolatile(volatiles[i], volatileEnlistmentOption);
-                        }
+                        // It doesn't matter what we specify for SinglePhaseVote.
+                        volatiles[i] = new TestSinglePhaseEnlistment(volatilePhase1Vote, SinglePhaseVote.InDoubt, expectedVolatileOutcome);
+                        tx.EnlistVolatile(volatiles[i], volatileEnlistmentOption);
                     }
+                }
 
-                    // Doesn't really matter what we specify for EnlistmentOutcome here. This is an SPC, so Phase2 won't happen for this enlistment.
-                    TestSinglePhaseEnlistment durable = new TestSinglePhaseEnlistment(Phase1Vote.Prepared, singlePhaseVote, EnlistmentOutcome.Committed);
-                    tx.EnlistDurable(Guid.NewGuid(), durable, EnlistmentOptions.None);
+                // Doesn't really matter what we specify for EnlistmentOutcome here. This is an SPC, so Phase2 won't happen for this enlistment.
+                TestSinglePhaseEnlistment durable = new TestSinglePhaseEnlistment(Phase1Vote.Prepared, singlePhaseVote, EnlistmentOutcome.Committed);
+                tx.EnlistDurable(Guid.NewGuid(), durable, EnlistmentOptions.None);
 
-                    if (commit)
-                    {
-                        ts.Complete();
-                    }
+                if (commit)
+                {
+                    ts.Complete();
                 }
             }
             catch (TransactionInDoubtException)
@@ -69,7 +68,6 @@ namespace System.Transactions.Tests
             {
                 Assert.Equal(TransactionStatus.Aborted, expectedTxStatus);
             }
-
 
             Assert.NotNull(tx);
             Assert.Equal(expectedTxStatus, tx.TransactionInformation.Status);
@@ -84,17 +82,16 @@ namespace System.Transactions.Tests
             AutoResetEvent outcomeEvent = null;
             try
             {
-                using (TransactionScope ts = new TransactionScope())
-                {
-                    tx = Transaction.Current.Clone();
-                    outcomeEvent = new AutoResetEvent(false);
-                    TestEnlistment enlistment = new TestEnlistment(phase1Vote, expectedOutcome, true, expectPhase0EnlistSuccess, outcomeEvent);
-                    tx.EnlistVolatile(enlistment, enlistmentOption);
+                using var ts = new TransactionScope();
 
-                    if (commit)
-                    {
-                        ts.Complete();
-                    }
+                tx = Transaction.Current!.Clone();
+                outcomeEvent = new AutoResetEvent(false);
+                var enlistment = new TestEnlistment(phase1Vote, expectedOutcome, true, expectPhase0EnlistSuccess, outcomeEvent);
+                tx.EnlistVolatile(enlistment, enlistmentOption);
+
+                if (commit)
+                {
+                    ts.Complete();
                 }
             }
             catch (TransactionInDoubtException)
@@ -120,30 +117,29 @@ namespace System.Transactions.Tests
             Transaction tx = null;
             try
             {
-                using (TransactionScope ts = new TransactionScope())
+                using var ts = new TransactionScope();
+
+                tx = Transaction.Current!.Clone();
+
+                if (volatileCount > 0)
                 {
-                    tx = Transaction.Current.Clone();
-
-                    if (volatileCount > 0)
+                    TestEnlistment[] volatiles = new TestEnlistment[volatileCount];
+                    outcomeEvents = new AutoResetEvent[volatileCount];
+                    for (int i = 0; i < volatileCount-1; i++)
                     {
-                        TestEnlistment[] volatiles = new TestEnlistment[volatileCount];
-                        outcomeEvents = new AutoResetEvent[volatileCount];
-                        for (int i = 0; i < volatileCount-1; i++)
-                        {
-                            outcomeEvents[i] = new AutoResetEvent(false);
-                            volatiles[i] = new TestEnlistment(volatilePhase1Vote, expectedEnlistmentOutcome, false, true, outcomeEvents[i]);
-                            tx.EnlistVolatile(volatiles[i], enlistmentOption);
-                        }
-
-                        outcomeEvents[volatileCount-1] = new AutoResetEvent(false);
-                        volatiles[volatileCount - 1] = new TestEnlistment(lastPhase1Vote, expectedEnlistmentOutcome, false, true, outcomeEvents[volatileCount-1]);
-                        tx.EnlistVolatile(volatiles[volatileCount - 1], enlistmentOption);
+                        outcomeEvents[i] = new AutoResetEvent(false);
+                        volatiles[i] = new TestEnlistment(volatilePhase1Vote, expectedEnlistmentOutcome, false, true, outcomeEvents[i]);
+                        tx.EnlistVolatile(volatiles[i], enlistmentOption);
                     }
 
-                    if (commit)
-                    {
-                        ts.Complete();
-                    }
+                    outcomeEvents[volatileCount-1] = new AutoResetEvent(false);
+                    volatiles[volatileCount - 1] = new TestEnlistment(lastPhase1Vote, expectedEnlistmentOutcome, false, true, outcomeEvents[volatileCount-1]);
+                    tx.EnlistVolatile(volatiles[volatileCount - 1], enlistmentOption);
+                }
+
+                if (commit)
+                {
+                    ts.Complete();
                 }
             }
             catch (TransactionInDoubtException)
@@ -163,6 +159,5 @@ namespace System.Transactions.Tests
             Assert.NotNull(tx);
             Assert.Equal(expectedTxStatus, tx.TransactionInformation.Status);
         }
-
     }
 }

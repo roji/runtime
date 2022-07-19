@@ -31,16 +31,16 @@ namespace System.Transactions.Oletx
         internal void ResourceManagerRecoveryComplete(Guid resourceManagerIdentifier)
             => throw NotSupported();
 
-        internal byte[] GetWhereabouts()
+        internal static byte[] GetWhereabouts()
             => throw NotSupported();
 
-        internal Transaction GetTransactionFromDtcTransaction(IDtcTransaction transactionNative)
+        internal static Transaction GetTransactionFromDtcTransaction(IDtcTransaction transactionNative)
             => throw NotSupported();
 
-        internal OletxTransaction GetTransactionFromExportCookie(byte[] cookie, Guid txId)
+        internal static OletxTransaction GetTransactionFromExportCookie(byte[] cookie, Guid txId)
             => throw NotSupported();
 
-        internal OletxTransaction GetOletxTransactionFromTransmitterPropagationToken(byte[] propagationToken)
+        internal static OletxTransaction GetOletxTransactionFromTransmitterPropagationToken(byte[] propagationToken)
             => throw NotSupported();
 
         internal static Exception NotSupported()
@@ -105,12 +105,17 @@ namespace System.Transactions.Oletx
             EnlistmentOptions enlistmentOptions)
             => throw NotSupported();
 
+        internal static byte[] GetExportCookie(byte[] whereaboutsCopy)
+            => throw NotSupported();
+
         public object GetRealObject(StreamingContext context)
             => throw NotSupported();
 
-        internal void Dispose()
-        {
-        }
+        internal static byte[] GetTransmitterPropagationToken()
+            => throw NotSupported();
+
+        internal static IDtcTransaction GetDtcTransaction()
+            => throw NotSupported();
 
         void ISerializable.GetObjectData(SerializationInfo serializationInfo, StreamingContext context)
         {
@@ -122,6 +127,10 @@ namespace System.Transactions.Oletx
             //throw NotSupported();
 
             throw new PlatformNotSupportedException();
+        }
+
+        internal void Dispose()
+        {
         }
 
         internal static Exception NotSupported()
@@ -141,59 +150,5 @@ namespace System.Transactions.Oletx
     internal sealed class OletxCommittableTransaction : OletxTransaction
     {
         internal void BeginCommit(InternalTransaction tx) => throw NotSupported();
-    }
-}
-
-namespace System.Transactions
-{
-    public static class TransactionInterop
-    {
-        internal static OletxTransaction ConvertToOletxTransaction(Transaction transaction)
-            => throw NotSupported();
-
-        /// <summary>
-        /// This is the PromoterType value that indicates that the transaction is promoting to MSDTC.
-        ///
-        /// If using the variation of Transaction.EnlistPromotableSinglePhase that takes a PromoterType and the
-        /// ITransactionPromoter being used promotes to MSDTC, then this is the value that should be
-        /// specified for the PromoterType parameter to EnlistPromotableSinglePhase.
-        ///
-        /// If using the variation of Transaction.EnlistPromotableSinglePhase that assumes promotion to MSDTC and
-        /// it that returns false, the caller can compare this value with Transaction.PromoterType to
-        /// verify that the transaction promoted, or will promote, to MSDTC. If the Transaction.PromoterType
-        /// matches this value, then the caller can continue with its enlistment with MSDTC. But if it
-        /// does not match, the caller will not be able to enlist with MSDTC.
-        /// </summary>
-        public static readonly Guid PromoterTypeDtc = new Guid("14229753-FFE1-428D-82B7-DF73045CB8DA");
-
-        public static byte[] GetExportCookie(Transaction transaction, byte[] whereabouts)
-            => throw NotSupported();
-
-        public static Transaction GetTransactionFromExportCookie(byte[] cookie)
-            => throw NotSupported();
-
-        public static byte[] GetTransmitterPropagationToken(Transaction transaction)
-            => throw NotSupported();
-
-        internal static byte[] GetTransmitterPropagationToken(OletxTransaction oletxTx)
-            => throw NotSupported();
-
-        public static Transaction GetTransactionFromTransmitterPropagationToken(byte[] propagationToken)
-            => throw NotSupported();
-
-        public static IDtcTransaction GetDtcTransaction(Transaction transaction)
-            => throw NotSupported();
-
-        public static Transaction GetTransactionFromDtcTransaction(IDtcTransaction transactionNative)
-            => throw NotSupported();
-
-        public static byte[] GetWhereabouts()
-            => throw NotSupported();
-
-        internal static OletxTransaction GetOletxTransactionFromTransmitterPropagationToken(byte[] propagationToken)
-            => throw NotSupported();
-
-        internal static Exception NotSupported()
-            => new PlatformNotSupportedException(SR.DistributedNotSupported);
     }
 }

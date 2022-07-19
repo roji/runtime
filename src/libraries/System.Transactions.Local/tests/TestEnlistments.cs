@@ -2,9 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System.Diagnostics;
-using System.Reflection;
+using System.IO;
 using System.Threading;
-using System.Threading.Tasks;
 using Xunit;
 
 #nullable enable
@@ -93,14 +92,19 @@ namespace System.Transactions.Tests
 
     public class TestEnlistment : IEnlistmentNotification
     {
-        Phase1Vote _phase1Vote;
-        EnlistmentOutcome _expectedOutcome;
-        bool _volatileEnlistDuringPrepare;
-        bool _expectEnlistToSucceed;
-        AutoResetEvent? _outcomeReceived;
-        Transaction _txToEnlist;
+        readonly Phase1Vote _phase1Vote;
+        readonly EnlistmentOutcome _expectedOutcome;
+        readonly bool _volatileEnlistDuringPrepare;
+        readonly bool _expectEnlistToSucceed;
+        readonly AutoResetEvent? _outcomeReceived;
+        readonly Transaction _txToEnlist;
 
-        public TestEnlistment(Phase1Vote phase1Vote, EnlistmentOutcome expectedOutcome, bool volatileEnlistDuringPrepare = false, bool expectEnlistToSucceed = true, AutoResetEvent? outcomeReceived = null)
+        public TestEnlistment(
+            Phase1Vote phase1Vote,
+            EnlistmentOutcome expectedOutcome,
+            bool volatileEnlistDuringPrepare = false,
+            bool expectEnlistToSucceed = true,
+            AutoResetEvent? outcomeReceived = null)
         {
             _phase1Vote = phase1Vote;
             _expectedOutcome = expectedOutcome;
@@ -110,6 +114,7 @@ namespace System.Transactions.Tests
             _txToEnlist = Transaction.Current!;
         }
 
+        public EnlistmentOutcome? Outcome { get; private set; }
         public bool WasPreparedCalled { get; private set; }
 
         public void Prepare(PreparingEnlistment preparingEnlistment)
@@ -153,6 +158,7 @@ namespace System.Transactions.Tests
 
         public void Commit(Enlistment enlistment)
         {
+            Outcome = EnlistmentOutcome.Committed;
             Assert.Equal(EnlistmentOutcome.Committed, _expectedOutcome);
             _outcomeReceived?.Set();
             enlistment.Done();
@@ -160,6 +166,7 @@ namespace System.Transactions.Tests
 
         public void Rollback(Enlistment enlistment)
         {
+            Outcome = EnlistmentOutcome.Aborted;
             Assert.Equal(EnlistmentOutcome.Aborted, _expectedOutcome);
             _outcomeReceived?.Set();
             enlistment.Done();
@@ -167,6 +174,7 @@ namespace System.Transactions.Tests
 
         public void InDoubt(Enlistment enlistment)
         {
+            Outcome = EnlistmentOutcome.InDoubt;
             Assert.Equal(EnlistmentOutcome.InDoubt, _expectedOutcome);
             _outcomeReceived?.Set();
             enlistment.Done();

@@ -1,7 +1,9 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System.IO;
 using System.Threading;
+using Microsoft.DotNet.RemoteExecutor;
 using Xunit;
 using Xunit.Sdk;
 
@@ -12,6 +14,9 @@ namespace System.Transactions.Tests;
 [PlatformSpecific(TestPlatforms.Windows)]
 public class OleTxTests
 {
+    //private static readonly TimeSpan Timeout = TimeSpan.FromMinutes(3);
+    private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(10);
+
     [Theory]
     [InlineData(Phase1Vote.Prepared, Phase1Vote.Prepared, EnlistmentOutcome.Committed, EnlistmentOutcome.Committed, TransactionStatus.Committed)]
     [InlineData(Phase1Vote.Prepared, Phase1Vote.ForceRollback, EnlistmentOutcome.Aborted, EnlistmentOutcome.Aborted, TransactionStatus.Aborted)]
@@ -63,44 +68,6 @@ public class OleTxTests
         Retry(() => Assert.Equal(TransactionStatus.Aborted, tx.TransactionInformation.Status));
     }
 
-    [Fact]
-    public void Promotable_enlistments()
-    {
-        var tx = new CommittableTransaction();
-        Transaction remoteTx;
-
-        Func<byte[]> promoteDelegate = () =>
-        {
-            // Simulate creating a distributed transaction on a remote resource (e.g. SQL Server).
-            remoteTx = new CommittableTransaction();
-            return TransactionInterop.GetTransmitterPropagationToken(remoteTx);
-        };
-
-        var promotableEnlistment1 = new TestPromotableSinglePhaseEnlistment(promoteDelegate, EnlistmentOutcome.Aborted);
-
-        var promotableEnlistment2 = new TestPromotableSinglePhaseEnlistment(null, EnlistmentOutcome.Aborted);
-
-        // 1st promotable enlistment - no distributed transaction yet.
-        Assert.True(tx.EnlistPromotableSinglePhase(promotableEnlistment1));
-        Assert.True(promotableEnlistment1.InitializedCalled);
-
-        // 2nd promotable enlistment returns false.
-        tx.EnlistPromotableSinglePhase(promotableEnlistment2);
-        Assert.False(promotableEnlistment2.InitializedCalled);
-
-        // Now enlist a durable enlistment, this will cause the escalation to a distributed transaction.
-        // This throws since we're using a single MSDTC here, and Sys.Tx refuses to accepts a transaction from promotion
-        // which already exists (we'd need two processes to fully test this).
-        var durableEnlistment = new TestEnlistment(Phase1Vote.Prepared, EnlistmentOutcome.Aborted);
-        var exception = Assert.Throws<InvalidOperationException>(() => tx.EnlistDurable(Guid.NewGuid(), durableEnlistment, EnlistmentOptions.None));
-        Assert.Equal("The transaction returned from Promote already exists as a distributed transaction.", exception.Message);
-
-        Assert.True(promotableEnlistment1.PromoteCalled);
-        Assert.False(promotableEnlistment2.PromoteCalled);
-
-        Assert.Equal(TransactionStatus.Aborted, tx.TransactionInformation.Status);
-    }
-
     [Theory]
     [InlineData(0)]
     [InlineData(1)]
@@ -115,12 +82,12 @@ public class OleTxTests
             for (int i = 0; i < volatileCount; i++)
             {
                 // It doesn't matter what we specify for SinglePhaseVote.
-                volatiles[i] = new TestEnlistment(Phase1Vote.Prepared, EnlistmentOutcome.Aborted);
+                volatiles[i] = new TestEnlistment(Phase1Vote.Prepared, EnlistmentOutcome.Committed);
                 tx.EnlistVolatile(volatiles[i], EnlistmentOptions.None);
             }
         }
 
-        TestEnlistment durable = new TestEnlistment(Phase1Vote.Prepared, EnlistmentOutcome.Aborted);
+        var durable = new TestEnlistment(Phase1Vote.Prepared, EnlistmentOutcome.Committed);
 
         // Creation of two phase durable enlistment attempts to promote to MSDTC
         tx.EnlistDurable(Guid.NewGuid(), durable, EnlistmentOptions.None);
@@ -128,6 +95,287 @@ public class OleTxTests
         tx.Commit();
 
         Retry(() => Assert.Equal(TransactionStatus.Committed, tx.TransactionInformation.Status));
+    }
+
+    [ConditionalFact(typeof(RemoteExecutor), nameof(RemoteExecutor.IsSupported))]
+    public void Promotion()
+    {
+        // This simulates the full promotable flow, as implemented for SQL Server.
+
+        // We are going to spin up two external processes.
+        // 1. The 1st external process will create the transaction and save its propagation token to disk.
+        // 2. The main process will read that, and propagate the transaction to the 2nd external process.
+        // 3. The main process will then notify the 1st external process to commit (as the main's transaction is delegated to it).
+        // 4. At that point the MSDTC Commit will be triggered; enlistments on both the 1st and 2nd processes will be notified
+        //    to commit, and the transaction status will reflect the committed status in the main process.
+        var tx = new CommittableTransaction();
+
+        string propagationTokenFilePath = Path.GetTempFileName();
+        string exportCookieFilePath = Path.GetTempFileName();
+        using var waitHandle1 = new EventWaitHandle(initialState: false, EventResetMode.ManualReset, "System.Transactions.Tests.OleTxTests.Promotion1");
+        using var waitHandle2 = new EventWaitHandle(initialState: false, EventResetMode.ManualReset, "System.Transactions.Tests.OleTxTests.Promotion2");
+        using var waitHandle3 = new EventWaitHandle(initialState: false, EventResetMode.ManualReset, "System.Transactions.Tests.OleTxTests.Promotion3");
+
+        RemoteInvokeHandle? remote1 = null, remote2 = null;
+
+        try
+        {
+            remote1 = RemoteExecutor.Invoke(Remote1, propagationTokenFilePath, new RemoteInvokeOptions { ExpectedExitCode = 42 });
+
+            // Wait for the external process to start a transaction and save its propagation token
+            Assert.True(waitHandle1.WaitOne(Timeout));
+
+            // Enlist the first PSPE. No escalation happens yet, since its the only enlistment.
+            var pspe1 = new TestPromotableSinglePhaseNotification(propagationTokenFilePath);
+            Assert.True(tx.EnlistPromotableSinglePhase(pspe1));
+            Assert.True(pspe1.WasInitializedCalled);
+            Assert.False(pspe1.WasPromoteCalled);
+            Assert.False(pspe1.WasRollbackCalled);
+            Assert.False(pspe1.WasSinglePhaseCommitCalled);
+
+            // Enlist the second PSPE. This returns false and does nothing, since there's already an enlistment.
+            var pspe2 = new TestPromotableSinglePhaseNotification(propagationTokenFilePath);
+            Assert.False(tx.EnlistPromotableSinglePhase(pspe2));
+            Assert.False(pspe2.WasInitializedCalled);
+            Assert.False(pspe2.WasPromoteCalled);
+            Assert.False(pspe2.WasRollbackCalled);
+            Assert.False(pspe2.WasSinglePhaseCommitCalled);
+
+            // Now generate an export cookie for the 2nd external process. This causes escalation and promotion.
+            byte[] whereabouts = TransactionInterop.GetWhereabouts();
+            byte[] exportCookie = TransactionInterop.GetExportCookie(tx, whereabouts);
+
+            Assert.True(pspe1.WasPromoteCalled);
+            Assert.False(pspe1.WasRollbackCalled);
+            Assert.False(pspe1.WasSinglePhaseCommitCalled);
+
+            // Write the export cookie and start the 2nd external process, which will read the cookie and enlist in the transaction.
+            // Wait for it to complete.
+            File.WriteAllBytes(exportCookieFilePath, exportCookie);
+            remote2 = RemoteExecutor.Invoke(Remote2, exportCookieFilePath, new RemoteInvokeOptions { ExpectedExitCode = 42 });
+            Assert.True(waitHandle2.WaitOne(Timeout));
+
+            // We now have two external processes with enlistments to our distributed transaction. Commit.
+            // Since our transaction is delegated to the 1st PSPE enlistment, Sys.Tx will call SinglePhaseCommit on it.
+            // In SQL Server this contacts the 1st DB to actually commit the transaction with MSDTC. In this simulation we'll just use a wait handle to trigger this.
+            tx.Commit();
+            Assert.True(pspe1.WasSinglePhaseCommitCalled);
+            waitHandle3.Set();
+
+            Retry(() => Assert.Equal(TransactionStatus.Committed, tx.TransactionInformation.Status));
+        }
+        catch
+        {
+            try
+            {
+                remote1?.Process.Kill();
+                remote2?.Process.Kill();
+            }
+            catch
+            {
+            }
+
+            throw;
+        }
+        finally
+        {
+            File.Delete(propagationTokenFilePath);
+        }
+
+        // Disposal of the RemoteExecutor handles will wait for the external processes to exit with the right exit code,
+        // which will happen when their enlistments receive the commit.
+        remote1?.Dispose();
+        remote2?.Dispose();
+
+        static void Remote1(string propagationTokenFilePath)
+        {
+            var tx = new CommittableTransaction();
+
+            var outcomeEvent = new AutoResetEvent(false);
+            var enlistment = new TestEnlistment(Phase1Vote.Prepared, EnlistmentOutcome.Committed, outcomeReceived: outcomeEvent);
+            tx.EnlistDurable(Guid.NewGuid(), enlistment, EnlistmentOptions.None);
+
+            // We now have an OleTx transaction. Save its propagation token to disk so that the main process can read it when promoting.
+            byte[] propagationToken = TransactionInterop.GetTransmitterPropagationToken(tx);
+            File.WriteAllBytes(propagationTokenFilePath, propagationToken);
+
+            // Signal to the main process that the propagation token is ready to be read
+            using var waitHandle1 = new EventWaitHandle(initialState: false, EventResetMode.ManualReset, "System.Transactions.Tests.OleTxTests.Promotion1");
+            waitHandle1.Set();
+
+            // The main process will now import our transaction via the propagation token, and propagate it to a 2nd process.
+            // In the main process the transaction is delegated; we're the one who started it, and so we're the one who need to Commit.
+            // When Commit() is called in the main process, that will trigger a SinglePhaseCommit on the PSPE which represents us. In SQL Server this
+            // contacts the DB to actually commit the transaction with MSDTC. In this simulation we'll just use the wait handle again to trigger this.
+            using var waitHandle3 = new EventWaitHandle(initialState: false, EventResetMode.ManualReset, "System.Transactions.Tests.OleTxTests.Promotion3");
+            Assert.True(waitHandle3.WaitOne(Timeout));
+
+            tx.Commit();
+
+            // Wait for the commit to occur on our enlistment, then exit successfully.
+            Assert.True(outcomeEvent.WaitOne(Timeout));
+            Environment.Exit(42); // 42 is error code expected by RemoteExecutor
+        }
+
+        static void Remote2(string exportCookieFilePath)
+        {
+            // Load the export cookie and enlist durably
+            byte[] exportCookie = File.ReadAllBytes(exportCookieFilePath);
+            var tx = TransactionInterop.GetTransactionFromExportCookie(exportCookie);
+
+            // Now enlist durably. This triggers promotion of the first PSPE, reading the propagation token.
+            var outcomeEvent = new AutoResetEvent(false);
+            var enlistment = new TestEnlistment(Phase1Vote.Prepared, EnlistmentOutcome.Committed, outcomeReceived: outcomeEvent);
+            tx.EnlistDurable(Guid.NewGuid(), enlistment, EnlistmentOptions.None);
+
+            // Signal to the main process that we're enlisted and ready to commit
+            using var waitHandle = new EventWaitHandle(initialState: false, EventResetMode.ManualReset, "System.Transactions.Tests.OleTxTests.Promotion2");
+            waitHandle.Set();
+
+            // Wait for the main process to commit the transaction
+            Assert.True(outcomeEvent.WaitOne(Timeout));
+            Environment.Exit(42); // 42 is error code expected by RemoteExecutor
+        }
+    }
+
+    public class TestPromotableSinglePhaseNotification : IPromotableSinglePhaseNotification
+    {
+        private string _propagationTokenFilePath;
+
+        public TestPromotableSinglePhaseNotification(string propagationTokenFilePath)
+            => _propagationTokenFilePath = propagationTokenFilePath;
+
+        public bool WasInitializedCalled { get; private set; }
+        public bool WasPromoteCalled { get; private set; }
+        public bool WasRollbackCalled { get; private set; }
+        public bool WasSinglePhaseCommitCalled { get; private set; }
+
+        public void Initialize()
+            => WasInitializedCalled = true;
+
+        public byte[] Promote()
+        {
+            WasPromoteCalled = true;
+
+            return File.ReadAllBytes(_propagationTokenFilePath);
+        }
+
+        public void Rollback(SinglePhaseEnlistment singlePhaseEnlistment)
+            => WasRollbackCalled = true;
+
+        public void SinglePhaseCommit(SinglePhaseEnlistment singlePhaseEnlistment)
+        {
+            WasSinglePhaseCommitCalled = true;
+
+            singlePhaseEnlistment.Committed();
+        }
+    }
+
+    [ConditionalFact(typeof(RemoteExecutor), nameof(RemoteExecutor.IsSupported))]
+    public void Recovery()
+    {
+        // We are going to spin up an external process to also enlist in the transaction, and then to crash when it
+        // receives the commit notification. We will then initiate the recovery flow.
+
+        var tx = new CommittableTransaction();
+
+        var outcomeEvent1 = new AutoResetEvent(false);
+        var enlistment1 = new TestEnlistment(Phase1Vote.Prepared, EnlistmentOutcome.Committed, outcomeReceived: outcomeEvent1);
+        var guid1 = Guid.NewGuid();
+        tx.EnlistDurable(guid1, enlistment1, EnlistmentOptions.None);
+
+        // The propagation token is used to propagate the transaction to that process so it can enlist to our
+        // transaction. We also provide the resource manager identifier GUID, and a path where the external process will
+        // write the recovery information it will receive from the MSDTC when preparing.
+        // We'll need these two elements later in order to Reenlist and trigger recovery.
+        byte[] propagationToken = TransactionInterop.GetTransmitterPropagationToken(tx);
+        string propagationTokenText = Convert.ToBase64String(propagationToken);
+        var guid2 = Guid.NewGuid();
+        string secondEnlistmentRecoveryFilePath = Path.GetTempFileName();
+
+        using var waitHandle = new EventWaitHandle(
+            initialState: false,
+            EventResetMode.ManualReset,
+            "System.Transactions.Tests.OleTxTests.Recovery");
+
+        try
+        {
+            using (RemoteExecutor.Invoke(
+                       EnlistAndCrash,
+                       propagationTokenText, guid2.ToString(), secondEnlistmentRecoveryFilePath,
+                       new RemoteInvokeOptions { ExpectedExitCode = 42 }))
+            {
+                // Wait for the external process to enlist in the transaction, it will signal this EventWaitHandle.
+                Assert.True(waitHandle.WaitOne(Timeout));
+
+                tx.Commit();
+            }
+
+            // The other has crashed when the MSDTC notified it to commit.
+            // Load the recovery information the other process has written to disk for us and reenlist with
+            // the failed RM's Guid to commit.
+            var outcomeEvent3 = new AutoResetEvent(false);
+            var enlistment3 = new TestEnlistment(Phase1Vote.Prepared, EnlistmentOutcome.Committed, outcomeReceived: outcomeEvent3);
+            byte[] secondRecoveryInformation = File.ReadAllBytes(secondEnlistmentRecoveryFilePath);
+            _ = TransactionManager.Reenlist(guid2, secondRecoveryInformation, enlistment3);
+            TransactionManager.RecoveryComplete(guid2);
+
+            Assert.True(outcomeEvent1.WaitOne(Timeout));
+            Assert.True(outcomeEvent3.WaitOne(Timeout));
+            Assert.Equal(EnlistmentOutcome.Committed, enlistment1.Outcome);
+            Assert.Equal(EnlistmentOutcome.Committed, enlistment3.Outcome);
+            Assert.Equal(TransactionStatus.Committed, tx.TransactionInformation.Status);
+
+            // Note: verify manually in the MSDTC console that the distributed transaction is gone
+            // (i.e. successfully committed),
+            // (Start -> Component Services -> Computers -> My Computer -> Distributed Transaction Coordinator ->
+            //           Local DTC -> Transaction List)
+        }
+        finally
+        {
+            File.Delete(secondEnlistmentRecoveryFilePath);
+        }
+
+        static void EnlistAndCrash(string propagationTokenText, string resourceManagerIdentifierGuid, string recoveryInformationFilePath)
+        {
+            byte[] propagationToken = Convert.FromBase64String(propagationTokenText);
+            var tx = TransactionInterop.GetTransactionFromTransmitterPropagationToken(propagationToken);
+
+            var crashingEnlistment = new CrashingEnlistment(recoveryInformationFilePath);
+            tx.EnlistDurable(Guid.Parse(resourceManagerIdentifierGuid), crashingEnlistment, EnlistmentOptions.None);
+
+            // Signal to the main process that we've enlisted and are ready to accept prepare/commit.
+            using var waitHandle = new EventWaitHandle(initialState: false, EventResetMode.ManualReset, "System.Transactions.Tests.OleTxTests.Recovery");
+            waitHandle.Set();
+
+            // We've enlisted, and set it up so that when the MSDTC tells us to commit, the process will crash.
+            Thread.Sleep(Timeout);
+        }
+    }
+
+    public class CrashingEnlistment : IEnlistmentNotification
+    {
+        private string _recoveryInformationFilePath;
+
+        public CrashingEnlistment(string recoveryInformationFilePath)
+            => _recoveryInformationFilePath = recoveryInformationFilePath;
+
+        public void Prepare(PreparingEnlistment preparingEnlistment)
+        {
+            // Received a prepare notification from MSDTC, persist the recovery information so that the main process can perform recovery for it.
+            File.WriteAllBytes(_recoveryInformationFilePath, preparingEnlistment.RecoveryInformation());
+
+            preparingEnlistment.Prepared();
+        }
+
+        public void Commit(Enlistment enlistment)
+            => Environment.Exit(42); // 42 is error code expected by RemoteExecutor
+
+        public void Rollback(Enlistment enlistment)
+            => Environment.Exit(1);
+
+        public void InDoubt(Enlistment enlistment)
+            => Environment.Exit(1);
     }
 
     [Fact]
@@ -188,4 +436,6 @@ public class OleTxTests
             }
         }
     }
+
+    const int MaxTransactionCommitTimeoutInSeconds = 5;
 }
