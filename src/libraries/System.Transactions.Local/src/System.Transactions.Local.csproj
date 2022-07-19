@@ -5,10 +5,8 @@
     <TargetFrameworks>$(NetCoreAppCurrent)-windows;$(NetCoreAppCurrent)</TargetFrameworks>
     <NoWarn>CA1805;IDE0059;CS1591</NoWarn>
     <TargetPlatformIdentifier>$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)'))</TargetPlatformIdentifier>
+    <IsTrimmable>false</IsTrimmable>
   </PropertyGroup>
-  <ItemGroup>
-    <ILLinkDescriptorsXmls Condition="'$(TargetPlatformIdentifier)' == 'windows'" Include="$(ILLinkDirectory)ILLink.Descriptors.LibraryBuild.xml" />
-  </ItemGroup>
   <ItemGroup>
     <Compile Include="System\Transactions\CommittableTransaction.cs" />
     <Compile Include="System\Transactions\DependentTransaction.cs" />
@@ -111,7 +109,6 @@
     <Reference Include="System.ComponentModel" />
     <Reference Include="System.ComponentModel.Primitives" />
     <Reference Include="System.Diagnostics.Process" />
-    <Reference Include="System.Diagnostics.StackTrace" />
     <Reference Include="System.Diagnostics.TraceSource" />
     <Reference Include="System.Diagnostics.Tracing" />
     <Reference Include="System.Memory" />
