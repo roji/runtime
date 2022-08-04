@@ -571,7 +571,6 @@ internal sealed class OletxResourceManager
                             localEnlistment = resourceManager.ReenlistList[0] as OletxEnlistment;
                             if (localEnlistment == null)
                             {
-                                //TODO need resource string for this exception.
                                 if (etwLog.IsEnabled())
                                 {
                                     etwLog.InternalError();

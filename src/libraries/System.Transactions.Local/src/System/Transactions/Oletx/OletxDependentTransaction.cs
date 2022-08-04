@@ -43,7 +43,7 @@ internal sealed class OletxDependentTransaction : OletxTransaction
 
         Debug.Assert(Disposed == 0, "OletxTransction object is disposed");
 
-        int localCompleted = Interlocked.CompareExchange(ref _completed, 1, 0);
+        int localCompleted = Interlocked.Exchange(ref _completed, 1);
         if (localCompleted == 1)
         {
             throw TransactionException.CreateTransactionCompletedException(DistributedTxId);

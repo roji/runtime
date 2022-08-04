@@ -33,7 +33,7 @@ internal sealed class EnlistmentNotifyShim : NotificationShimBase, ITransactionR
 
     public void PrepareRequest(bool fRetaining, OletxXactRm grfRM, bool fWantMoniker, bool fSinglePhase)
     {
-        var pEnlistmentAsync = Interlocked.Exchange(ref EnlistmentAsync, null);
+        ITransactionEnlistmentAsync? pEnlistmentAsync = Interlocked.Exchange(ref EnlistmentAsync, null);
 
         if (pEnlistmentAsync is null)
         {

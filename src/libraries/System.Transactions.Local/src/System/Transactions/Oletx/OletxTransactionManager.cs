@@ -105,10 +105,7 @@ internal sealed class OletxTransactionManager
                                 // In this case we know that the TM has gone down and we need to exchange
                                 // the native lock for a managed lock.
                                 ProcessingTmDown = true;
-#pragma warning disable 0618
-                                //@TODO: This overload of Monitor.Enter is obsolete.  Please change this to use Monitor.Enter(ref bool), and remove the pragmas   -- ericeil
                                 Monitor.Enter(ProxyShimFactory);
-#pragma warning restore 0618
                             }
                             else
                             {
@@ -142,7 +139,6 @@ internal sealed class OletxTransactionManager
                                 {
                                     if (enlistment2 is OletxPhase0VolatileEnlistmentContainer ph0VolEnlistContainer)
                                     {
-                                        //CSDMain 91509 - We now synchronize this call with the AddDependentClone call in RealOleTxTransaction
                                         ph0VolEnlistContainer.Phase0Request(abortingHint);
                                     }
                                     else
@@ -443,7 +439,6 @@ internal sealed class OletxTransactionManager
         DtcTransactionManagerLock.AcquireReaderLock(-1);
         try
         {
-            // TODO: Make Sys.Tx isolation level values the same as DTC isolation level values and use the sys.tx value here.
             OletxTransactionIsolationLevel oletxIsoLevel = ConvertIsolationLevel(properties.IsolationLevel);
             uint oletxTimeout = DtcTransactionManager.AdjustTimeout(properties.Timeout);
 

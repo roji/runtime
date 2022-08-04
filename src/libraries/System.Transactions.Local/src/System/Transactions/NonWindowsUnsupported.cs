@@ -197,7 +197,3 @@ namespace System.Transactions
             => new PlatformNotSupportedException(SR.DistributedNotSupported);
     }
 }
-
-namespace System.Transactions.Diagnostics
-{
-}

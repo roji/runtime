@@ -24,7 +24,7 @@ internal interface ITransactionResourceAsync
     /// </summary>
     /// <param name="fRetaining">Always false.</param>
     /// <param name="grfRM">Values from <see cref="OletxXactRm" />.</param>
-    /// <param name="fWantMoniker">Always false.</param> // TODO
+    /// <param name="fWantMoniker">Always false.</param>
     /// <param name="fSinglePhase">If true, it indicates that the RM is the only resource manager enlisted on the transaction.</param>
     void PrepareRequest(
         [MarshalAs(UnmanagedType.Bool)] bool fRetaining,

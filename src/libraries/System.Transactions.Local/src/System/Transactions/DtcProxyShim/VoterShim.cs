@@ -16,7 +16,7 @@ internal sealed class VoterBallotShim
 
     public void Vote(bool voteYes)
     {
-        var voteHr = OletxHelper.S_OK;
+        int voteHr = OletxHelper.S_OK;
 
         if (!voteYes)
         {

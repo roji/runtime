@@ -469,7 +469,6 @@ internal sealed class OletxPhase0VolatileEnlistmentContainer : OletxVolatileEnli
                         try
                         {
                             _phase0EnlistmentShim.Phase0Done(false);
-                            // CSDMain 138031: There is a potential race between DTC sending Abort notification and OletxDependentTransaction::Complete is called.
                             // We need to set the alreadyVoted flag to true once we successfully voted, so later we don't vote again when OletxDependentTransaction::Complete is called
                             // Otherwise, in OletxPhase0VolatileEnlistmentContainer::DecrementOutstandingNotifications code path, we are going to call Phase0Done( true ) again
                             // and result in an access violation while accessing the pPhase0EnlistmentAsync member variable of the Phase0Shim object.
@@ -592,7 +591,7 @@ internal sealed class OletxPhase1VolatileEnlistmentContainer : OletxVolatileEnli
         {
             if (Phase != -1)
             {
-                throw TransactionException.CreateTransactionStateException(null, Guid.Empty); // TODO
+                throw TransactionException.CreateTransactionStateException(null, Guid.Empty);
             }
 
             // We simply need to block the response to the proxy until all clone is completed.
@@ -614,8 +613,7 @@ internal sealed class OletxPhase1VolatileEnlistmentContainer : OletxVolatileEnli
             etwLog.MethodEnter(TraceSourceType.TraceSourceOleTx, this, description);
         }
 
-        //Fix for stress bug CSDMain 126887. This is to synchronize with the corresponding AddDependentClone
-        //which takes the container lock while incrementing the incompleteDependentClone count
+        // This is to synchronize with the corresponding AddDependentClone which takes the container lock while incrementing the incompleteDependentClone count
         lock (this)
         {
             IncompleteDependentClones--;

@@ -6,7 +6,6 @@ using System.Collections.Generic;
 
 namespace System.Transactions.DtcProxyShim;
 
-// TODO: Is this the right to manage these COM IIDs?
 internal static class Guids
 {
     internal const string IID_ITransactionDispenser = "3A6AD9E1-23B9-11cf-AD60-00AA00A74CCD";

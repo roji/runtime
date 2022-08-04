@@ -57,8 +57,6 @@ internal sealed class OletxEnlistment : OletxBaseEnlistment, IPromotedEnlistment
         OletxTransaction oletxTransaction)
         : base(oletxResourceManager, oletxTransaction)
     {
-        Guid myGuid = Guid.Empty;
-
         // This will get set later by the creator of this object after it
         // has enlisted with the proxy.
         EnlistmentShim = null;
@@ -88,8 +86,6 @@ internal sealed class OletxEnlistment : OletxBaseEnlistment, IPromotedEnlistment
         OletxResourceManager oletxResourceManager)
         : base(oletxResourceManager, null)
     {
-        Guid myGuid = Guid.Empty;
-
         // This will get set later by the creator of this object after it
         // has enlisted with the proxy.
         EnlistmentShim = null;
@@ -304,7 +300,6 @@ internal sealed class OletxEnlistment : OletxBaseEnlistment, IPromotedEnlistment
             {
                 State = OletxEnlistmentState.Preparing;
 
-                // TODO: Can this be more efficient.
                 _prepareInfoByteArray = TransactionManager.GetRecoveryInformation(
                     OletxResourceManager.OletxTransactionManager.CreationNodeName,
                     prepareInfo);
@@ -598,7 +593,7 @@ internal sealed class OletxEnlistment : OletxBaseEnlistment, IPromotedEnlistment
                 // If we got an abort hint or we are the committable transaction and Commit has not yet been called or the TM went down,
                 // we don't want to do any more work on the transaction.  The abort notifications will be sent by the phase 1
                 // enlistment
-                if (_aborting ||  commitNotYetCalled || _tmWentDown)
+                if (_aborting || commitNotYetCalled || _tmWentDown)
                 {
                     // There is a possible race where we could get the Phase0Request before we are given the
                     // shim.  In that case, we will vote "no" when we are given the shim.
@@ -650,7 +645,6 @@ internal sealed class OletxEnlistment : OletxBaseEnlistment, IPromotedEnlistment
                         rmGuidArray[index];
                 }
 
-                // TODO: Seems like this could be more efficient.
                 _prepareInfoByteArray = TransactionManager.GetRecoveryInformation(
                     OletxResourceManager.OletxTransactionManager.CreationNodeName,
                     _proxyPrepareInfoByteArray);

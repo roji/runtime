@@ -34,7 +34,7 @@ internal static class OletxHelper
     {
         int nRetries = MaxRetryCount;
 
-        while (nRetries > 0)
+        while (true)
         {
             try
             {
@@ -43,8 +43,12 @@ internal static class OletxHelper
             }
             catch (COMException e) when (e.ErrorCode == XACT_E_ALREADYINPROGRESS)
             {
+                if (--nRetries == 0)
+                {
+                    throw;
+                }
+
                 Thread.Sleep(RetryInterval);
-                nRetries--;
             }
         }
     }

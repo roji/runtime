@@ -119,7 +119,6 @@ namespace System.Transactions.Oletx
             RealOletxTransaction.OletxTransactionCreated();
         }
 
-        // TODO: Do we want to keep supporting this?
         protected OletxTransaction(SerializationInfo? serializationInfo, StreamingContext context)
         {
             if (serializationInfo == null)
@@ -711,7 +710,6 @@ namespace System.Transactions.Oletx
 
                             if (localPhase0VolatileContainer != null)
                             {
-                                //CSDMain 91509 - We now synchronize this call with the shim notification trying to call Phase0Request on this container
                                 TakeContainerLock(localPhase0VolatileContainer, ref phase0ContainerLockAcquired);
                             }
 
@@ -834,10 +832,7 @@ namespace System.Transactions.Oletx
         {
             if (!phase0ContainerLockAcquired)
             {
-#pragma warning disable 0618
-                //@TODO: This overload of Monitor.Enter is obsolete.  Please change this to use Monitor.Enter(ref bool), and remove the pragmas   -- ericeil
                 Monitor.Enter(localPhase0VolatileContainer);
-#pragma warning restore 0618
                 phase0ContainerLockAcquired = true;
             }
         }

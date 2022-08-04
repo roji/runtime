@@ -135,7 +135,7 @@ internal sealed class DtcProxyShimFactory
         out Guid transactionIdentifier,
         out TransactionShim transactionShim)
     {
-        var options = GetCachedOptions();
+        ITransactionOptions options = GetCachedOptions();
 
         try
         {
@@ -197,7 +197,7 @@ internal sealed class DtcProxyShimFactory
         out OletxTransactionIsolationLevel isolationLevel,
         out TransactionShim transactionShim)
     {
-        var receiver = GetCachedReceiver();
+        ITransactionReceiver receiver = GetCachedReceiver();
 
         try
         {
@@ -250,7 +250,7 @@ internal sealed class DtcProxyShimFactory
 
         Monitor.Enter(_notificationLock);
 
-        var entryRemoved = _notifications.TryDequeue(out NotificationShimBase? notification);
+        bool entryRemoved = _notifications.TryDequeue(out NotificationShimBase? notification);
         if (entryRemoved)
         {
             managedIdentifier = notification!.EnlistmentIdentifier;
