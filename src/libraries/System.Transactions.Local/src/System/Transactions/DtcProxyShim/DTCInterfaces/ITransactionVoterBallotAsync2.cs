@@ -10,7 +10,7 @@ namespace System.Transactions.DtcProxyShim.DtcInterfaces;
 /// The transaction voter ballot object, in the DTC proxy, implements this interface and creates it on the method call <see cref="ITransactionVoterFactory2.Create" />.
 /// </summary>
 /// <remarks>
-/// See https://docs.microsoft.com/en-us/previous-versions/windows/desktop/ms680565(v=vs.85).
+/// See https://docs.microsoft.com/previous-versions/windows/desktop/ms680565(v=vs.85).
 /// </remarks>
 [ComImport, Guid("5433376C-414D-11d3-B206-00C04FC2F3EF"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 internal interface ITransactionVoterBallotAsync2

@@ -10,7 +10,7 @@ namespace System.Transactions.DtcProxyShim.DtcInterfaces;
 /// The IPrepareInfo interface is superseded by the IPrepareInfo2 interface.
 /// </summary>
 /// <remarks>
-/// See https://docs.microsoft.com/en-us/previous-versions/windows/desktop/ms686533(v=vs.85).
+/// See https://docs.microsoft.com/previous-versions/windows/desktop/ms686533(v=vs.85).
 /// </remarks>
 [ComImport, Guid("80c7bfd0-87ee-11ce-8081-0080c758527e"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 internal interface IPrepareInfo

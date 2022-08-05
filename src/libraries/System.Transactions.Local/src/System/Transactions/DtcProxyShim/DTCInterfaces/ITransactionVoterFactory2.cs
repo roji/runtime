@@ -11,7 +11,7 @@ namespace System.Transactions.DtcProxyShim.DtcInterfaces;
 /// This interface is exported as a sink to the transaction voter for vetoing distributed transaction commitment.
 /// </summary>
 /// <remarks>
-/// See https://docs.microsoft.com/en-us/previous-versions/windows/desktop/ms686084(v=vs.85).
+/// See https://docs.microsoft.com/previous-versions/windows/desktop/ms686084(v=vs.85).
 /// </remarks>
 [ComImport, Guid("5433376A-414D-11d3-B206-00C04FC2F3EF"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 internal interface ITransactionVoterFactory2

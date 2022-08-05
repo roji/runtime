@@ -12,7 +12,7 @@ namespace System.Transactions.DtcProxyShim.DtcInterfaces;
 /// This informs the resource manager that it must perform recovery.
 /// </summary>
 /// <remarks>
-/// See https://docs.microsoft.com/en-us/previous-versions/windows/desktop/ms686073(v=vs.85).
+/// See https://docs.microsoft.com/previous-versions/windows/desktop/ms686073(v=vs.85).
 /// </remarks>
 [ComImport, Guid("0D563181-DEFB-11CE-AED1-00AA0051E2C4"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 internal interface IResourceManagerSink

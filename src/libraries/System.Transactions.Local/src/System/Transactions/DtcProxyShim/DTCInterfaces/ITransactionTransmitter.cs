@@ -10,7 +10,7 @@ namespace System.Transactions.DtcProxyShim.DtcInterfaces;
 /// The ITransactionTransmitter interface is used to marshal transaction tokens.
 /// </summary>
 /// <remarks>
-/// See https://docs.microsoft.com/en-us/previous-versions/windows/desktop/ms682296(v=vs.85).
+/// See https://docs.microsoft.com/previous-versions/windows/desktop/ms682296(v=vs.85).
 /// </remarks>
 [ComImport, Guid("59313E01-B36C-11cf-A539-00AA006887C3"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 internal interface ITransactionTransmitter

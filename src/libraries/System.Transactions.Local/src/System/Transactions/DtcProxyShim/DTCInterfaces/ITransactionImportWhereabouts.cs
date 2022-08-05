@@ -9,7 +9,7 @@ namespace System.Transactions.DtcProxyShim.DtcInterfaces;
 /// ITransactionImportWhereabouts interface is used when propagating transactions from one process to another or one system
 /// </summary>
 /// <remarks>
-/// See https://docs.microsoft.com/en-us/previous-versions/windows/desktop/ms682783(v=vs.85).
+/// See https://docs.microsoft.com/previous-versions/windows/desktop/ms682783(v=vs.85).
 /// </remarks>
 [ComImport, Guid("0141fda4-8fc0-11ce-bd18-204c4f4f5020"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 internal interface ITransactionImportWhereabouts

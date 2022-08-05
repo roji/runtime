@@ -10,7 +10,7 @@ namespace System.Transactions.DtcProxyShim.DtcInterfaces;
 /// Following a failure, the resource manager uses this interface to determine the outcome of in-doubt transactions.
 /// </summary>
 /// <remarks>
-/// See https://docs.microsoft.com/en-us/previous-versions/windows/desktop/ms681790(v=vs.85).
+/// See https://docs.microsoft.com/previous-versions/windows/desktop/ms681790(v=vs.85).
 /// </remarks>
 [ComImport, Guid(Guids.IID_IResourceManager), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 internal interface IResourceManager

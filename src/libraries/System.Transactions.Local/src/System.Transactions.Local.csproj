@@ -102,8 +102,6 @@
     <Compile Include="System\Transactions\NonWindowsUnsupported.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\System.Diagnostics.EventLog\src\System.Diagnostics.EventLog.csproj" />
-    <ProjectReference Include="..\..\System.Configuration.ConfigurationManager\src\System.Configuration.ConfigurationManager.csproj" />
     <Reference Include="System.Collections" />
     <Reference Include="System.Collections.Concurrent" />
     <Reference Include="System.ComponentModel" />

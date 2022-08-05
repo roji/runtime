@@ -12,7 +12,7 @@ namespace System.Transactions.DtcProxyShim.DtcInterfaces;
 /// The process then sends the transaction cookie to the destination process. This is referred to as exporting the transaction.
 /// </summary>
 /// <remarks>
-/// See https://docs.microsoft.com/en-us/previous-versions/windows/desktop/ms678954(v=vs.85).
+/// See https://docs.microsoft.com/previous-versions/windows/desktop/ms678954(v=vs.85).
 /// </remarks>
 [ComImport, Guid("0141fda5-8fc0-11ce-bd18-204c4f4f5020"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 internal interface ITransactionExport

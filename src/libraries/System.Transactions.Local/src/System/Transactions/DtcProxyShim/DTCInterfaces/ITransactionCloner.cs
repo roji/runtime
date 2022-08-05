@@ -11,7 +11,7 @@ namespace System.Transactions.DtcProxyShim.DtcInterfaces;
 /// <see cref="ITransaction.Commit" /> on the cloned transaction object will always fail with XACT_E_COMMITPREVENTED.
 /// </summary>
 /// <remarks>
-/// See https://docs.microsoft.com/en-us/previous-versions/windows/desktop/ms684377(v=vs.85).
+/// See https://docs.microsoft.com/previous-versions/windows/desktop/ms684377(v=vs.85).
 /// </remarks>
 [ComImport, Guid("02656950-2152-11d0-944C-00A0C905416E"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 internal interface ITransactionCloner

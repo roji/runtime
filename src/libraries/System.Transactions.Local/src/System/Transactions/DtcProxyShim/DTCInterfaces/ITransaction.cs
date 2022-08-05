@@ -11,7 +11,7 @@ namespace System.Transactions.DtcProxyShim.DtcInterfaces;
 /// The ITransaction interface is used to commit and abort transactions and to obtain status information about transactions.
 /// </summary>
 /// <remarks>
-/// See https://docs.microsoft.com/en-us/previous-versions/windows/desktop/ms686531(v=vs.85).
+/// See https://docs.microsoft.com/previous-versions/windows/desktop/ms686531(v=vs.85).
 /// </remarks>
 [ComImport, Guid(Guids.IID_ITransaction), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 internal interface ITransaction

@@ -10,7 +10,7 @@ namespace System.Transactions.DtcProxyShim.DtcInterfaces;
 /// that phase0 processing has completed, or that phase0 notification is no longer desired.
 /// </summary>
 /// <remarks>
-/// See https://docs.microsoft.com/en-us/previous-versions/windows/desktop/ms685087(v=vs.85).</remarks>
+/// See https://docs.microsoft.com/previous-versions/windows/desktop/ms685087(v=vs.85).</remarks>
 [ComImport, Guid("82DC88E1-A954-11d1-8F88-00600895E7D5"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 internal interface ITransactionPhase0EnlistmentAsync
 {

@@ -13,7 +13,7 @@ namespace System.Transactions.DtcProxyShim.DtcInterfaces;
 /// through the inherited <see cref="ITransactionOutcomeEvents" /> interface.
 /// </summary>
 /// <remarks>
-/// See https://docs.microsoft.com/en-us/previous-versions/windows/desktop/ms678930(v=vs.85).
+/// See https://docs.microsoft.com/previous-versions/windows/desktop/ms678930(v=vs.85).
 /// </remarks>
 [ComImport, Guid("5433376B-414D-11d3-B206-00C04FC2F3EF"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 internal interface ITransactionVoterNotifyAsync2

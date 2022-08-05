@@ -12,7 +12,7 @@ namespace System.Transactions.DtcProxyShim.DtcInterfaces;
 /// DTC calls the appropriate method on this interface to inform the application about the outcome of a transaction.
 /// </summary>
 /// <remarks>
-/// See https://docs.microsoft.com/en-us/previous-versions/windows/desktop/ms686465(v=vs.85).
+/// See https://docs.microsoft.com/previous-versions/windows/desktop/ms686465(v=vs.85).
 /// </remarks>
 [ComImport, Guid("3A6AD9E2-23B9-11cf-AD60-00AA00A74CCD"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 internal interface ITransactionOutcomeEvents

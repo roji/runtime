@@ -10,7 +10,7 @@ namespace System.Transactions.DtcProxyShim.DtcInterfaces;
 /// used by the Distributed Transaction Coordinator (DTC) proxy.
 /// </summary>
 /// <remarks>
-/// See https://docs.microsoft.com/en-us/previous-versions/windows/desktop/ms687122(v=vs.85).
+/// See https://docs.microsoft.com/previous-versions/windows/desktop/ms687122(v=vs.85).
 /// </remarks>
 [ComImport, Guid("30274F88-6EE4-474e-9B95-7807BC9EF8CF"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 internal interface ITmNodeName

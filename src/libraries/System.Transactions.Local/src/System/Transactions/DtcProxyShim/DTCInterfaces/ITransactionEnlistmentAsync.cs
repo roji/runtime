@@ -11,7 +11,7 @@ namespace System.Transactions.DtcProxyShim.DtcInterfaces;
 /// abort, or commit request on the transaction object associated with this enlistment object.
 /// </summary>
 /// <remarks>
-/// See https://docs.microsoft.com/en-us/previous-versions/windows/desktop/ms686429(v=vs.85).
+/// See https://docs.microsoft.com/previous-versions/windows/desktop/ms686429(v=vs.85).
 /// </remarks>
 [ComImport, Guid("0fb15081-af41-11ce-bd2b-204c4f4f5020"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 internal interface ITransactionEnlistmentAsync

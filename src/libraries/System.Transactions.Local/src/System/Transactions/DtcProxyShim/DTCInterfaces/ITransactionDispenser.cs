@@ -13,7 +13,7 @@ namespace System.Transactions.DtcProxyShim.DtcInterfaces;
 /// The GetOptionsObject method creates new transaction options objects.
 /// </summary>
 /// <remarks>
-/// See https://docs.microsoft.com/en-us/previous-versions/windows/desktop/ms679525(v=vs.85).
+/// See https://docs.microsoft.com/previous-versions/windows/desktop/ms679525(v=vs.85).
 /// </remarks>
 [ComImport, Guid(Guids.IID_ITransactionDispenser), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 internal interface ITransactionDispenser

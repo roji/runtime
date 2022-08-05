@@ -12,7 +12,7 @@ namespace System.Transactions.DtcProxyShim.DtcInterfaces;
 /// The export object is used when propagating transactions between the systems.
 /// </summary>
 /// <remarks>
-/// See https://docs.microsoft.com/en-us/previous-versions/windows/desktop/ms686771(v=vs.85).
+/// See https://docs.microsoft.com/previous-versions/windows/desktop/ms686771(v=vs.85).
 /// </remarks>
 [ComImport, Guid("E1CF9B53-8745-11ce-A9BA-00AA006C3706"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 internal interface ITransactionExportFactory

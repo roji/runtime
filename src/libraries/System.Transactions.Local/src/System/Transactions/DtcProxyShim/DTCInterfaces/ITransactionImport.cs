@@ -13,7 +13,7 @@ namespace System.Transactions.DtcProxyShim.DtcInterfaces;
 /// the resource manager uses the IResourceManager::Enlist method to enlist in the transaction.
 /// </summary>
 /// <remarks>
-/// See https://docs.microsoft.com/en-us/previous-versions/windows/desktop/ms681296(v=vs.85).
+/// See https://docs.microsoft.com/previous-versions/windows/desktop/ms681296(v=vs.85).
 /// </remarks>
 [ComImport, Guid("E1CF9B5A-8745-11ce-A9BA-00AA006C3706"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 internal interface ITransactionImport

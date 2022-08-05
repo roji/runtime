@@ -11,7 +11,7 @@ namespace System.Transactions.DtcProxyShim.DtcInterfaces;
 /// Resource managers use this interface to register themselves with the transaction manager.
 /// </summary>
 /// <remarks>
-/// See https://docs.microsoft.com/en-us/previous-versions/windows/desktop/ms686489(v=vs.85).
+/// See https://docs.microsoft.com/previous-versions/windows/desktop/ms686489(v=vs.85).
 /// </remarks>
 [ComImport, Guid("6B369C21-FBD2-11d1-8F47-00C04F8EE57D"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 internal interface IResourceManagerFactory2

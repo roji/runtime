@@ -14,7 +14,7 @@ namespace System.Transactions.DtcProxyShim.DtcInterfaces;
 /// The resource manager should then asynchronously process the queued request using its own threads to prepare, commit, or abort the transaction.
 /// </summary>
 /// <remarks>
-/// See https://docs.microsoft.com/en-us/previous-versions/windows/desktop/ms678823(v=vs.85).
+/// See https://docs.microsoft.com/previous-versions/windows/desktop/ms678823(v=vs.85).
 /// </remarks>
 [ComImport, Guid("69E971F0-23CE-11cf-AD60-00AA00A74CCD"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 internal interface ITransactionResourceAsync

@@ -10,7 +10,7 @@ namespace System.Transactions.DtcProxyShim.DtcInterfaces;
 /// The ITransactionTransmitterFactory interface is used to create <see cref="ITransactionTransmitter" /> objects.
 /// </summary>
 /// <remarks>
-/// See https://docs.microsoft.com/en-us/previous-versions/windows/desktop/ms679232(v=vs.85).
+/// See https://docs.microsoft.com/previous-versions/windows/desktop/ms679232(v=vs.85).
 /// </remarks>
 [ComImport, Guid("59313E00-B36C-11cf-A539-00AA006887C3"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 internal interface ITransactionTransmitterFactory

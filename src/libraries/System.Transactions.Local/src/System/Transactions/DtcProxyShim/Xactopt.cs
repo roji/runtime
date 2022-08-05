@@ -10,7 +10,7 @@ namespace System.Transactions.DtcProxyShim;
 /// The XACTOPT structure contains information for a transaction options object.
 /// </summary>
 /// <remarks>
-/// See https://docs.microsoft.com/en-us/previous-versions/windows/desktop/ms679195(v=vs.85).
+/// See https://docs.microsoft.com/previous-versions/windows/desktop/ms679195(v=vs.85).
 /// </remarks>
 [StructLayout(LayoutKind.Sequential)]
 internal struct Xactopt
