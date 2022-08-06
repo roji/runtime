@@ -1,9 +1,7 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System.Threading;
 using Xunit;
-using Xunit.Sdk;
 
 namespace System.Transactions.Tests;
 
@@ -13,17 +11,14 @@ namespace System.Transactions.Tests;
 public class OleTxNonWindowsUnsupportedTests
 {
     [Fact]
-    public void Two_durable_enlistments()
+    public void Durable_enlistment()
     {
         var tx = new CommittableTransaction();
 
         // Votes and outcomes don't matter, the 2nd enlistment fails in non-Windows
         var enlistment1 = new TestEnlistment(Phase1Vote.Prepared, EnlistmentOutcome.Aborted);
-        var enlistment2 = new TestEnlistment(Phase1Vote.Prepared, EnlistmentOutcome.Aborted);
 
-        tx.EnlistDurable(Guid.NewGuid(), enlistment1, EnlistmentOptions.None);
-
-        Assert.Throws<PlatformNotSupportedException>(() => tx.EnlistDurable(Guid.NewGuid(), enlistment2, EnlistmentOptions.None));
+        Assert.Throws<PlatformNotSupportedException>(() => tx.EnlistDurable(Guid.NewGuid(), enlistment1, EnlistmentOptions.None));
         Assert.Equal(TransactionStatus.Aborted, tx.TransactionInformation.Status);
     }
 
@@ -32,7 +27,7 @@ public class OleTxNonWindowsUnsupportedTests
     {
         var tx = new CommittableTransaction();
 
-        var promotableEnlistment1 = new TestPromotableSinglePhaseEnlistment(null, EnlistmentOutcome.Aborted);
+        var promotableEnlistment1 = new TestPromotableSinglePhaseEnlistment(Array.Empty<byte>, EnlistmentOutcome.Aborted);
         var promotableEnlistment2 = new TestPromotableSinglePhaseEnlistment(null, EnlistmentOutcome.Aborted);
 
         // 1st promotable enlistment - no distributed transaction yet.
@@ -45,9 +40,9 @@ public class OleTxNonWindowsUnsupportedTests
 
         // Now enlist a durable enlistment, this will cause the escalation to a distributed transaction and fail on non-Windows.
         var durableEnlistment = new TestEnlistment(Phase1Vote.Prepared, EnlistmentOutcome.Aborted);
-        var exception = Assert.Throws<PlatformNotSupportedException>(() => tx.EnlistDurable(Guid.NewGuid(), durableEnlistment, EnlistmentOptions.None));
+        Assert.Throws<PlatformNotSupportedException>(() => tx.EnlistDurable(Guid.NewGuid(), durableEnlistment, EnlistmentOptions.None));
 
-        Assert.False(promotableEnlistment1.PromoteCalled);
+        Assert.True(promotableEnlistment1.PromoteCalled);
         Assert.False(promotableEnlistment2.PromoteCalled);
 
         Assert.Equal(TransactionStatus.Aborted, tx.TransactionInformation.Status);

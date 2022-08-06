@@ -100,7 +100,12 @@ namespace System.Transactions.Tests
         readonly AutoResetEvent? _outcomeReceived;
         readonly Transaction _txToEnlist;
 
-        public TestEnlistment(Phase1Vote phase1Vote, EnlistmentOutcome expectedOutcome, bool volatileEnlistDuringPrepare = false, bool expectEnlistToSucceed = true, AutoResetEvent? outcomeReceived = null)
+        public TestEnlistment(
+            Phase1Vote phase1Vote,
+            EnlistmentOutcome expectedOutcome,
+            bool volatileEnlistDuringPrepare = false,
+            bool expectEnlistToSucceed = true,
+            AutoResetEvent? outcomeReceived = null)
         {
             _phase1Vote = phase1Vote;
             _expectedOutcome = expectedOutcome;
@@ -112,12 +117,10 @@ namespace System.Transactions.Tests
 
         public EnlistmentOutcome? Outcome { get; private set; }
         public bool WasPreparedCalled { get; private set; }
-        public byte[]? RecoveryInformation { get; private set; }
 
         public void Prepare(PreparingEnlistment preparingEnlistment)
         {
             WasPreparedCalled = true;
-            RecoveryInformation = preparingEnlistment.RecoveryInformation();
 
             switch (_phase1Vote)
             {

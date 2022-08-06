@@ -1,10 +1,8 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System.Diagnostics;
 using System.IO;
 using System.Threading;
-using Microsoft.Diagnostics.Runtime.Interop;
 using Microsoft.DotNet.RemoteExecutor;
 using Xunit;
 using Xunit.Sdk;
@@ -124,7 +122,7 @@ public class OleTxTests
             }
         }
 
-        TestEnlistment durable = new TestEnlistment(Phase1Vote.Prepared, EnlistmentOutcome.Committed);
+        var durable = new TestEnlistment(Phase1Vote.Prepared, EnlistmentOutcome.Committed);
 
         // Creation of two phase durable enlistment attempts to promote to MSDTC
         tx.EnlistDurable(Guid.NewGuid(), durable, EnlistmentOptions.None);
@@ -137,52 +135,62 @@ public class OleTxTests
     [ConditionalFact(typeof(RemoteExecutor), nameof(RemoteExecutor.IsSupported))]
     public void Recovery()
     {
-        var tx = new CommittableTransaction(TimeSpan.FromHours(1));
+        var tx = new CommittableTransaction();
 
         var outcomeEvent1 = new AutoResetEvent(false);
         var enlistment1 = new TestEnlistment(Phase1Vote.Prepared, EnlistmentOutcome.Committed, outcomeReceived: outcomeEvent1);
         var guid1 = Guid.NewGuid();
         tx.EnlistDurable(guid1, enlistment1, EnlistmentOptions.None);
 
-        // We are going to spin up an external process to also enlist in the transaction, and then to crash when it receives the commit notification.
-        // We will then initiate the recovery flow.
+        // We are going to spin up an external process to also enlist in the transaction, and then to crash when it
+        // receives the commit notification. We will then initiate the recovery flow.
 
-        // The propagation token is used to propagate the transaction to that process so it can enlist to our transaction.
-        // We also provide the resource manager identifier GUID, and a path where the external process will write the recovery information it will
-        // receive from the MSDTC when preparing.
-        // We'll need these two elements later ni order to Reenlist and trigger recovery.
-        var propagationToken = TransactionInterop.GetTransmitterPropagationToken(tx);
-        var propagationTokenText = Convert.ToBase64String(propagationToken);
+        // The propagation token is used to propagate the transaction to that process so it can enlist to our
+        // transaction. We also provide the resource manager identifier GUID, and a path where the external process will
+        // write the recovery information it will receive from the MSDTC when preparing.
+        // We'll need these two elements later in order to Reenlist and trigger recovery.
+        byte[] propagationToken = TransactionInterop.GetTransmitterPropagationToken(tx);
+        string propagationTokenText = Convert.ToBase64String(propagationToken);
         var guid2 = Guid.NewGuid();
-        var secondEnlistmentRecoveryFilePath = Path.GetTempFileName();
+        string secondEnlistmentRecoveryFilePath = Path.GetTempFileName();
 
-        using var waitHandle = new EventWaitHandle(initialState: false, EventResetMode.ManualReset, "System.Transactions.Tests.OleTxTests.WaitHandle");
+        using var waitHandle = new EventWaitHandle(
+            initialState: false,
+            EventResetMode.ManualReset,
+            "System.Transactions.Tests.OleTxTests.WaitHandle");
 
         try
         {
-            using (var remoteExecutor = RemoteExecutor.Invoke(EnlistAndCrash, propagationTokenText, guid2.ToString(), secondEnlistmentRecoveryFilePath, new RemoteInvokeOptions { ExpectedExitCode = 42 }))
+            using (RemoteExecutor.Invoke(
+                       EnlistAndCrash,
+                       propagationTokenText, guid2.ToString(), secondEnlistmentRecoveryFilePath,
+                       new RemoteInvokeOptions { ExpectedExitCode = 42 }))
             {
-                // Wait for the external process to enlist in the transaction, it will signal this EventWaitHandle after it does.
+                // Wait for the external process to enlist in the transaction, it will signal this EventWaitHandle.
                 waitHandle.WaitOne();
 
                 tx.Commit();
             }
 
             // The other has crashed when the MSDTC notified it to commit.
-
-            // First, reenlist with the wrong recovery information, to test that negative flow
-            var enlistment3 = new TestEnlistment(Phase1Vote.Prepared, EnlistmentOutcome.Committed);
-            Assert.Throws<TransactionException>(() => TransactionManager.Reenlist(guid2, enlistment1.RecoveryInformation!, enlistment3));
-
-            // Now load the correct recovery information from disk and reenlist with the failed RM's Guid to commit.
-            var secondRecoveryInformation = File.ReadAllBytes(secondEnlistmentRecoveryFilePath);
-            var enlistmentWat = TransactionManager.Reenlist(guid2, secondRecoveryInformation, enlistment3);
+            // Load the recovery information the other process has written to disk for us and reenlist with
+            // the failed RM's Guid to commit.
+            var outcomeEvent3 = new AutoResetEvent(false);
+            var enlistment3 = new TestEnlistment(Phase1Vote.Prepared, EnlistmentOutcome.Committed, outcomeReceived: outcomeEvent3);
+            byte[] secondRecoveryInformation = File.ReadAllBytes(secondEnlistmentRecoveryFilePath);
+            _ = TransactionManager.Reenlist(guid2, secondRecoveryInformation, enlistment3);
             TransactionManager.RecoveryComplete(guid2);
 
+            Assert.True(outcomeEvent1.WaitOne(TimeSpan.FromSeconds(5)));
+            Assert.True(outcomeEvent3.WaitOne(TimeSpan.FromSeconds(5)));
+            Assert.Equal(EnlistmentOutcome.Committed, enlistment1.Outcome);
             Assert.Equal(EnlistmentOutcome.Committed, enlistment3.Outcome);
+            Assert.Equal(TransactionStatus.Committed, tx.TransactionInformation.Status);
 
-            // Note: verify manually in the MSDTC console that the distributed transaction is gone (i.e. successfully committed),
-            // (Start -> Component Services -> Computers -> My Computer -> Distributed Transaction Coordinator -> Local DTC -> Transaction List)
+            // Note: verify manually in the MSDTC console that the distributed transaction is gone
+            // (i.e. successfully committed),
+            // (Start -> Component Services -> Computers -> My Computer -> Distributed Transaction Coordinator ->
+            //           Local DTC -> Transaction List)
         }
         finally
         {
@@ -194,7 +202,7 @@ public class OleTxTests
 
         static void EnlistAndCrash(string propagationTokenText, string resourceManagerIdentifierGuid, string recoveryInformationFilePath)
         {
-            var propagationToken = Convert.FromBase64String(propagationTokenText);
+            byte[] propagationToken = Convert.FromBase64String(propagationTokenText);
             var tx = TransactionInterop.GetTransactionFromTransmitterPropagationToken(propagationToken);
 
             var crashingEnlistment = new CrashingEnlistment(recoveryInformationFilePath);
