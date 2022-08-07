@@ -27,7 +27,7 @@ public class OleTxNonWindowsUnsupportedTests
     {
         var tx = new CommittableTransaction();
 
-        var promotableEnlistment1 = new TestPromotableSinglePhaseEnlistment(Array.Empty<byte>, EnlistmentOutcome.Aborted);
+        var promotableEnlistment1 = new TestPromotableSinglePhaseEnlistment(() => new byte[24], EnlistmentOutcome.Aborted);
         var promotableEnlistment2 = new TestPromotableSinglePhaseEnlistment(null, EnlistmentOutcome.Aborted);
 
         // 1st promotable enlistment - no distributed transaction yet.

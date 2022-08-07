@@ -99,6 +99,7 @@
     <Compile Include="System\Transactions\TransactionInterop.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetPlatformIdentifier)' != 'windows'">
+    <Compile Include="System\Transactions\TransactionInteropNonWindows.cs" />
     <Compile Include="System\Transactions\NonWindowsUnsupported.cs" />
   </ItemGroup>
   <ItemGroup>
