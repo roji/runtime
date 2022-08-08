@@ -17,7 +17,7 @@ public class OleTxTests
     //private static readonly TimeSpan Timeout = TimeSpan.FromMinutes(3);
     private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(10);
 
-    [Theory]
+    [ConditionalTheory(typeof(PlatformDetection), nameof(PlatformDetection.IsNotWindowsNanoServer))]
     [InlineData(Phase1Vote.Prepared, Phase1Vote.Prepared, EnlistmentOutcome.Committed, EnlistmentOutcome.Committed, TransactionStatus.Committed)]
     [InlineData(Phase1Vote.Prepared, Phase1Vote.ForceRollback, EnlistmentOutcome.Aborted, EnlistmentOutcome.Aborted, TransactionStatus.Aborted)]
     [InlineData(Phase1Vote.ForceRollback, Phase1Vote.Prepared, EnlistmentOutcome.Aborted, EnlistmentOutcome.Aborted, TransactionStatus.Aborted)]
@@ -48,7 +48,7 @@ public class OleTxTests
         Retry(() => Assert.Equal(expectedTxStatus, tx.TransactionInformation.Status));
     }
 
-    [Fact]
+    [ConditionalFact(typeof(PlatformDetection), nameof(PlatformDetection.IsNotWindowsNanoServer))]
     public void Two_durable_enlistments_rollback()
     {
         var tx = new CommittableTransaction();
@@ -68,7 +68,7 @@ public class OleTxTests
         Retry(() => Assert.Equal(TransactionStatus.Aborted, tx.TransactionInformation.Status));
     }
 
-    [Theory]
+    [ConditionalTheory(typeof(PlatformDetection), nameof(PlatformDetection.IsNotWindowsNanoServer))]
     [InlineData(0)]
     [InlineData(1)]
     [InlineData(2)]
@@ -97,7 +97,9 @@ public class OleTxTests
         Retry(() => Assert.Equal(TransactionStatus.Committed, tx.TransactionInformation.Status));
     }
 
-    [ConditionalFact(typeof(RemoteExecutor), nameof(RemoteExecutor.IsSupported))]
+    protected static bool IsRemoteExecutorSupportedAndNotNano => RemoteExecutor.IsSupported && PlatformDetection.IsNotWindowsNanoServer;
+
+    [ConditionalFact(nameof(IsRemoteExecutorSupportedAndNotNano))]
     public void Promotion()
     {
         // This simulates the full promotable flow, as implemented for SQL Server.
@@ -271,7 +273,7 @@ public class OleTxTests
         }
     }
 
-    [ConditionalFact(typeof(RemoteExecutor), nameof(RemoteExecutor.IsSupported))]
+    [ConditionalFact(nameof(IsRemoteExecutorSupportedAndNotNano))]
     public void Recovery()
     {
         // We are going to spin up an external process to also enlist in the transaction, and then to crash when it
@@ -378,7 +380,7 @@ public class OleTxTests
             => Environment.Exit(1);
     }
 
-    [Fact]
+    [ConditionalFact(typeof(PlatformDetection), nameof(PlatformDetection.IsNotWindowsNanoServer))]
     public void TransmitterPropagationToken()
     {
         var tx = new CommittableTransaction();
@@ -394,7 +396,7 @@ public class OleTxTests
         Assert.Equal(tx.TransactionInformation.DistributedIdentifier, tx2.TransactionInformation.DistributedIdentifier);
     }
 
-    [Fact]
+    [ConditionalFact(typeof(PlatformDetection), nameof(PlatformDetection.IsNotWindowsNanoServer))]
     public void GetExportCookie()
     {
         var tx = new CommittableTransaction();
@@ -436,6 +438,4 @@ public class OleTxTests
             }
         }
     }
-
-    const int MaxTransactionCommitTimeoutInSeconds = 5;
 }

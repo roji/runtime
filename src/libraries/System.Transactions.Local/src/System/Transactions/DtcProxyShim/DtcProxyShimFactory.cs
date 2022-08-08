@@ -38,7 +38,7 @@ internal sealed class DtcProxyShimFactory
         => _eventHandle = notificationEventHandle;
 
     // https://docs.microsoft.com/previous-versions/windows/desktop/ms678898(v=vs.85)
-    [DllImport(Interop.Libraries.Xolehlp, CharSet = CharSet.Unicode)]
+    [DllImport(Interop.Libraries.Xolehlp, CharSet = CharSet.Unicode, PreserveSig = false)]
     internal static extern void DtcGetTransactionManagerExW(
         [MarshalAs(UnmanagedType.LPWStr)] string? pszHost,
         [MarshalAs(UnmanagedType.LPWStr)] string? pszTmName,
