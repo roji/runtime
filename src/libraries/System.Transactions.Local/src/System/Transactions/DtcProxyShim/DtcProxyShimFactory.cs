@@ -38,8 +38,8 @@ internal sealed class DtcProxyShimFactory
         => _eventHandle = notificationEventHandle;
 
     // https://docs.microsoft.com/previous-versions/windows/desktop/ms678898(v=vs.85)
-    [DllImport(Interop.Libraries.Xolehlp, CharSet = CharSet.Unicode, PreserveSig = false)]
-    internal static extern void DtcGetTransactionManagerExW(
+    [DllImport(Interop.Libraries.Xolehlp, CharSet = CharSet.Unicode, ExactSpelling = true, PreserveSig = false)]
+    private static extern void DtcGetTransactionManagerExW(
         [MarshalAs(UnmanagedType.LPWStr)] string? pszHost,
         [MarshalAs(UnmanagedType.LPWStr)] string? pszTmName,
         in Guid riid,
@@ -56,6 +56,11 @@ internal sealed class DtcProxyShimFactory
         out byte[] whereabouts,
         out ResourceManagerShim resourceManagerShim)
     {
+        if (RuntimeInformation.ProcessArchitecture == Architecture.X86)
+        {
+            throw new PlatformNotSupportedException(SR.DistributedNotSupportOn32Bits);
+        }
+
         lock (_proxyInitLock)
         {
             DtcGetTransactionManagerExW(nodeName, null, Guids.IID_ITransactionDispenser_Guid, 0, null, out ITransactionDispenser? localDispenser);
