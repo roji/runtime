@@ -109,9 +109,9 @@ internal sealed class DtcProxyShimFactory
                     "System.Transactions.InternalRM",
                     rmNotifyShim,
                     Guids.IID_IResourceManager_Guid,
-                    out object? rm);
+                    out IntPtr rm);
 
-                rmShim.ResourceManager = (IResourceManager)rm;
+                rmShim.ResourceManager = (IResourceManager)Marshal.GetObjectForIUnknown(rm);
             });
 
             resourceManagerShim = rmShim;
@@ -174,9 +174,9 @@ internal sealed class DtcProxyShimFactory
                 "System.Transactions.ResourceManager",
                 rmNotifyShim,
                 Guids.IID_IResourceManager_Guid,
-                out object? rm);
+                out IntPtr rm);
 
-            rmShim.ResourceManager = (IResourceManager)rm;
+            rmShim.ResourceManager = (IResourceManager)Marshal.GetObjectForIUnknown(rm);
         });
 
         resourceManagerShim = rmShim;

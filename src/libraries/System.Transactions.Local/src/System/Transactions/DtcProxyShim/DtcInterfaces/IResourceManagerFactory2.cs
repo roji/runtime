@@ -20,5 +20,5 @@ internal interface IResourceManagerFactory2
         [MarshalAs(UnmanagedType.LPStr)] string pszRMName,
         [MarshalAs(UnmanagedType.Interface)] IResourceManagerSink pIResMgrSink,
         in Guid riidRequested,
-        [MarshalAs(UnmanagedType.Interface)] out object rm);
+        out IntPtr rm);
 }
