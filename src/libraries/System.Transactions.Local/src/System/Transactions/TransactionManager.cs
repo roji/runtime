@@ -6,6 +6,9 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Threading;
 using System.Transactions.Configuration;
+#if WINDOWS
+using System.Transactions.DtcProxyShim;
+#endif
 using System.Transactions.Oletx;
 
 namespace System.Transactions
@@ -29,6 +32,10 @@ namespace System.Transactions
         private static TransactionTable? s_transactionTable;
 
         private static TransactionStartedEventHandler? s_distributedTransactionStartedDelegate;
+
+        internal const string DistributedTransactionTrimmingWarning =
+            "Distributed transactions support may not be compatible with trimming. If your program creates a distributed transaction via System.Transactions, the correctness of the application cannot be guaranteed after trimming.";
+
         public static event TransactionStartedEventHandler? DistributedTransactionStarted
         {
             add
@@ -391,7 +398,31 @@ namespace System.Transactions
             }
         }
 
-        public static bool ImplicitDistributedTransactions { get; set; }
+#if WINDOWS
+        public static bool ImplicitDistributedTransactions
+        {
+            get => DtcProxyShimFactory.s_transactionConnector is not null;
+            [RequiresUnreferencedCode(DistributedTransactionTrimmingWarning)]
+            set
+            {
+                if (value)
+                {
+                    DtcProxyShimFactory.s_transactionConnector ??= new DtcProxyShimFactory.DtcTransactionConnector();
+                }
+                else
+                {
+                    DtcProxyShimFactory.s_transactionConnector = null;
+                }
+            }
+        }
+#else
+        public static bool ImplicitDistributedTransactions
+        {
+            get;
+            [RequiresUnreferencedCode(DistributedTransactionTrimmingWarning)]
+            set;
+        }
+#endif
 
         // This routine writes the "header" for the recovery information, based on the
         // type of the calling object and its provided parameter collection.  This information
