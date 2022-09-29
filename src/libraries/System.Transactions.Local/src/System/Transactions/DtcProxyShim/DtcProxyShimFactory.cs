@@ -59,10 +59,14 @@ internal sealed class DtcProxyShimFactory
         out byte[] whereabouts,
         out ResourceManagerShim resourceManagerShim)
     {
-        switch (RuntimeInformation.ProcessArchitecture)
+        if (RuntimeInformation.ProcessArchitecture == Architecture.X86)
         {
-            case Architecture.X86:
-                throw new PlatformNotSupportedException(SR.DistributedNotSupportedOn32Bits);
+            throw new PlatformNotSupportedException(SR.DistributedNotSupportedOn32Bits);
+        }
+
+        if (!TransactionManager.ImplicitDistributedTransactions)
+        {
+            throw new NotSupportedException(SR.ImplicitDistributedTransactionsDisabled);
         }
 
         ConnectToProxyCore(nodeName, resourceManagerIdentifier, managedIdentifier, out nodeNameMatches, out whereabouts, out resourceManagerShim);

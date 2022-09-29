@@ -423,4 +423,7 @@
   <data name="DistributedNotSupportedOn32Bits" xml:space="preserve">
     <value>Distributed transactions are currently unsupported in 32-bit processes.</value>
   </data>
+  <data name="ImplicitDistributedTransactionsDisabled" xml:space="preserve">
+    <value>Implicit distributed transactions have not been enabled. If you're intentionally starting a distributed transaction, set TransactionManager.ImplicitDistributedTransactions to true.</value>
+  </data>
 </root>

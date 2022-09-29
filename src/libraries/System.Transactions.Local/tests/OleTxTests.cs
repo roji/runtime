@@ -469,6 +469,8 @@ public class OleTxTests : IClassFixture<OleTxTests.OleTxFixture>
             return;
         }
 
+        TransactionManager.ImplicitDistributedTransactions = true;
+
         // In CI, we sometimes get XACT_E_TMNOTAVAILABLE; when it happens, it's typically on the very first
         // attempt to connect to MSDTC (flaky/slow on-demand startup of MSDTC), though not only.
         // This catches that error and retries.
@@ -524,7 +526,20 @@ public class OleTxTests : IClassFixture<OleTxTests.OleTxFixture>
         // this is likely due to on-demand slow startup of MSDTC. Perform pre-test connecting with retry
         // to ensure that MSDTC is properly up when the first test runs.
         public OleTxFixture()
-            => Test(() =>
+        {
+            Test(() =>
+            {
+                TransactionManager.ImplicitDistributedTransactions = false;
+
+                using var tx = new CommittableTransaction();
+
+                Assert.Throws<NotSupportedException>(()
+                    => tx.EnlistDurable(Guid.NewGuid(), new TestEnlistment(Phase1Vote.Done, EnlistmentOutcome.Committed), EnlistmentOptions.None));
+            });
+
+            TransactionManager.ImplicitDistributedTransactions = true;
+
+            Test(() =>
             {
                 using var tx = new CommittableTransaction();
 
@@ -536,5 +551,6 @@ public class OleTxTests : IClassFixture<OleTxTests.OleTxFixture>
 
                 tx.Commit();
             });
+        }
     }
 }

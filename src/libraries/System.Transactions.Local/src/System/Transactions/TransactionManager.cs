@@ -391,6 +391,8 @@ namespace System.Transactions
             }
         }
 
+        public static bool ImplicitDistributedTransactions { get; set; }
+
         // This routine writes the "header" for the recovery information, based on the
         // type of the calling object and its provided parameter collection.  This information
         // we be read back by the static Reenlist method to create the necessary transaction
