@@ -96,7 +96,7 @@ namespace System.Data.OleDb.Tests
             Assert.Throws<ArgumentOutOfRangeException>(() => connection.BeginTransaction((IsolationLevel)0));
         }
 
-        [ConditionalFact(Helpers.IsAceDriverAvailable)]
+        [ConditionalFact(Helpers.IsDriverAvailable)]
         public void BeginTransaction_CallTwice_Throws()
         {
             // ctor in OleDbTestBase already called BeginTransaction once
@@ -199,7 +199,7 @@ namespace System.Data.OleDb.Tests
             command.ExecuteNonQuery();
         }
 
-        [ConditionalFact(Helpers.IsAceDriverAvailable)]
+        [ConditionalFact(Helpers.IsDriverAvailable)]
         public void ChangeDatabase_EmptyDatabase_Throws()
         {
             Assert.Throws<ArgumentException>(() => connection.ChangeDatabase(null));

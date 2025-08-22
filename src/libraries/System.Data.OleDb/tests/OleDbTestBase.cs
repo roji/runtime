@@ -68,6 +68,6 @@ namespace System.Data.OleDb.Tests
             base.Dispose(disposing);
         }
 
-        protected string ConnectionString => @"Provider=" + Helpers.ProviderName + @";Data source=" + TestDirectory + @";Extended Properties=""Text;HDR=No;FMT=Delimited""";
+        protected string ConnectionString => Helpers.ConnectionString;
     }
 }
